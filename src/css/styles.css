@@ -45,7 +45,7 @@ h1{
     justify-content: center;
     align-items: center
 }
-.button .start{
+.button-start .start{
     background: var(--chili-red);
     color: white;
     font-weight: bold;
@@ -74,3 +74,4 @@ h1{
 	font-weight: 400;
 	margin-top: 7rem;
 }
+
