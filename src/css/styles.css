@@ -1,0 +1,76 @@
+/* CSS HEX */
+:root{
+    --white: #ffffffff;
+    --battleship-gray: #8c9b93ff;
+    --off-red-rgb: #fc0f0fff;
+    --chili-red: #ed2f23ff;
+    --black: #000000ff;
+    --raisin-black: #282424ff;
+   
+}
+*{
+    margin:0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Noto Sans Display", sans-serif;
+}
+html{
+    height: 100vh;
+}
+
+.header{
+    height: 4rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--chili-red);
+    
+}
+h1{
+    color: white;
+    font-size: 2rem;
+}
+.logokinessia{
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem;
+}
+#logo{
+    height: 300px;
+    width: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+.button .start{
+    background: var(--chili-red);
+    color: white;
+    font-weight: bold;
+    font-size: 2rem;
+    width: 15rem;
+    height: 5rem;
+    margin: 1rem ;
+    border: none;
+    border-radius: 1.5rem;
+    display:block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footer{
+    display: flex;
+	position: fixed;
+	bottom: 0;
+	width: 100%;
+	height: 2rem;
+	justify-content: center;
+	align-items: center;
+    background-color: var(--chili-red);
+    color: var(--white);
+    font-size: .5rem;
+	font-weight: 400;
+	margin-top: 7rem;
+}
