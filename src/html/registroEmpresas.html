@@ -6,14 +6,61 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/stylesempresas.css">
     <script type="module" src="../app/app.js" defer></script>
     <title>Document</title>
 </head>
 <body>
     <header>
         <div id="header-container"></div>
+        <div class="title-page"> 
+            <h2>Registro de Usuarios</h2>
+        </div>
     </header>
-    <h2>registro empresas</h2>
+   
+
+    <main>
+        <form action="/submit" method="post">
+            <label for="nombreEmpresa">Nombre de la Empresa:</label>
+            <input type="text" id="nombreEmpresa" name="nombreEmpresa" required>
+        
+            <div class="checkbox-group">
+                <label for="cargoServicioVisible">Cargo por Servicio Visible:</label>
+                <input type="checkbox" id="cargoServicioVisible" name="cargoServicioVisible">
+        
+                <label for="cargoServicioMixto">Cargo por Servicio Mixto:</label>
+                <input type="checkbox" id="cargoServicioMixto" name="cargoServicioMixto">
+        
+                <label for="cargoServicioFacturado">Cargo por Servicio Facturado:</label>
+                <input type="number" step="0.01" id="cargoServicioFacturado" name="cargoServicioFacturado">
+        
+                <label for="cargoServicioOculto">Cargo por Servicio Oculto:</label>
+                <input type="number" step="0.01" id="cargoServicioOculto" name="cargoServicioOculto">
+            </div>
+        
+            <div class="checkbox-group">
+                <label for="descuentoMonto">Descuento por Monto:</label>
+                <input type="checkbox" id="descuentoMonto" name="descuentoMonto">
+        
+                <label for="descuentoPorcentaje">Descuento por Porcentaje:</label>
+                <input type="checkbox" id="descuentoPorcentaje" name="descuentoPorcentaje">
+        
+                <label for="montoDescuento">Monto de Descuento:</label>
+                <input type="number" step="0.01" id="montoDescuento" name="montoDescuento">
+        
+                <label for="porcentajeDescuento">Porcentaje de Descuento:</label>
+                <input type="number" step="0.01" id="porcentajeDescuento" name="porcentajeDescuento">
+            </div>
+        
+            <label for="tarifaFija">Tarifa Fija:</label>
+            <input type="number" step="0.01" id="tarifaFija" name="tarifaFija">
+        
+            <button type="submit">Registrar Empresa</button>
+        </form>
+    </main>
+    <div class="back-button">
+        <a href="dashboard.html" class="button"> Regresar</a>
+    </div> 
+
 </body>
 </html>

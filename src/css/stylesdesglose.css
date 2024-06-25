@@ -1,0 +1,117 @@
+.title-page{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--battleship-gray);
+    font-size: 20px;
+    margin: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.empresa {
+    margin-right: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #fff;
+    background-color:  var(--chili-red);
+    border: none;
+    border-radius: 5px;
+  
+}
+
+button:hover {
+    background-color: var(--battleship-gray);
+}
+
+button:active {
+    background-color: #780000;
+    box-shadow: 0 2px #666;
+    transform: translateY(2px);
+}
+
+.desglose {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.aerolinea{
+    
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1;
+}
+.form-group input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #fff;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 4px #999;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:active {
+    background-color: #3e8e41;
+    box-shadow: 0 2px #666;
+    transform: translateY(2px);
+}

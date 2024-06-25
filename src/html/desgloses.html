@@ -6,13 +6,84 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/stylesdesglose.css">
     <script type="module" src="../app/app.js" defer></script>
     <title>Document</title>
 </head>
 <body>
     <header>
         <div id="header-container"></div>
+        <div class="title-page"> 
+            <h2>Desgloses</h2>
+        </div>
     </header>
+    <main>
+        <div>
+            <form action="/submit" method="post">
+                <label for="empresa"> Empresa:</label>
+                <select id="empresa" name="empresa" required class="empresa">
+                    <option value="">Selecciona</option>
+                </select>
+            
+                <button type="submit">Enviar</button>
+            </form>
+        </div>
+        <div>
+            <form action="/submit" method="post" class="desglose">
+                <div class="form-group">
+                    <label for="folio">Folio:</label>
+                    <input type="number" id="folio" name="folio" required>
+                </div>
+                <div class="form-group">
+                    <label for="aerolinea">Aerolinea</label>
+                    <select id="aerolinea" name="aerolinea" required class="aerolinea">
+                        <option value="">AEROMEXICO</option>
+                        <option value="">VOLARIS</option>
+                        <option value="">VIVA AEROLINEA</option>
+                        <option value="">TAR</option>
+                        <option value="">MEXICANA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tarifaBase">Tarifa Base:</label>
+                    <input type="number" step="0.01" id="tarifaBase" name="tarifaBase" required>
+                </div>
+                <div class="form-group">
+                    <label for="iva">IVA:</label>
+                    <input type="number" step="0.01" id="iva" name="iva" required>
+                </div>
+                <div class="form-group">
+                    <label for="tua">TUA:</label>
+                    <input type="number" step="0.01" id="tua" name="tua" required>
+                </div>
+                <div class="form-group">
+                    <label for="yr">YR:</label>
+                    <input type="number" step="0.01" id="yr" name="yr" required>
+                </div>
+                <div class="form-group">
+                    <label for="otrosCargos">Otros Cargos:</label>
+                    <input type="number" step="0.01" id="otrosCargos" name="otrosCargos" required>
+                </div>
+                <div class="form-group">
+                    <label for="cargoPorServicio">Cargo Por Servicio:</label>
+                    <input type="number" step="0.01" id="cargoPorServicio" name="cargoPorServicio" required>
+                </div>
+                <div class="form-group">
+                    <label for="total">Total:</label>
+                    <input type="number" step="0.01" id="total" name="total" required>
+                </div>
+                <div class="form-group">
+                    <label for="usuarioID">Usuario ID:</label>
+                    <input type="text" id="usuarioID" name="usuarioID" required>
+                </div>
+                <div class="form-group">
+                    <label for="empresaID">Empresa ID:</label>
+                    <input type="text" id="empresaID" name="empresaID" required>
+                </div>
+                <button type="submit">Registrar Desglose</button>
+            </form>
+            
+        </div>
+    </main>
 </body>
 </html>
