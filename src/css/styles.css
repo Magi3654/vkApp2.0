@@ -6,7 +6,7 @@
     --chili-red: #ed2f23ff;
     --black: #000000ff;
     --raisin-black: #282424ff;
-   
+    --font-size: 1rem; /* Base font size */
 }
 *{
     margin:0;

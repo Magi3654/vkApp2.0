@@ -4,34 +4,26 @@
     align-items: center;
     justify-content: space-evenly;
 }
+
+.dashboard, .back-button {
+    margin: 200px;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+}
 .button {
     display: inline-block;
-    padding: 40px 80px;
-    margin: 2rem;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    text-align: center;
+    margin: 5px;
+    padding: 20px 40px;
     text-decoration: none;
-    color: var(--white);
+    color: white;
     background-color: var(--chili-red);
-    border: none;
-    border-radius: 15px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
 }
-
-.back-button .button{
-    margin: 2rem;
-    display: inline-block;
-    align-items: center;
-    justify-content: center;
-    padding: 30px 60px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    text-align: center;
-    text-decoration: none;
-    color: var(--white);
-    background-color: var(--chili-red);
-    border: none;
-    border-radius: 15px;
+.button:hover {
+    background-color: var(--battleship-gray);
 }

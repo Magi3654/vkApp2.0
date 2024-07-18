@@ -18,17 +18,27 @@
         </div>
     </header>
     <main>
-        <div>
+        <div class="desglose-header">
             <form action="/submit" method="post">
-                <label for="empresa"> Empresa:</label>
-                <select id="empresa" name="empresa" required class="empresa">
-                    <option value="">Selecciona</option>
-                </select>
-            
+                <div class="form-group">
+                    <label for="empresa">Empresa:</label>
+                    <select id="empresa" name="empresa" required class="empresa">
+                        <option value="">Selecciona</option>
+                    </select>
+                </div>
                 <button type="submit">Enviar</button>
             </form>
+            <form action="/submit" method="post">
+                <div class="form-group">
+                    <label for="folio-search">Buscar folio:</label>
+                    <input type="text" id="folio-search" name="folio-search">
+                </div>
+                <button type="button" onclick="search()">Buscar</button>
+                <button type="button" onclick="edit()">Editar</button>
+            </form>
         </div>
-        <div>
+        
+        <div class="desglose-form">
             <form action="/submit" method="post" class="desglose">
                 <div class="form-group">
                     <label for="folio">Folio:</label>
@@ -84,6 +94,10 @@
             </form>
             
         </div>
+
+        <div class="back-button">
+            <a href="dashboard.html" class="button"> Regresar</a>
+        </div> 
     </main>
 </body>
 </html>
