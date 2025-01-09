@@ -6,8 +6,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/stylesdash.css">
-    <script type="module" src="../app/app.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdash.css') }}">
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" defer></script>
     <title>Document</title>
 </head>
 <body>
@@ -22,7 +22,8 @@
         <a href="registroUsuarios.html" class="button">Alta Usuarios</a>
     </div>
     <div class="back-button">
-        <a href="index.html" class="button">Regresar</a>
+        <a href="{{ url_for('index') }}" class="button">Regresar</a>
+
     </div>
 
 </body>
