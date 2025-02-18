@@ -16,10 +16,10 @@
     </header>
 
     <div class="dashboard">
-        <a href="desgloses.html" class="button">Desgloses</a>
-        <a href="papeletas.html" class="button">Papeletas</a>
-        <a href="registroEmpresas.html" class="button">Alta Empresas</a>
-        <a href="registroUsuarios.html" class="button">Alta Usuarios</a>
+        <a href="{{ url_for('desgloses') }}" class="button">Desgloses</a>
+        <a href="{{ url_for('papeletas') }}" class="button">Papeletas</a>
+        <a href="{{ url_for('newclient') }}" class="button">Alta Empresas</a>
+        <a href="{{ url_for('newuser') }}" class="button">Alta Usuarios</a>
     </div>
     <div class="back-button">
         <a href="{{ url_for('index') }}" class="button">Regresar</a>
