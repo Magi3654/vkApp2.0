@@ -6,15 +6,69 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/styles.css">
-    <script type="module" src="../app/app.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
+    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" ></script>
     <title>Document</title>
 </head>
 <body>
     <header>
         <div id="header-container"></div>
     </header>
-    <h2>under construction</h2>
-    <img src="../img/aviation-service-team-working-on-600nw-1808690524.webp" alt="">
+    <div>
+        <form action="/submit" method="post" class="papeleta-form">
+            <div class="form-group">
+                <label for="folio">Folio:</label>
+                <input type="text" id="folio" name="folio" required>
+            </div>
+            <div class="form-group">
+                <label for="tarjeta">Tarjeta:</label>
+                <input type="text" id="tarjeta" name="tarjeta" required>
+            </div>
+            <div class="form-group">
+                <label for="fechaVenta">Fecha de Venta:</label>
+                <input type="date" id="fechaVenta" name="fechaVenta" required>
+            </div>
+            <div class="form-group">
+                <label for="usuario">Usuario:</label>
+                <input type="text" id="usuario" name="usuario" required>
+            </div>
+            <div class="form-group">
+                <label for="totalTicket">Total del Ticket:</label>
+                <input type="number" step="0.01" id="totalTicket" name="totalTicket" required>
+            </div>
+            <div class="form-group">
+                <label for="diezPorciento">10%:</label>
+                <input type="number" step="0.01" id="diezPorciento" name="diezPorciento" required>
+            </div>
+            <div class="form-group">
+                <label for="cargo">Cargo:</label>
+                <input type="number" step="0.01" id="cargo" name="cargo" required>
+            </div>
+            <div class="form-group">
+                <label for="total">Total:</label>
+                <input type="number" step="0.01" id="total" name="total" required>
+            </div>
+            <div class="form-group">
+                <label for="facturarA">Facturar a:</label>
+                <input type="text" id="facturarA" name="facturarA" required>
+            </div>
+            <div class="form-group">
+                <label for="solicito">Solicitó:</label>
+                <input type="text" id="solicito" name="solicito" required>
+            </div>
+            <div class="form-group">
+                <label for="claveSabre">Clave Sabre:</label>
+                <input type="text" id="claveSabre" name="claveSabre" required>
+            </div>
+            <div class="form-group">
+                <label for="formaPago">Forma de Pago Cliente:</label>
+                <input type="text" id="formaPago" name="formaPago" required>
+            </div>
+            <button type="submit">Registrar Papeleta</button>
+        </form>
+        <div class="back-button">
+            <a href="dashboard.html" class="button">Regresar</a>
+        </div>
+    </div>
 </body>
 </html>

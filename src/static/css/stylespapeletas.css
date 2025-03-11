@@ -1,0 +1,71 @@
+.title-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--battleship-gray);
+    font-size: 1.5rem;
+    margin: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 600px;  /* Reduce el ancho */
+    margin: 2rem auto; /* Lo centra */
+    padding: 1.5rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+label {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+input, select {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #fff;
+    background-color: var(--chili-red);
+    border: none;
+    border-radius: 5px;
+    margin-top: 1rem;
+}
+
+button:hover {
+    background-color: var(--battleship-gray);
+}
+
+.back-button {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.back-button .button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: white;
+    background-color: var(--chili-red);
+    border-radius: 5px;
+    display: inline-block;
+}
