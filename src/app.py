@@ -23,13 +23,14 @@ def desgloses():
 def papeletas():
     return render_template('papeletas.html')
 
-@app.route('/newclient')
+@app.route('/registroEmpresas')
 def newclient():
     return render_template('registroEmpresas.html')
 
-@app.route('/newuser')
+@app.route('/registroUsuarios')
 def newuser():
     return render_template('registroUsuarios.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
+c
