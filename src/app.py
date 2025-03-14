@@ -24,11 +24,11 @@ def papeletas():
     return render_template('papeletas.html')
 
 @app.route('/registroEmpresas')
-def newclient():
+def registroEmpresas():
     return render_template('registroEmpresas.html')
 
 @app.route('/registroUsuarios')
-def newuser():
+def registroUsuarios():
     return render_template('registroUsuarios.html')
 
 if __name__ == '__main__':
