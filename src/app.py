@@ -3,6 +3,10 @@ from models import db, Usuario, Rol  # Asegúrate de que estos modelos estén de
 from werkzeug.security import generate_password_hash  # Para el hashing de contraseñas
 from flask_migrate import Migrate
 from config import Config
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SQLALCHEMY_DATABASE_URI'] = Config.DATABASE_URL
