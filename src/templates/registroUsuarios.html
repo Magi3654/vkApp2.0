@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,7 @@
 
     <main>
         <div class="registro">
-            <form >
+            <form method="POST" action="{{ url_for('registro') }}">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" required>
 
@@ -32,9 +32,9 @@
 
                 <label for="rol">Rol:</label>
                 <select id="rol" name="rol" required>
-                    <option value="admin">Administrador</option>
-                    <option value="generador">Generador</option>
-                    <option value="consulta">Consulta</option>
+                    {% for rol in roles %}
+                        <option value="{{ rol.id }}">{{ rol.nombre }}</option>
+                    {% endfor %}
                 </select>
                 <button class="submit" type="submit">Registrar</button>
             </form>
