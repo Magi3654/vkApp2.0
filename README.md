@@ -31,8 +31,11 @@ Este proyecto tiene como objetivo desarrollar un hub interno que automatice la g
 
 ### Backend
 
-- **Python (Flask/Django)**: Se utilizará un framework como Flask o Django para manejar las solicitudes HTTP, gestionar la lógica de negocio y comunicarse con la base de datos.
+- **Python (Flask)**: Se utilizará un framework como Flask  para manejar las solicitudes HTTP, gestionar la lógica de negocio y comunicarse con la base de datos.
 - **PostgreSQL**: Se utilizará para almacenar la información de clientes, reservas y transacciones.
 
-## Diagrama de Arquitectura
+
+## Conclusión
+
+El desarrollo del Kinessia Hub permitirá a la agencia de viajes optimizar sus procesos administrativos y mejorar la eficiencia en la gestión de documentos y reservas. Al automatizar tareas como la creación de desgloses de ventas, la gestión de cargos de tarjeta y el seguimiento de pagos, se reducirá la carga de trabajo manual y se minimizarán los errores. Además, la implementación de perfiles específicos para empresas y usuarios garantizará un control adecuado de acceso y funcionalidades, mejorando la experiencia tanto para los agentes como para los administradores. En resumen, este hub interno no solo facilitará la operación diaria de la agencia, sino que también proporcionará herramientas valiosas para la toma de decisiones estratégicas.
 
