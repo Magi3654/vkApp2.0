@@ -1,6 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 from sqlalchemy.ext.declarative import declarative_base
+from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Column, BigInteger, String, Numeric, Boolean, Date, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import relationship
 
