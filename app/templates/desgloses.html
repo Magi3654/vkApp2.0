@@ -18,40 +18,35 @@
         </div>
     </header>
     <main>
-        <div class="desglose-header">
-            <form action="/submit" method="post">
+        <!-- Hemos simplificado los múltiples forms en uno solo para crear -->
+        <div class="desglose-form">
+            <!-- 
+              ACCIÓN CORREGIDA: Apunta a la función 'nuevo_desglose' del blueprint 'main'
+            -->
+            <form action="{{ url_for('main.nuevo_desglose') }}" method="post" class="desglose">
                 <div class="form-group">
                     <label for="empresa">Empresa:</label>
+                    <!-- 
+                      MENÚ DINÁMICO: Este select se llena con datos de la base de datos
+                    -->
                     <select id="empresa" name="empresa" required class="empresa">
-                        <option value="">Selecciona</option>
+                        <option value="">Selecciona una empresa</option>
+                        {% for emp in empresas %}
+                            <option value="{{ emp.id }}">{{ emp.nombre_empresa }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <button type="submit">Enviar</button>
-            </form>
-            <form action="/submit" method="post">
-                <div class="form-group">
-                    <label for="folio-search">Buscar folio:</label>
-                    <input type="text" id="folio-search" name="folio-search">
-                </div>
-                <button type="button" onclick="search()">Buscar</button>
-                <button type="button" onclick="edit()">Editar</button>
-            </form>
-        </div>
-        
-        <div class="desglose-form">
-            <form action="/submit" method="post" class="desglose">
+                
                 <div class="form-group">
                     <label for="folio">Folio:</label>
                     <input type="number" id="folio" name="folio" required>
                 </div>
                 <div class="form-group">
-                    <label for="aerolinea">Aerolinea</label>
-                    <select id="aerolinea" name="aerolinea" required class="aerolinea">
-                        <option value="">AEROMEXICO</option>
-                        <option value="">VOLARIS</option>
-                        <option value="">VIVA AEROLINEA</option>
-                        <option value="">TAR</option>
-                        <option value="">MEXICANA</option>
+                    <label for="aerolinea">Aerolínea:</label>
+                    <select id="aerolinea" name="aerolinea" required>
+                        <option value="AEROMEXICO">AEROMEXICO</option>
+                        <option value="VOLARIS">VOLARIS</option>
+                        <option value="VIVA AEROBUS">VIVA AEROBUS</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -81,14 +76,6 @@
                 <div class="form-group">
                     <label for="total">Total:</label>
                     <input type="number" step="0.01" id="total" name="total" required>
-                </div>
-                <div class="form-group">
-                    <label for="usuarioID">Usuario ID:</label>
-                    <input type="text" id="usuarioID" name="usuarioID" required>
-                </div>
-                <div class="form-group">
-                    <label for="empresaID">Empresa ID:</label>
-                    <input type="text" id="empresaID" name="empresaID" required>
                 </div>
                 <button type="submit">Registrar Desglose</button>
             </form>

@@ -20,7 +20,7 @@
    
 
     <main>
-        <form action="/submit" method="post">
+        <form action="{{ url_for('main.nueva_empresa') }}" method="post">
             <label for="nombreEmpresa">Nombre de la Empresa:</label>
             <input type="text" id="nombreEmpresa" name="nombreEmpresa" required>
         
