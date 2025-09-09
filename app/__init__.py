@@ -1,53 +1,41 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
 from config import Config
+from .models import db, Usuario 
+from flask_login import LoginManager
 
-# Creamos las instancias de las extensiones aquí, pero sin inicializarlas todavía.
-# Esto nos permite importarlas en otros archivos (como models.py) de forma segura.
-db = SQLAlchemy()
-login_manager = LoginManager()
-
-# Le decimos a Flask-Login a qué página redirigir a los usuarios que intenten
-# acceder a una página protegida sin haber iniciado sesión.
-login_manager.login_view = 'auth.login'
-
+# NO importes los blueprints aquí arriba.
 
 def create_app():
     """
-    Esta es la función 'fábrica' que construye y configura la aplicación.
+    Fábrica de la aplicación que construye y configura la instancia de Flask.
     """
     app = Flask(__name__)
-
-    # 1. Cargar la configuración desde el archivo config.py
     app.config.from_object(Config)
 
-    # 2. Conectar las extensiones (como la base de datos) con la aplicación
+    # 1. Inicializa las extensiones con la instancia de la aplicación.
     db.init_app(app)
+    
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login' # Redirige aquí si se necesita login
     login_manager.init_app(app)
 
-    # 3. Configurar el cargador de usuarios para Flask-Login
-    # Esto le dice a Flask-Login cómo encontrar un usuario específico por su ID.
-    from .models import Usuario 
     @login_manager.user_loader
     def load_user(user_id):
-        # SQLAlchemy devuelve el usuario correspondiente a ese ID.
+        # Flask-Login usa esta función para recargar el objeto de usuario desde el ID de usuario almacenado en la sesión.
         return Usuario.query.get(int(user_id))
 
-    # 4. Registrar los Blueprints (nuestras colecciones de rutas)
+    # 2. Importa y registra los Blueprints DESPUÉS de inicializar las extensiones.
+    #    Esta es la parte crucial de la solución.
     from .routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
     from .auth import auth as auth_blueprint
-    # Todas las rutas en auth.py tendrán el prefijo /auth (ej: /auth/login)
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
-
-    # 5. Contexto de la aplicación
+    
     with app.app_context():
-        # ¡IMPORTANTE! Comentamos o eliminamos la siguiente línea porque tus tablas
-        # de la base de datos ya fueron creadas manualmente. Si la dejamos,
-        # podría intentar sobreescribirlas o causar errores.
-        # db.create_all()
+        # Comentamos esta línea porque las tablas ya existen en tu base de datos.
+        # Si estuvieras empezando de cero, la necesitarías.
+        # db.create_all() 
         pass
 
     return app
