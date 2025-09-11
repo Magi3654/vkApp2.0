@@ -10,18 +10,35 @@
     <title>Kinessia Trip Hub</title>
 </head>
 <body>
-    <header class="header">
-        <h1>Kinessia Hub</h1>
-    </header>
-    <nav>
-        <ul>
-            <li><a href="{{ url_for('index') }}">Inicio</a></li>
-            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('desgloses') }}">Desgloses</a></li>
-            <li><a href="{{ url_for('papeletas') }}">Papeletas</a></li>
-            <li><a href="{{ url_for('registroEmpresas') }}">Alta Empresas</a></li>
-            <li><a href="{{ url_for('registroUsuarios') }}">Alta Usuarios</a></li>
-        </ul>
-    </nav>
+
+    <nav class="main-nav">
+    <div class="logokinessia">
+        <!-- CORRECCIÓN: Se añade 'main.' al endpoint 'index' -->
+        <a href="{{ url_for('main.index') }}">
+            <img src="{{ url_for('static', filename='img/logo_kinessia.png') }}" alt="Kinessia Trip Hub Logo">
+        </a>
+    </div>
+    <ul class="nav-links">
+        <!-- Se añade 'main.' a todos los enlaces -->
+        <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('main.desgloses') }}">Desgloses</a></li>
+        <li><a href="{{ url_for('main.papeletas') }}">Papeletas</a></li>
+        
+        <!-- Enlaces solo para administradores -->
+        {% if current_user.is_authenticated and current_user.rol_relacion.nombre == 'administrador' %}
+            <li><a href="{{ url_for('main.empresas') }}">Empresas</a></li>
+            <!-- Se apunta a 'auth.register' para el registro de usuarios -->
+            <li><a href="{{ url_for('auth.register') }}">Alta Usuarios</a></li>
+        {% endif %}
+    </ul>
+    <div class="nav-user">
+        {% if current_user.is_authenticated %}
+            <span>Hola, {{ current_user.nombre }}</span>
+            <!-- Se apunta a 'auth.logout' para cerrar sesión -->
+            <a href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>
+        {% endif %}
+    </div>
+</nav>
+
 </body>
 </html>

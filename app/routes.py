@@ -1,61 +1,46 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
-# Importa todos los modelos que necesitarás
-from .models import db, Usuario, Rol, Papeleta, Desglose, Empresa, CargoServicio, Descuento, TarifaFija
+from .models import db, Usuario, Rol, Papeleta, Desglose, Empresa
 
+# --- LÍNEA CLAVE ---
+# Aquí definimos el Blueprint 'main' que tu archivo __init__.py está buscando.
 main = Blueprint('main', __name__)
+
+
+# --- RUTAS PRINCIPALES DE LA APLICACIÓN ---
 
 @main.route('/')
 @login_required
 def index():
-    # Redirige a la página principal después del login
+    # La página de inicio redirige al dashboard.
     return redirect(url_for('main.dashboard'))
 
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    # Pasa el objeto del usuario actual a la plantilla del dashboard
+    # Muestra el dashboard principal.
     return render_template('dashboard.html', usuario=current_user)
 
-# --- RUTA TEMPORAL PARA CREAR EL PRIMER USUARIO ---
-# ¡RECUERDA BORRAR ESTA RUTA DESPUÉS DE USARLA!
-@main.route('/inicializar-admin-secreto')
-def inicializar_admin():
-    try:
-        # 1. Busca el rol 'administrador' en la base de datos
-        rol_admin = Rol.query.filter_by(nombre='administrador').first()
-        if not rol_admin:
-            return "Error: El rol 'administrador' no existe en la tabla de roles."
+@main.route('/desgloses')
+@login_required
+def desgloses():
+    # Muestra la página para gestionar desgloses.
+    return render_template('desglose.html')
 
-        # 2. Verifica si el usuario administrador ya existe
-        if Usuario.query.filter_by(correo='admin@tuagencia.com').first():
-            return "El usuario administrador ya existe."
+@main.route('/papeletas')
+@login_required
+def papeletas():
+    # Muestra la página para gestionar papeletas.
+    return render_template('papeletas.html')
 
-        # --- LÍNEAS CORREGIDAS ---
-        # 3. Crea el nuevo usuario, proporcionando valores para AMBAS columnas de rol
-        admin_user = Usuario(
-            nombre='Admin Principal',
-            correo='admin@tuagencia.com',
-            rol_id=rol_admin.id,      # El ID para la clave foránea
-            rol=rol_admin.nombre    # El texto para la columna 'rol'
-        )
-        admin_user.set_password('admin12345')
-        
-        db.session.add(admin_user)
-        db.session.commit()
-        
-        flash('¡Usuario administrador creado con éxito!', 'success')
-        return redirect(url_for('auth.login'))
-
-    except Exception as e:
-        db.session.rollback() # Revierte los cambios si algo sale mal
-        return f"Ocurrió un error al crear el usuario: {str(e)}"
-
-# --- AQUÍ PUEDES AÑADIR LAS RUTAS PARA PAPELETAS, DESGLOSES, ETC. ---
-# Ejemplo:
-# @main.route('/papeletas')
-# @login_required
-# def papeletas():
-#     # Lógica para mostrar las papeletas
-#     return render_template('papeletas.html')
+@main.route('/empresas')
+@login_required
+def empresas():
+    # Ruta para administrar empresas (solo para administradores).
+    if current_user.rol_relacion.nombre != 'administrador':
+        flash('Acceso no autorizado.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Asegúrate de que tu plantilla se llame 'empresas.html' o 'registroEmpresas.html'
+    return render_template('empresas.html')
 

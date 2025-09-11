@@ -1,50 +1,100 @@
 /* CSS HEX */
-:root{
+:root {
     --white: #ffffffff;
     --battleship-gray: #8c9b93ff;
-    --off-red-rgb: #fc0f0fff;
-    --chili-red: #ed2f23ff;
+    --off-red-rgb: #D52027;
+    --chili-red: #D52027;
     --black: #000000ff;
     --raisin-black: #282424ff;
     --font-size: 1rem; /* Base font size */
 }
-*{
-    margin:0;
+
+/* Reset global y fuente por defecto */
+* {
+    margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: "Noto Sans Display", sans-serif;
 }
-html{
-    height: 100vh;
+
+html, body {
+    height: 100%;
 }
 
-.header{
-    height: 4rem;
-    width: 100%;
+/* --- ESTILOS DEL HEADER/MENÚ DE NAVEGACIÓN --- */
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--chili-red); /* Usamos tu variable de color */
+    padding: 0.75rem 2rem;
+    color: var(--white);
+    height: 4rem; /* Tomado de tu clase .header original */
+}
+
+.nav-logo a {
+    color: var(--white);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.nav-links a {
+    color: var(--white);
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.nav-links a:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-user a {
+    background-color: rgba(0,0,0,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: var(--white);
+    text-decoration: none;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.nav-user a:hover {
+    background-color: rgba(0,0,0,0.4);
+}
+
+.logokinessia {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--chili-red);
-    
+    margin: 4rem 2rem; 
+    padding: 1rem;
 }
-h1{
-    color: white;
-    font-size: 2rem;
+.logokinessia img {
+    max-width: 100%; 
+    width: 3.5rem;    
+    height: auto;    
 }
-.logokinessia{
-    height: 400px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 2rem;
-}
-#logo{
-    height: 300px;
-    width: 600px;
-    display: flex;
-    justify-content: center;
-    align-items: center
-}
+
 .button-start .start{
     background: var(--chili-red);
     color: white;
@@ -62,16 +112,14 @@ h1{
 
 .footer{
     display: flex;
-	position: fixed;
-	bottom: 0;
-	width: 100%;
-	height: 2rem;
-	justify-content: center;
-	align-items: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 2rem;
+    justify-content: center;
+    align-items: center;
     background-color: var(--chili-red);
     color: var(--white);
     font-size: .5rem;
-	font-weight: 400;
-	margin-top: 7rem;
+    font-weight: 400;
 }
-
