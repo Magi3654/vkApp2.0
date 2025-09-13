@@ -1,90 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdesglose.css') }}">
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" defer></script>
-    <title>Kinessia Trip Hub</title>
-</head>
-<body>
-    <header>
-        <div id="header-container"></div>
-        <div class="title-page"> 
-            <h2>Desgloses</h2>
-        </div>
-    </header>
-    <main>
-        <!-- Hemos simplificado los múltiples forms en uno solo para crear -->
-        <div class="desglose-form">
-            <!-- 
-              ACCIÓN CORREGIDA: Apunta a la función 'nuevo_desglose' del blueprint 'main'
-            -->
-            <form action="{{ url_for('main.nuevo_desglose') }}" method="post" class="desglose">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h2>Registrar Nuevo Desglose</h2>
+        <p>Completa la información para generar un nuevo registro.</p>
+    </div>
+    
+    <!-- El action ahora apunta a la ruta POST -->
+    <form action="{{ url_for('main.nuevo_desglose_post') }}" method="POST" class="crud-form">
+        <div class="form-grid">
+            <!-- Columna Izquierda del Formulario -->
+            <div class="form-column">
                 <div class="form-group">
-                    <label for="empresa">Empresa:</label>
-                    <!-- 
-                      MENÚ DINÁMICO: Este select se llena con datos de la base de datos
-                    -->
-                    <select id="empresa" name="empresa" required class="empresa">
-                        <option value="">Selecciona una empresa</option>
-                        {% for emp in empresas %}
-                            <option value="{{ emp.id }}">{{ emp.nombre_empresa }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="folio">Folio:</label>
+                    <label for="folio">Folio</label>
                     <input type="number" id="folio" name="folio" required>
                 </div>
                 <div class="form-group">
-                    <label for="aerolinea">Aerolínea:</label>
-                    <select id="aerolinea" name="aerolinea" required>
-                        <option value="AEROMEXICO">AEROMEXICO</option>
-                        <option value="VOLARIS">VOLARIS</option>
-                        <option value="VIVA AEROBUS">VIVA AEROBUS</option>
+                    <label for="empresa_id">Empresa Cliente</label>
+                    <select id="empresa_id" name="empresa_id" required>
+                        <option value="" disabled selected>Selecciona una empresa...</option>
+                        {% for empresa in empresas %}
+                            <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="tarifaBase">Tarifa Base:</label>
-                    <input type="number" step="0.01" id="tarifaBase" name="tarifaBase" required>
+                    <label for="aerolinea_id">Aerolínea</label>
+                    <select id="aerolinea_id" name="aerolinea_id" required>
+                        <option value="" disabled selected>Selecciona una aerolínea...</option>
+                        {% for aerolinea in aerolineas %}
+                            <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="tarifa_base">Tarifa Base</label>
+                    <input type="number" step="0.01" id="tarifa_base" name="tarifa_base" required>
                 </div>
                 <div class="form-group">
-                    <label for="iva">IVA:</label>
+                    <label for="iva">IVA</label>
                     <input type="number" step="0.01" id="iva" name="iva" required>
                 </div>
                 <div class="form-group">
-                    <label for="tua">TUA:</label>
+                    <label for="tua">TUA</label>
                     <input type="number" step="0.01" id="tua" name="tua" required>
                 </div>
+            </div>
+            <!-- Columna Derecha del Formulario -->
+            <div class="form-column">
                 <div class="form-group">
-                    <label for="yr">YR:</label>
+                    <label for="clave_reserva">Clave de Reserva</label>
+                    <input type="text" id="clave_reserva" name="clave_reserva" required>
+                </div>
+                <div class="form-group">
+                    <label for="empresa_booking_id">Empresa Booking</label>
+                    <select id="empresa_booking_id" name="empresa_booking_id" required>
+                        <option value="" disabled selected>Selecciona...</option>
+                        {% for eb in empresas_booking %}
+                            <option value="{{ eb.id }}">{{ eb.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="yr">YR</label>
                     <input type="number" step="0.01" id="yr" name="yr" required>
                 </div>
                 <div class="form-group">
-                    <label for="otrosCargos">Otros Cargos:</label>
-                    <input type="number" step="0.01" id="otrosCargos" name="otrosCargos" required>
+                    <label for="otros_cargos">Otros Cargos</label>
+                    <input type="number" step="0.01" id="otros_cargos" name="otros_cargos" required>
+                </div>
+                 <div class="form-group">
+                    <label for="cargo_por_servicio">Cargo por Servicio</label>
+                    <input type="number" step="0.01" id="cargo_por_servicio" name="cargo_por_servicio" required>
                 </div>
                 <div class="form-group">
-                    <label for="cargoPorServicio">Cargo Por Servicio:</label>
-                    <input type="number" step="0.01" id="cargoPorServicio" name="cargoPorServicio" required>
-                </div>
-                <div class="form-group">
-                    <label for="total">Total:</label>
+                    <label for="total">Total</label>
                     <input type="number" step="0.01" id="total" name="total" required>
                 </div>
-                <button type="submit">Registrar Desglose</button>
-            </form>
-            
+            </div>
         </div>
-
-        <div class="back-button">
-            <a href="{{ url_for('dashboard') }}" class="button"> Regresar</a>
-        </div> 
-    </main>
-</body>
-</html>
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">Guardar Desglose</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 --
--- PostgreSQL database dump (Versión Simplificada)
+-- PostgreSQL database dump (Versión Final, Corregida e Idempotente)
 --
 
 SET statement_timeout = 0;
@@ -12,6 +12,19 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+-- Limpiamos las tablas existentes antes de crearlas para evitar errores.
+DROP TABLE IF EXISTS public.papeletas CASCADE;
+DROP TABLE IF EXISTS public.desgloses CASCADE;
+DROP TABLE IF EXISTS public.cargos_servicio CASCADE;
+DROP TABLE IF EXISTS public.descuentos CASCADE;
+DROP TABLE IF EXISTS public.tarifas_fijas CASCADE;
+DROP TABLE IF EXISTS public.usuarios CASCADE;
+DROP TABLE IF EXISTS public.empresas CASCADE;
+DROP TABLE IF EXISTS public.roles CASCADE;
+DROP TABLE IF EXISTS public.aerolineas CASCADE;
+DROP TABLE IF EXISTS public.empresas_booking CASCADE;
+
 
 SET default_tablespace = '';
 SET default_table_access_method = heap;
@@ -68,7 +81,7 @@ CREATE TABLE public.usuarios (
     CONSTRAINT usuarios_pkey PRIMARY KEY (id),
     CONSTRAINT usuarios_correo_key UNIQUE (correo),
     CONSTRAINT fk_rol FOREIGN KEY (rol_id) REFERENCES public.roles(id),
-    CONSTRAINT usuarios_rol_check CHECK ((rol = ANY (ARRAY['admin'::text, 'administrador'::text, 'generador'::text, 'consulta'::text])))
+    CONSTRAINT usuarios_rol_check CHECK ((rol = ANY (ARRAY['administrador'::text, 'agente'::text, 'contabilidad'::text])))
 );
 
 --
@@ -159,5 +172,10 @@ CREATE TABLE public.tarifas_fijas (
 -- Data for Name: roles; Type: TABLE DATA; Schema: public;
 --
 INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (1, 'administrador');
-INSERT INTO public.roles (id, nombre) OVERRiding SYSTEM VALUE VALUES (2, 'agente');
-INSERT INTO public.roles (id, nombre) OVERRiding SYSTEM VALUE VALUES (3, 'contabilidad');
+INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (2, 'agente');
+INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (3, 'contabilidad');
+
+--
+-- PostgreSQL database dump complete
+--
+

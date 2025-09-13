@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header">
+        <h2>Papeletas Registradas</h2>
+        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">Añadir Nueva Papeleta</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Fecha Venta</th>
+                <th>Facturar a</th>
+                <th>Total</th>
+                <th>Tarjeta</th>
+                <th>Creado por</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for papeleta in papeletas_registradas %}
+            <tr>
+                <td>{{ papeleta.folio }}</td>
+                <td>{{ papeleta.fecha_venta }}</td>
+                <td>{{ papeleta.facturar_a }}</td>
+                <td>${{ papeleta.total }}</td>
+                <td>**** {{ papeleta.tarjeta }}</td>
+                <td>{{ papeleta.usuario.nombre }}</td>
+                <td class="actions">
+                    <a href="#" class="btn-edit">Editar</a>
+                    <a href="#" class="btn-delete">Eliminar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="no-data">No hay papeletas registradas todavía.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

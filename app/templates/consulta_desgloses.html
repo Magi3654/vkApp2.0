@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdesglose.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- Tabla para mostrar los desgloses existentes -->
+<div class="table-container">
+    <div class="table-header">
+        <h2>Desgloses Registrados</h2>
+        <a href="{{ url_for('main.nuevo_desglose_form') }}" class="btn-new">Añadir Nuevo Desglose</a>
+    </div>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Empresa</th>
+                <th>Aerolínea</th>
+                <th>Total</th>
+                <th>Clave Reserva</th>
+                <th>Creado por</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for desglose in desgloses_registrados %}
+            <tr>
+                <td>{{ desglose.folio }}</td>
+                <td>{{ desglose.empresa.nombre_empresa }}</td>
+                <td>{{ desglose.aerolinea.nombre }}</td>
+                <td>${{ desglose.total }}</td>
+                <td>{{ desglose.clave_reserva }}</td>
+                <td>{{ desglose.usuario.nombre }}</td>
+                <td class="actions">
+                    <a href="#" class="btn-edit">Editar</a>
+                    <a href="#" class="btn-delete">Eliminar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="no-data">No hay desgloses registrados todavía.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

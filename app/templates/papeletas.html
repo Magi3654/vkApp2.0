@@ -1,70 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" ></script>
-    <title>Kinessia Trip Hub</title>
-</head>
-<body>
-    <header>
-        <div id="header-container"></div>
-    </header>
-    <div>
-        <form action="{{ url_for('main.nueva_papeleta') }}" method="post" class="papeleta-form">
-            <div class="form-group">
-                <label for="folio">Folio:</label>
-                <input type="text" id="folio" name="folio" required>
-            </div>
-            <div class="form-group">
-                <label for="tarjeta">Tarjeta:</label>
-                <input type="text" id="tarjeta" name="tarjeta" required>
-            </div>
-            <div class="form-group">
-                <label for="fechaVenta">Fecha de Venta:</label>
-                <input type="date" id="fechaVenta" name="fechaVenta" required>
-            </div>
-            <div class="form-group">
-                <label for="totalTicket">Total del Ticket:</label>
-                <input type="number" step="0.01" id="totalTicket" name="totalTicket" required>
-            </div>
-            <div class="form-group">
-                <label for="diezPorciento">10%:</label>
-                <input type="number" step="0.01" id="diezPorciento" name="diezPorciento" required>
-            </div>
-            <div class="form-group">
-                <label for="cargo">Cargo:</label>
-                <input type="number" step="0.01" id="cargo" name="cargo" required>
-            </div>
-            <div class="form-group">
-                <label for="total">Total:</label>
-                <input type="number" step="0.01" id="total" name="total" required>
-            </div>
-            <div class="form-group">
-                <label for="facturarA">Facturar a:</label>
-                <input type="text" id="facturarA" name="facturarA" required>
-            </div>
-            <div class="form-group">
-                <label for="solicito">Solicitó:</label>
-                <input type="text" id="solicito" name="solicito" required>
-            </div>
-            <div class="form-group">
-                <label for="claveSabre">Clave Sabre:</label>
-                <input type="text" id="claveSabre" name="claveSabre" required>
-            </div>
-            <div class="form-group">
-                <label for="formaPago">Forma de Pago Cliente:</label>
-                <input type="text" id="formaPago" name="formaPago" required>
-            </div>
-            <button type="submit">Registrar Papeleta</button>
-        </form>
-        <div class="back-button">
-            <a href="{{ url_for('dashboard') }}" class="button">Regresar</a>
-        </div>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h2>Registrar Nueva Papeleta</h2>
+        <p>Completa la información del cargo a tarjeta.</p>
     </div>
-</body>
-</html>
+    
+    <form action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
+        <div class="form-grid">
+            <!-- Columna Izquierda -->
+            <div class="form-column">
+                <div class="form-group">
+                    <label for="folio">Folio</label>
+                    <input type="text" id="folio" name="folio" required>
+                </div>
+                <div class="form-group">
+                    <label for="tarjeta">Terminación Tarjeta (4 dígitos)</label>
+                    <input type="text" id="tarjeta" name="tarjeta" required maxlength="4">
+                </div>
+                <div class="form-group">
+                    <label for="fecha_venta">Fecha de Venta</label>
+                    <input type="date" id="fecha_venta" name="fecha_venta" required>
+                </div>
+                <div class="form-group">
+                    <label for="total_ticket">Total del Ticket</label>
+                    <input type="number" step="0.01" id="total_ticket" name="total_ticket" required>
+                </div>
+                <div class="form-group">
+                    <label for="diez_porciento">10%</label>
+                    <input type="number" step="0.01" id="diez_porciento" name="diez_porciento" required>
+                </div>
+                 <div class="form-group">
+                    <label for="cargo">Cargo</label>
+                    <input type="number" step="0.01" id="cargo" name="cargo" required>
+                </div>
+            </div>
+            <!-- Columna Derecha -->
+            <div class="form-column">
+                <div class="form-group">
+                    <label for="total">Total</label>
+                    <input type="number" step="0.01" id="total" name="total" required>
+                </div>
+                 <div class="form-group">
+                    <label for="facturar_a">Facturar a</label>
+                    <input type="text" id="facturar_a" name="facturar_a" required>
+                </div>
+                <div class="form-group">
+                    <label for="solicito">Solicitó</label>
+                    <input type="text" id="solicito" name="solicito" required>
+                </div>
+                <div class="form-group">
+                    <label for="clave_sabre">Clave Sabre</label>
+                    <input type="text" id="clave_sabre" name="clave_sabre" required>
+                </div>
+                <div class="form-group">
+                    <label for="forma_pago">Forma de Pago</label>
+                    <input type="text" id="forma_pago" name="forma_pago" required>
+                </div>
+                <div class="form-group">
+                    <label for="empresa_id">Empresa</label>
+                    <select id="empresa_id" name="empresa_id" required>
+                        <option value="" disabled selected>Selecciona una empresa...</option>
+                        {% for empresa in empresas %}
+                            <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">Guardar Papeleta</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

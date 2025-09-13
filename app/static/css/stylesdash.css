@@ -1,29 +1,115 @@
-.dashboard{
-    margin: 8rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
+/* Estilos específicos para el Dashboard */
+
+:root {
+    /* Colores base para el dashboard (tomados de tu CSS) */
+    --bg-color: #f8f9fa; /* Un gris muy claro para el fondo */
+    --card-bg: #ffffff;
+    --text-color: #212529; /* Coincide con --raisin-black */
+    --subtle-text-color: #6c757d; /* Coincide con --battleship-gray */
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    /* Heredamos los colores de tu marca desde styles.css */
+    /* --chili-red, --white, etc. */
 }
 
-.dashboard, .back-button {
-    margin: 200px;
-    text-align: center;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-evenly;
+.dashboard {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
 }
-.button {
-    display: inline-block;
-    margin: 5px;
-    padding: 20px 40px;
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.dashboard-header h1 {
+    color: var(--raisin-black);
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header p {
+    color: var(--battleship-gray);
+    font-size: 1.1rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--raisin-black);
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-title.admin-section {
+    color: var(--chili-red);
+    border-bottom-color: var(--chili-red);
+}
+
+/* Grid para las tarjetas */
+.actions-grid, .management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
     text-decoration: none;
-    color: white;
+    color: var(--text-color);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    color: var(--raisin-black);
+}
+
+.card p {
+    color: var(--subtle-text-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Estilos especiales para las tarjetas de "Nuevo Item" */
+.new-item-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    border-left: 5px solid var(--chili-red);
+}
+
+.new-item-card .card-icon {
     background-color: var(--chili-red);
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
+    color: var(--white);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
 }
-.button:hover {
-    background-color: var(--battleship-gray);
+
+.new-item-card .card-body {
+    flex-grow: 1;
 }
+
+.new-item-card:hover .card-icon {
+    transform: scale(1.1);
+}
+

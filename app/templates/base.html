@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 1. Enlace a la hoja de estilos principal (para toda la app) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- 2. Bloque para que cada página pueda añadir sus propios estilos (como el dashboard) -->
+    {% block page_styles %}{% endblock %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    
+    <title>{% block title %}Kinessia Trip Hub{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <!-- Incluimos el menú de navegación desde otro archivo -->
+        {% include 'header.html' %}
+    </header>
+
+    <main class="container">
+        <!-- Contenedor para mostrar mensajes de éxito o error -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Aquí es donde se inyectará el contenido de cada página (dashboard, desgloses, etc.) -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        © 2025 Kinessia Trip. Todos los derechos reservados.
+    </footer>
+
+</body>
+</html>
+
