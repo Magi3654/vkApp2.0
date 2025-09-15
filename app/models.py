@@ -44,17 +44,20 @@ class Empresa(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     nombre_empresa = db.Column(db.String, nullable=False)
 
-    papeletas = db.relationship('Papeleta', back_populates='empresa')
-    desgloses = db.relationship('Desglose', back_populates='empresa')
-    # Nombres de relación corregidos para apuntar a las clases en singular
-    cargos_servicio = db.relationship('CargoServicio', back_populates='empresa')
-    descuentos = db.relationship('Descuento', back_populates='empresa')
-    tarifas_fijas = db.relationship('TarifaFija', back_populates='empresa')
+    # --- RELACIONES ACTUALIZADAS ---
+    # Añadimos 'cascade' para que al borrar una empresa, se borren
+    # automáticamente todos sus registros asociados.
+    papeletas = db.relationship('Papeleta', back_populates='empresa', cascade="all, delete-orphan")
+    desgloses = db.relationship('Desglose', back_populates='empresa', cascade="all, delete-orphan")
+    cargos_servicio = db.relationship('CargoServicio', back_populates='empresa', cascade="all, delete-orphan")
+    descuentos = db.relationship('Descuento', back_populates='empresa', cascade="all, delete-orphan")
+    tarifas_fijas = db.relationship('TarifaFija', back_populates='empresa', cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Empresa {self.nombre_empresa}>'
 
-# Nombre de clase corregido a singular: CargoServicio
+# (El resto de las clases no necesitan cambios)
+# ... (Pega aquí el resto de tus clases: CargoServicio, Descuento, etc.)
 class CargoServicio(db.Model):
     __tablename__ = 'cargos_servicio'
     id = db.Column(db.BigInteger, primary_key=True)
@@ -71,14 +74,12 @@ class Descuento(db.Model):
     valor = db.Column(db.Numeric(10, 2), nullable=False)
     empresa = db.relationship('Empresa', back_populates='descuentos')
 
-# Nombre de clase corregido a singular: TarifaFija
 class TarifaFija(db.Model):
     __tablename__ = 'tarifas_fijas'
     id = db.Column(db.BigInteger, primary_key=True)
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'), nullable=False)
     monto = db.Column(db.Numeric(10, 2), nullable=False)
     empresa = db.relationship('Empresa', back_populates='tarifas_fijas')
-
 # --- Modelos Operativos ---
 
 class Papeleta(db.Model):

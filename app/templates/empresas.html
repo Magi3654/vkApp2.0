@@ -1,66 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+
+{% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesempresas.css') }}">
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" ></script>
-    <title>Kinessia Trip Hub</title>
-</head>
-<body>
-    <header>
-        <div id="header-container"></div>
-        <div class="title-page"> 
-            <h2>Registro de Usuarios</h2>
+{% endblock %}
+
+{% block content %}
+<div class="crud-container">
+    <!-- Columna del Formulario para CREAR una nueva empresa -->
+    <div class="form-section">
+        <div class="form-header">
+            <h2>Registrar Nueva Empresa</h2>
+            <p>Añade una nueva empresa y sus reglas de negocio.</p>
         </div>
-    </header>
-   
+        
+        <form action="{{ url_for('main.nueva_empresa') }}" method="POST" class="crud-form">
+            <div class="form-group">
+                <label for="nombre_empresa">Nombre de la Empresa</label>
+                <input type="text" id="nombre_empresa" name="nombre_empresa" required>
+            </div>
 
-    <main>
-        <form action="{{ url_for('main.nueva_empresa') }}" method="post">
-            <label for="nombreEmpresa">Nombre de la Empresa:</label>
-            <input type="text" id="nombreEmpresa" name="nombreEmpresa" required>
-        
-            <div class="checkbox-group">
-                <label for="cargoServicioVisible">Cargo por Servicio Visible:</label>
-                <input type="checkbox" id="cargoServicioVisible" name="cargoServicioVisible">
-        
-                <label for="cargoServicioMixto">Cargo por Servicio Mixto:</label>
-                <input type="checkbox" id="cargoServicioMixto" name="cargoServicioMixto">
-        
-                <label for="cargoServicioFacturado">Cargo por Servicio Facturado:</label>
-                <input type="number" step="0.01" id="cargoServicioFacturado" name="cargoServicioFacturado">
-        
-                <label for="cargoServicioOculto">Cargo por Servicio Oculto:</label>
-                <input type="number" step="0.01" id="cargoServicioOculto" name="cargoServicioOculto">
+            <fieldset>
+                <legend>Cargos por Servicio</legend>
+                 <div class="form-group">
+                    <label for="cargoServicioFacturado">Monto del Cargo (Visible/Facturado)</label>
+                    <input type="number" step="0.01" id="cargoServicioFacturado" name="cargoServicioFacturado" placeholder="Ej: 58.00">
+                </div>
+                 <div class="form-group">
+                    <label for="cargoServicioOculto">Monto del Cargo (Oculto/Agregado)</label>
+                    <input type="number" step="0.01" id="cargoServicioOculto" name="cargoServicioOculto" placeholder="Ej: 348.00">
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Descuentos</legend>
+                <div class="form-group">
+                    <label for="montoDescuento">Monto Fijo de Descuento</label>
+                    <input type="number" step="0.01" id="montoDescuento" name="montoDescuento" placeholder="Ej: 50.00">
+                </div>
+            </fieldset>
+            
+            <fieldset>
+                <legend>Tarifas</legend>
+                 <div class="form-group">
+                    <label for="tarifaFija">Tarifa Fija</label>
+                    <input type="number" step="0.01" id="tarifaFija" name="tarifaFija" placeholder="Ej: 1200.00">
+                </div>
+            </fieldset>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">Guardar Empresa</button>
             </div>
-        
-            <div class="checkbox-group">
-                <label for="descuentoMonto">Descuento por Monto:</label>
-                <input type="checkbox" id="descuentoMonto" name="descuentoMonto">
-        
-                <label for="descuentoPorcentaje">Descuento por Porcentaje:</label>
-                <input type="checkbox" id="descuentoPorcentaje" name="descuentoPorcentaje">
-        
-                <label for="montoDescuento">Monto de Descuento:</label>
-                <input type="number" step="0.01" id="montoDescuento" name="montoDescuento">
-        
-                <label for="porcentajeDescuento">Porcentaje de Descuento:</label>
-                <input type="number" step="0.01" id="porcentajeDescuento" name="porcentajeDescuento">
-            </div>
-        
-            <label for="tarifaFija">Tarifa Fija:</label>
-            <input type="number" step="0.01" id="tarifaFija" name="tarifaFija">
-        
-            <button type="submit">Registrar Empresa</button>
         </form>
-    </main>
-    <div class="back-button">
-        <a href="{{ url_for('dashboard') }}" class="button"> Regresar</a>
-    </div> 
+    </div>
 
-</body>
-</html>
+    <!-- Columna de la Tabla para LEER las empresas existentes -->
+    <div class="table-section">
+        <div class="table-header">
+            <h2>Empresas Registradas</h2>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nombre de la Empresa</th>
+                    <th class="currency">Cargo Facturado</th>
+                    <th class="currency">Cargo Oculto</th>
+                    <th>Descuento</th>
+                    <th class="currency">Tarifa Fija</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for empresa in empresas_registradas %}
+                <tr>
+                    <td>{{ empresa.nombre_empresa }}</td>
+                    
+                    <!-- Lógica para mostrar el cargo visible/facturado -->
+                    <td class="currency">
+                        {% set cargo_visible = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'visible')|first %}
+                        ${{ '%.2f'|format(cargo_visible.monto) if cargo_visible else '---' }}
+                    </td>
+
+                    <!-- Lógica para mostrar el cargo oculto/agregado -->
+                    <td class="currency">
+                        {% set cargo_oculto = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'oculto')|first %}
+                        ${{ '%.2f'|format(cargo_oculto.monto) if cargo_oculto else '---' }}
+                    </td>
+
+                    <!-- Nueva celda para Descuentos -->
+                    <td>
+                        {% set descuento = empresa.descuentos|first %}
+                        {% if descuento %}
+                            ${{ '%.2f'|format(descuento.valor) }} ({{ descuento.tipo }})
+                        {% else %}
+                            ---
+                        {% endif %}
+                    </td>
+
+                    <!-- Nueva celda para Tarifas Fijas -->
+                    <td class="currency">
+                        {% set tarifa = empresa.tarifas_fijas|first %}
+                        ${{ '%.2f'|format(tarifa.monto) if tarifa else '---' }}
+                    </td>
+                    
+                    <td class="actions">
+                        <a href="{{ url_for('main.editar_empresa_form', id=empresa.id) }}" class="btn-edit">Editar</a>
+                        <a href="{{ url_for('main.eliminar_empresa', id=empresa.id) }}" class="btn-delete" onclick="return confirm('¿Estás seguro?');">Eliminar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="no-data">No hay empresas registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
