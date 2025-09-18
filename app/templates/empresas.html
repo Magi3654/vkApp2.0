@@ -61,7 +61,7 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Nombre de la Empresa</th>
+                    <th>Nombre</th>
                     <th class="currency">Cargo Facturado</th>
                     <th class="currency">Cargo Oculto</th>
                     <th>Descuento</th>
@@ -74,36 +74,30 @@
                 <tr>
                     <td>{{ empresa.nombre_empresa }}</td>
                     
-                    <!-- Lógica para mostrar el cargo visible/facturado -->
+                    <!-- Lógica Robusta para Cargos -->
                     <td class="currency">
                         {% set cargo_visible = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'visible')|first %}
-                        ${{ '%.2f'|format(cargo_visible.monto) if cargo_visible else '---' }}
+                        ${{ '%.2f'|format(cargo_visible.monto) if cargo_visible and cargo_visible.monto is not none else '---' }}
                     </td>
-
-                    <!-- Lógica para mostrar el cargo oculto/agregado -->
                     <td class="currency">
                         {% set cargo_oculto = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'oculto')|first %}
-                        ${{ '%.2f'|format(cargo_oculto.monto) if cargo_oculto else '---' }}
+                        ${{ '%.2f'|format(cargo_oculto.monto) if cargo_oculto and cargo_oculto.monto is not none else '---' }}
                     </td>
 
-                    <!-- Nueva celda para Descuentos -->
-                    <td>
+                    <!-- Lógica Robusta para Descuentos -->
+                    <td class="currency">
                         {% set descuento = empresa.descuentos|first %}
-                        {% if descuento %}
-                            ${{ '%.2f'|format(descuento.valor) }} ({{ descuento.tipo }})
-                        {% else %}
-                            ---
-                        {% endif %}
+                        ${{ '%.2f'|format(descuento.valor) if descuento and descuento.valor is not none else '---' }}
                     </td>
 
-                    <!-- Nueva celda para Tarifas Fijas -->
+                    <!-- Lógica Robusta para Tarifas Fijas -->
                     <td class="currency">
                         {% set tarifa = empresa.tarifas_fijas|first %}
-                        ${{ '%.2f'|format(tarifa.monto) if tarifa else '---' }}
+                        ${{ '%.2f'|format(tarifa.monto) if tarifa and tarifa.monto is not none else '---' }}
                     </td>
                     
                     <td class="actions">
-                        <a href="{{ url_for('main.editar_empresa_form', id=empresa.id) }}" class="btn-edit">Editar</a>
+                        <a href="{{ url_for('main.editar_empresa', id=empresa.id) }}" class="btn-edit">Editar</a>
                         <a href="{{ url_for('main.eliminar_empresa', id=empresa.id) }}" class="btn-delete" onclick="return confirm('¿Estás seguro?');">Eliminar</a>
                     </td>
                 </tr>
