@@ -103,6 +103,18 @@
 
 .btn-edit { background-color: #007bff; }
 .btn-delete { background-color: #dc3545; }
+.btn-cancel {
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    display: inline-block;
+    margin-left: 1rem;
+}
+.btn-cancel:hover {
+    background-color: #5a6268;
+}
 
 .no-data {
     text-align: center;

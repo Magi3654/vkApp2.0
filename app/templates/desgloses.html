@@ -18,7 +18,8 @@
             <div class="form-column">
                 <div class="form-group">
                     <label for="folio">Folio</label>
-                    <input type="number" id="folio" name="folio" required>
+                    <input type="number" id="folio" name="folio" readonly required>
+                    <small>Folio generado automáticamente</small>
                 </div>
                 <div class="form-group">
                     <label for="empresa_id">Empresa Cliente</label>
@@ -89,4 +90,37 @@
         </div>
     </form>
 </div>
+
+<script>
+// Cargar el siguiente folio al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('{{ url_for("main.siguiente_folio_desglose") }}')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('folio').value = data.folio;
+        })
+        .catch(error => console.error('Error cargando folio:', error));
+
+    // Auto-cargar cargos al seleccionar empresa
+    const empresaSelect = document.getElementById('empresa_id');
+    const cargoServicioInput = document.getElementById('cargo_por_servicio');
+
+    empresaSelect.addEventListener('change', function() {
+        const empresaId = this.value;
+        if (empresaId) {
+            fetch(`{{ url_for("main.cargos_empresa", empresa_id=0) }}`.replace('0', empresaId))
+                .then(response => response.json())
+                .then(data => {
+                    // Usar cargo visible por defecto
+                    if (data.cargo_visible !== null) {
+                        cargoServicioInput.value = data.cargo_visible.toFixed(2);
+                    } else if (data.cargo_oculto !== null) {
+                        cargoServicioInput.value = data.cargo_oculto.toFixed(2);
+                    }
+                })
+                .catch(error => console.error('Error cargando cargos:', error));
+        }
+    });
+});
+</script>
 {% endblock %}

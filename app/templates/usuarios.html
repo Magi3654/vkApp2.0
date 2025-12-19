@@ -1,26 +1,19 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+
+{# Bloque para cargar los estilos específicos de esta página #}
+{% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesusers.css') }}">
-    <script type="module" src="{{ url_for('static', filename='js/app.js') }}" ></script>
-    <title>Kinessia Trip Hub</title>
-</head>
-<body>
-    <header>
-        <div id="header-container"></div>
-        <div class="title-page"> 
-            <h2>Registro de Usuarios</h2>
-        </div>
-    </header>
+{% endblock %}
+
+{# Bloque de contenido principal que se inserta en base.html #}
+{% block content %}
+    <div class="title-page"> 
+        <h2>Registro de Usuarios</h2>
+    </div>
 
     <main>
         <div class="registro">
-            <form method="POST" action="{{ url_for('registro') }}">
+            <form method="POST" action="{{ url_for('auth.register') }}">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" required>
 
@@ -31,7 +24,7 @@
                 <input type="password" id="contrasena" name="contrasena" required>
 
                 <label for="rol">Rol:</label>
-                <select id="rol" name="rol" required>
+                <select id="rol" name="rol_id" required> {# <-- CAMBIO IMPORTANTE: el name debe ser 'rol_id' #}
                     {% for rol in roles %}
                         <option value="{{ rol.id }}">{{ rol.nombre }}</option>
                     {% endfor %}
@@ -40,9 +33,7 @@
             </form>
         </div>
         <div class="back-button">
-            <a href="{{ url_for('dashboard') }}" class="button"> Regresar</a>
+            <a href="{{ url_for('main.dashboard') }}">Volver al Dashboard</a>
         </div> 
     </main>
-
-</body>
-</html>
+{% endblock %}

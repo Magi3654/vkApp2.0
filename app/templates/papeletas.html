@@ -17,12 +17,13 @@
                 <!-- Columna Izquierda -->
                 <div class="form-column">
                     <div class="form-group">
-                        <label for="folio">Folio</label>
-                        <input type="text" id="folio" name="folio" required>
-                    </div>
-                    <div class="form-group">
                         <label for="tarjeta">Terminación Tarjeta (4 dígitos)</label>
                         <input type="text" id="tarjeta" name="tarjeta" required maxlength="4" pattern="\d{4}" title="Introduce los 4 dígitos de la tarjeta.">
+                    </div>
+                    <div class="form-group">
+                        <label for="folio">Folio</label>
+                        <input type="text" id="folio" name="folio" readonly required>
+                        <small>Se genera automáticamente por tarjeta</small>
                     </div>
                     <div class="form-group">
                         <label for="fecha_venta">Fecha de Venta</label>
@@ -49,7 +50,21 @@
                     </div>
                      <div class="form-group">
                         <label for="facturar_a">Facturar a</label>
-                        <input type="text" id="facturar_a" name="facturar_a" required>
+                        <select id="facturar_a" name="facturar_a" required>
+                            <option value="" disabled selected>Selecciona una empresa...</option>
+                            {% for empresa in empresas %}
+                                <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="aerolinea_id">Aerolínea</label>
+                        <select id="aerolinea_id" name="aerolinea_id">
+                            <option value="" disabled selected>Selecciona una aerolínea...</option>
+                            {% for aerolinea in aerolineas %}
+                                <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="solicito">Solicitó</label>
@@ -63,15 +78,6 @@
                         <label for="forma_pago">Forma de Pago</label>
                         <input type="text" id="forma_pago" name="forma_pago" required>
                     </div>
-                    <div class="form-group">
-                        <label for="empresa_id">Empresa</label>
-                        <select id="empresa_id" name="empresa_id" >
-                            <option value="" disabled selected>Selecciona una empresa...</option>
-                            {% for empresa in empresas %}
-                                <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
             </div>
             <div class="form-actions">
@@ -81,5 +87,31 @@
         </form>
     </div>
 </div>
+
+<script>
+// Generar folio automáticamente según la tarjeta
+document.addEventListener('DOMContentLoaded', function() {
+    const tarjetaInput = document.getElementById('tarjeta');
+    const folioInput = document.getElementById('folio');
+
+    tarjetaInput.addEventListener('input', function() {
+        const tarjeta = this.value;
+
+        // Solo buscar cuando tenga 4 dígitos
+        if (tarjeta.length === 4 && /^\d{4}$/.test(tarjeta)) {
+            fetch(`{{ url_for("main.siguiente_folio_papeleta") }}?tarjeta=${tarjeta}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.folio) {
+                        folioInput.value = data.folio;
+                    }
+                })
+                .catch(error => console.error('Error cargando folio:', error));
+        } else {
+            folioInput.value = '';
+        }
+    });
+});
+</script>
 {% endblock %}
 

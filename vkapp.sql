@@ -1,5 +1,7 @@
 --
--- PostgreSQL database dump (Versión Final, Corregida e Idempotente)
+-- PostgreSQL database dump (Versión actualizada - Compatible con Supabase)
+-- Base de datos: vkapp_db
+-- Fecha: 2025-11-18
 --
 
 SET statement_timeout = 0;
@@ -81,7 +83,7 @@ CREATE TABLE public.usuarios (
     CONSTRAINT usuarios_pkey PRIMARY KEY (id),
     CONSTRAINT usuarios_correo_key UNIQUE (correo),
     CONSTRAINT fk_rol FOREIGN KEY (rol_id) REFERENCES public.roles(id),
-    CONSTRAINT usuarios_rol_check CHECK ((rol = ANY (ARRAY['administrador'::text, 'agente'::text, 'contabilidad'::text])))
+    CONSTRAINT usuarios_rol_check CHECK (rol IN ('administrador', 'agente', 'contabilidad'))
 );
 
 --
@@ -103,7 +105,7 @@ CREATE TABLE public.desgloses (
     clave_reserva text NOT NULL,
     CONSTRAINT desgloses_pkey PRIMARY KEY (folio),
     CONSTRAINT fk_aerolinea FOREIGN KEY (aerolinea_id) REFERENCES public.aerolineas(id),
-    CONSTRAINT fk_empresa FOREIGN KEY (empresa_id) REFERENCES public.empresas(id),
+    CONSTRAINT fk_empresa FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE CASCADE,
     CONSTRAINT fk_empresa_booking FOREIGN KEY (empresa_booking_id) REFERENCES public.empresas_booking(id),
     CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)
 );
@@ -127,7 +129,7 @@ CREATE TABLE public.papeletas (
     forma_pago text NOT NULL,
     empresa_id bigint,
     CONSTRAINT papeletas_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_empresa_papeletas FOREIGN KEY (empresa_id) REFERENCES public.empresas(id),
+    CONSTRAINT fk_empresa_papeletas FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE CASCADE,
     CONSTRAINT fk_usuario_papeletas FOREIGN KEY (usuario_id) REFERENCES public.usuarios(id)
 );
 
@@ -140,8 +142,8 @@ CREATE TABLE public.cargos_servicio (
     tipo text NOT NULL,
     monto numeric(10,2) NOT NULL,
     CONSTRAINT cargos_servicio_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_empresa_cargos_servicio FOREIGN KEY (empresa_id) REFERENCES public.empresas(id),
-    CONSTRAINT cargos_servicio_tipo_check CHECK ((tipo = ANY (ARRAY['visible'::text, 'oculto'::text, 'mixto'::text])))
+    CONSTRAINT fk_empresa_cargos_servicio FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE CASCADE,
+    CONSTRAINT cargos_servicio_tipo_check CHECK (tipo IN ('visible', 'oculto', 'mixto'))
 );
 
 --
@@ -153,8 +155,8 @@ CREATE TABLE public.descuentos (
     tipo text NOT NULL,
     valor numeric(10,2) NOT NULL,
     CONSTRAINT descuentos_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_empresa_descuentos FOREIGN KEY (empresa_id) REFERENCES public.empresas(id),
-    CONSTRAINT descuentos_tipo_check CHECK ((tipo = ANY (ARRAY['monto'::text, 'porcentaje'::text])))
+    CONSTRAINT fk_empresa_descuentos FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE CASCADE,
+    CONSTRAINT descuentos_tipo_check CHECK (tipo IN ('monto', 'porcentaje'))
 );
 
 --
@@ -165,17 +167,16 @@ CREATE TABLE public.tarifas_fijas (
     empresa_id bigint NOT NULL,
     monto numeric(10,2) NOT NULL,
     CONSTRAINT tarifas_fijas_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_empresa_tarifas_fijas FOREIGN KEY (empresa_id) REFERENCES public.empresas(id)
+    CONSTRAINT fk_empresa_tarifas_fijas FOREIGN KEY (empresa_id) REFERENCES public.empresas(id) ON DELETE CASCADE
 );
 
 --
 -- Data for Name: roles; Type: TABLE DATA; Schema: public;
 --
-INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (1, 'administrador');
-INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (2, 'agente');
-INSERT INTO public.roles (id, nombre) OVERRIDING SYSTEM VALUE VALUES (3, 'contabilidad');
+INSERT INTO public.roles (nombre) VALUES ('administrador') ON CONFLICT (nombre) DO NOTHING;
+INSERT INTO public.roles (nombre) VALUES ('agente') ON CONFLICT (nombre) DO NOTHING;
+INSERT INTO public.roles (nombre) VALUES ('contabilidad') ON CONFLICT (nombre) DO NOTHING;
 
 --
 -- PostgreSQL database dump complete
 --
-

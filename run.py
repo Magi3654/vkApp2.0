@@ -1,6 +1,13 @@
 import sys
 import os
+
+# Configurar path del proyecto
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# Cargar variables de entorno desde app/.env
+from dotenv import load_dotenv
+env_path = os.path.join(os.path.dirname(__file__), 'app', '.env')
+load_dotenv(env_path)
 
 from app import create_app
 

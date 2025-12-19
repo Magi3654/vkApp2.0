@@ -34,8 +34,10 @@
                 <td>{{ desglose.clave_reserva }}</td>
                 <td>{{ desglose.usuario.nombre }}</td>
                 <td class="actions">
-                    <a href="#" class="btn-edit">Editar</a>
-                    <a href="#" class="btn-delete">Eliminar</a>
+                    <a href="{{ url_for('main.editar_desglose', folio=desglose.folio) }}" class="btn-edit">Editar</a>
+                    <a href="{{ url_for('main.eliminar_desglose', folio=desglose.folio) }}"
+                       class="btn-delete"
+                       onclick="return confirm('¿Estás seguro de eliminar el desglose con folio {{ desglose.folio }}?');">Eliminar</a>
                 </td>
             </tr>
             {% else %}

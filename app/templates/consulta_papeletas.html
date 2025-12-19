@@ -16,6 +16,7 @@
                 <th>Folio</th>
                 <th>Fecha Venta</th>
                 <th>Facturar a</th>
+                <th>Aerolínea</th>
                 <th>Total</th>
                 <th>Tarjeta</th>
                 <th>Creado por</th>
@@ -28,6 +29,7 @@
                 <td>{{ papeleta.folio }}</td>
                 <td>{{ papeleta.fecha_venta }}</td>
                 <td>{{ papeleta.facturar_a }}</td>
+                <td>{{ papeleta.aerolinea.nombre if papeleta.aerolinea else '---' }}</td>
                 <td>${{ papeleta.total }}</td>
                 <td>**** {{ papeleta.tarjeta }}</td>
                 <td>{{ papeleta.usuario.nombre }}</td>
@@ -38,7 +40,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="no-data">No hay papeletas registradas todavía.</td>
+                <td colspan="8" class="no-data">No hay papeletas registradas todavía.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from .models import db, Usuario, Rol, Papeleta, Desglose, Empresa, Aerolinea, EmpresaBooking, CargoServicio, Descuento, TarifaFija
 from datetime import datetime
+from sqlalchemy import func
 
 main = Blueprint('main', __name__)
 
@@ -16,6 +17,63 @@ def index():
 @login_required
 def dashboard():
     return render_template('dashboard.html', usuario=current_user)
+
+# --- API ENDPOINTS ---
+
+@main.route('/api/siguiente-folio-desglose')
+@login_required
+def siguiente_folio_desglose():
+    """Retorna el siguiente folio disponible para desgloses."""
+    ultimo_folio = db.session.query(func.max(Desglose.folio)).scalar()
+    siguiente = (ultimo_folio or 0) + 1
+    return jsonify({'folio': siguiente})
+
+@main.route('/api/siguiente-folio-papeleta')
+@login_required
+def siguiente_folio_papeleta():
+    """Retorna el siguiente folio disponible para una tarjeta específica."""
+    tarjeta = request.args.get('tarjeta', '')
+
+    if not tarjeta or len(tarjeta) != 4:
+        return jsonify({'error': 'Tarjeta inválida'}), 400
+
+    # Buscar el último folio para esta tarjeta
+    ultima_papeleta = Papeleta.query.filter_by(tarjeta=tarjeta).order_by(Papeleta.id.desc()).first()
+
+    if ultima_papeleta:
+        # Extraer el número del folio (formato: XXXX-001)
+        try:
+            ultimo_numero = int(ultima_papeleta.folio.split('-')[1])
+            siguiente = ultimo_numero + 1
+        except:
+            siguiente = 1
+    else:
+        siguiente = 1
+
+    # Formato: 1234-001
+    folio = f"{tarjeta}-{siguiente:03d}"
+
+    return jsonify({'folio': folio, 'numero': siguiente})
+
+@main.route('/api/cargos-empresa/<int:empresa_id>')
+@login_required
+def cargos_empresa(empresa_id):
+    """Retorna los cargos por servicio de una empresa."""
+    empresa = Empresa.query.get_or_404(empresa_id)
+
+    cargo_visible = None
+    cargo_oculto = None
+
+    for cargo in empresa.cargos_servicio:
+        if cargo.tipo == 'visible':
+            cargo_visible = float(cargo.monto)
+        elif cargo.tipo == 'oculto':
+            cargo_oculto = float(cargo.monto)
+
+    return jsonify({
+        'cargo_visible': cargo_visible,
+        'cargo_oculto': cargo_oculto
+    })
 
 # --- RUTAS DE DESGLOSES (Refactorizadas) ---
 
@@ -41,8 +99,93 @@ def nuevo_desglose_form():
 @main.route('/desgloses/nuevo', methods=['POST'])
 @login_required
 def nuevo_desglose_post():
-    # ... (lógica para guardar desglose) ...
-    flash('Desglose creado con éxito.', 'success')
+    """Recibe los datos del formulario y crea un nuevo desglose."""
+    try:
+        # Crear el nuevo objeto Desglose con todos los datos del formulario
+        nuevo = Desglose(
+            folio=int(request.form.get('folio')),
+            empresa_id=int(request.form.get('empresa_id')),
+            aerolinea_id=int(request.form.get('aerolinea_id')),
+            empresa_booking_id=int(request.form.get('empresa_booking_id')),
+            tarifa_base=float(request.form.get('tarifa_base')),
+            iva=float(request.form.get('iva')),
+            tua=float(request.form.get('tua')),
+            yr=float(request.form.get('yr')),
+            otros_cargos=float(request.form.get('otros_cargos')),
+            cargo_por_servicio=float(request.form.get('cargo_por_servicio')),
+            total=float(request.form.get('total')),
+            clave_reserva=request.form.get('clave_reserva'),
+            usuario_id=current_user.id  # Asignamos el ID del usuario logueado
+        )
+
+        # Guardar en la base de datos
+        db.session.add(nuevo)
+        db.session.commit()
+
+        flash(f'Desglose con folio {nuevo.folio} creado con éxito.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al crear el desglose: {str(e)}', 'danger')
+
+    return redirect(url_for('main.desgloses'))
+
+@main.route('/desgloses/editar/<int:folio>', methods=['GET', 'POST'])
+@login_required
+def editar_desglose(folio):
+    """Maneja la edición de un desglose existente."""
+    desglose = Desglose.query.get_or_404(folio)
+
+    if request.method == 'POST':
+        try:
+            # Actualizar los campos del desglose
+            desglose.empresa_id = int(request.form.get('empresa_id'))
+            desglose.aerolinea_id = int(request.form.get('aerolinea_id'))
+            desglose.empresa_booking_id = int(request.form.get('empresa_booking_id'))
+            desglose.tarifa_base = float(request.form.get('tarifa_base'))
+            desglose.iva = float(request.form.get('iva'))
+            desglose.tua = float(request.form.get('tua'))
+            desglose.yr = float(request.form.get('yr'))
+            desglose.otros_cargos = float(request.form.get('otros_cargos'))
+            desglose.cargo_por_servicio = float(request.form.get('cargo_por_servicio'))
+            desglose.total = float(request.form.get('total'))
+            desglose.clave_reserva = request.form.get('clave_reserva')
+
+            db.session.commit()
+            flash(f'Desglose con folio {desglose.folio} actualizado con éxito.', 'success')
+            return redirect(url_for('main.desgloses'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar el desglose: {str(e)}', 'danger')
+            return redirect(url_for('main.editar_desglose', folio=folio))
+
+    # GET: Mostrar formulario de edición
+    empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
+    aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
+    empresas_booking_list = EmpresaBooking.query.order_by(EmpresaBooking.nombre).all()
+
+    return render_template(
+        'desglose_edit.html',
+        desglose=desglose,
+        empresas=empresas_list,
+        aerolineas=aerolineas_list,
+        empresas_booking=empresas_booking_list
+    )
+
+@main.route('/desgloses/eliminar/<int:folio>')
+@login_required
+def eliminar_desglose(folio):
+    """Elimina un desglose."""
+    desglose_a_eliminar = Desglose.query.get_or_404(folio)
+
+    try:
+        db.session.delete(desglose_a_eliminar)
+        db.session.commit()
+        flash(f'Desglose con folio {folio} eliminado con éxito.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar el desglose: {str(e)}', 'danger')
+
     return redirect(url_for('main.desgloses'))
 
 # --- RUTAS DE PAPELETAS (Refactorizadas) ---
@@ -53,7 +196,7 @@ def consulta_papeletas():
     """Muestra la lista de todas las papeletas registradas."""
     papeletas_list = Papeleta.query.order_by(Papeleta.id.desc()).all()
     return render_template(
-        'papeletas.html',
+        'consulta_papeletas.html',
         papeletas_registradas=papeletas_list
     )
 
@@ -61,11 +204,12 @@ def consulta_papeletas():
 @login_required
 def nueva_papeleta_form():
     """Muestra el formulario para crear una nueva papeleta."""
-    # Esta es la lógica clave: obtenemos la lista de empresas para el menú desplegable.
     empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
+    aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
     return render_template(
         'papeletas.html',
-        empresas=empresas_list
+        empresas=empresas_list,
+        aerolineas=aerolineas_list
     )
 
 @main.route('/papeletas/nueva', methods=['POST'])
@@ -77,7 +221,21 @@ def nueva_papeleta_post():
         fecha_venta_str = request.form.get('fecha_venta')
         fecha_venta = datetime.strptime(fecha_venta_str, '%Y-%m-%d').date() if fecha_venta_str else None
 
-        # 2. Crear el nuevo objeto Papeleta con todos los datos del formulario
+        # 2. Procesar empresa_id (ahora viene de facturar_a)
+        empresa_id_str = request.form.get('facturar_a')
+        empresa_id = int(empresa_id_str) if empresa_id_str else None
+
+        # 3. Procesar aerolinea_id (puede ser None)
+        aerolinea_id_str = request.form.get('aerolinea_id')
+        aerolinea_id = int(aerolinea_id_str) if aerolinea_id_str else None
+
+        # 4. Obtener nombre de empresa para facturar_a
+        facturar_a_nombre = ''
+        if empresa_id:
+            empresa = Empresa.query.get(empresa_id)
+            facturar_a_nombre = empresa.nombre_empresa if empresa else ''
+
+        # 5. Crear el nuevo objeto Papeleta con todos los datos del formulario
         nueva = Papeleta(
             folio=request.form.get('folio'),
             tarjeta=request.form.get('tarjeta'),
@@ -86,18 +244,19 @@ def nueva_papeleta_post():
             diez_porciento=float(request.form.get('diez_porciento')),
             cargo=float(request.form.get('cargo')),
             total=float(request.form.get('total')),
-            facturar_a=request.form.get('facturar_a'),
+            facturar_a=facturar_a_nombre,
             solicito=request.form.get('solicito'),
             clave_sabre=request.form.get('clave_sabre'),
             forma_pago=request.form.get('forma_pago'),
-            empresa_id=int(request.form.get('empresa_id')),
+            empresa_id=empresa_id,
+            aerolinea_id=aerolinea_id,
             usuario_id=current_user.id  # Asignamos el ID del usuario logueado
         )
-        
-        # 3. Guardar en la base de datos
+
+        # 6. Guardar en la base de datos
         db.session.add(nueva)
         db.session.commit()
-        
+
         flash(f'Papeleta con folio {nueva.folio} creada con éxito.', 'success')
     except Exception as e:
         db.session.rollback()

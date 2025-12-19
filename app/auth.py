@@ -51,7 +51,8 @@ def logout():
 def register():
     """Permite a los administradores registrar nuevos usuarios."""
     # Verificamos si el rol del usuario actual es 'administrador'.
-    if current_user.rol.nombre != 'administrador':
+    # LÍNEA CORRECTA
+    if current_user.rol_relacion.nombre != 'administrador':
         flash('No tienes permiso para registrar nuevos usuarios.', 'danger')
         return redirect(url_for('main.index'))
 
@@ -66,11 +67,18 @@ def register():
             flash('Ese correo electrónico ya está registrado.', 'warning')
             return redirect(url_for('auth.register'))
 
+        # Obtener el rol seleccionado
+        rol_seleccionado = Rol.query.get(int(rol_id))
+        if not rol_seleccionado:
+            flash('Rol inválido seleccionado.', 'danger')
+            return redirect(url_for('auth.register'))
+
         # Creamos la nueva instancia de usuario.
         nuevo_usuario = Usuario(
             nombre=nombre,
             correo=correo,
-            rol_id=rol_id
+            rol=rol_seleccionado.nombre,  # Campo texto con el nombre del rol
+            rol_id=rol_id                  # Foreign key a tabla roles
         )
         nuevo_usuario.set_password(contrasena)
 
@@ -82,5 +90,6 @@ def register():
 
     # Para la solicitud GET, pasamos la lista de roles a la plantilla.
     roles = Rol.query.all()
-    return render_template('registro_usuarios.html', roles=roles)
+    # LÍNEA CORRECTA
+    return render_template('usuarios.html', roles=roles)
 

@@ -98,8 +98,10 @@ class Papeleta(db.Model):
     forma_pago = db.Column(db.String, nullable=False)
     usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'))
+    aerolinea_id = db.Column(db.BigInteger, db.ForeignKey('aerolineas.id'))
     usuario = db.relationship('Usuario', back_populates='papeletas')
     empresa = db.relationship('Empresa', back_populates='papeletas')
+    aerolinea = db.relationship('Aerolinea')
 
 class Desglose(db.Model):
     __tablename__ = 'desgloses'
@@ -128,6 +130,7 @@ class Aerolinea(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     nombre = db.Column(db.String, nullable=False, unique=True)
     desgloses = db.relationship('Desglose', back_populates='aerolinea')
+    papeletas = db.relationship('Papeleta', backref='aerolinea_rel')
 
 class EmpresaBooking(db.Model):
     __tablename__ = 'empresas_booking'
