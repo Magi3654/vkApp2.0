@@ -3,6 +3,54 @@
 {# Enlaza la hoja de estilos específica para el dashboard #}
 {% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdash.css') }}">
+    <style>
+        /* Badge para autorizaciones pendientes */
+        .badge-pending {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Card destacada para autorizaciones */
+        .card.auth-card {
+            border-left: 4px solid #ffc107;
+            position: relative;
+        }
+        
+        .card.auth-card.has-pending {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+        }
+        
+        /* Icono de tarjeta de crédito */
+        .card-icon.tarjeta {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* Icono de autorización */
+        .card-icon.auth {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+        }
+        
+        .card-icon.auth.pending {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        /* Sección de director */
+        .director-section {
+            color: #764ba2;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -12,24 +60,53 @@
         <p>Gestiona las operaciones administrativas de la agencia desde aquí.</p>
     </div>
 
-    <!-- Sección de Acciones Rápidas (CRUD) -->
+    {# ============================================
+       SECCIÓN: AUTORIZACIONES PENDIENTES (Solo Director)
+       ============================================ #}
+    {% if current_user.rol in ['director', 'administrador', 'admin'] and autorizaciones_pendientes > 0 %}
+    <div class="section-title" style="color: #dc3545;">🔔 Requiere tu Atención</div>
+    <div class="actions-grid">
+        <a href="{{ url_for('main.autorizaciones') }}" class="card new-item-card auth-card has-pending">
+            <div class="card-icon auth pending">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </div>
+            <div class="card-body">
+                <h3>Autorizaciones Pendientes <span class="badge-pending">{{ autorizaciones_pendientes }}</span></h3>
+                <p>Hay solicitudes de uso de tarjeta esperando tu aprobación.</p>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+
+    {# ============================================
+       SECCIÓN: ACCIONES PRINCIPALES
+       ============================================ #}
     <div class="section-title">Acciones Principales</div>
     <div class="actions-grid">
         <a href="{{ url_for('main.nuevo_desglose_form') }}" class="card new-item-card">
             <div class="card-icon">
-                <!-- Icono SVG para "Nuevo Desglose" -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
             </div>
             <div class="card-body">
                 <h3>Nuevo Desglose</h3>
                 <p>Crear un nuevo desglose de servicios para una empresa.</p>
             </div>
         </a>
-        <!-- ENLACE CORREGIDO: Apunta al formulario de creación de papeletas -->
+        
         <a href="{{ url_for('main.nueva_papeleta_form') }}" class="card new-item-card">
             <div class="card-icon">
-                <!-- Icono SVG para "Nueva Papeleta" -->
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
             </div>
             <div class="card-body">
                 <h3>Nueva Papeleta</h3>
@@ -38,35 +115,65 @@
         </a>
     </div>
 
-    <!-- Sección de Consultas y Búsquedas -->
+    {# ============================================
+       SECCIÓN: CONSULTAS Y REGISTROS
+       ============================================ #}
     <div class="section-title">Consultas y Registros</div>
     <div class="management-grid">
         <a href="{{ url_for('main.desgloses') }}" class="card">
             <h3>Consultar Desgloses</h3>
             <p>Buscar, ver y editar desgloses existentes.</p>
         </a>
-        <!-- ENLACE CORREGIDO: Apunta a la tabla de consulta de papeletas -->
+        
         <a href="{{ url_for('main.consulta_papeletas') }}" class="card">
             <h3>Consultar Papeletas</h3>
             <p>Buscar y gestionar los cargos registrados.</p>
         </a>
+        
+        <a href="{{ url_for('main.autorizaciones') }}" class="card auth-card">
+            <h3>Mis Autorizaciones</h3>
+            <p>Ver el estado de tus solicitudes de autorización.</p>
+        </a>
     </div>
 
-    <!-- Sección de Administración (Solo para Admins) -->
-    {% if current_user.is_authenticated and current_user.rol_relacion.nombre == 'administrador' %}
+    {# ============================================
+       SECCIÓN: PANEL DE ADMINISTRADOR
+       ============================================ #}
+    {% if current_user.is_authenticated and current_user.rol in ['administrador', 'admin', 'director', 'gerente'] %}
     <div class="section-title admin-section">Panel de Administrador</div>
     <div class="management-grid">
         <a href="{{ url_for('main.empresas') }}" class="card">
             <h3>Gestionar Empresas</h3>
             <p>Añadir o editar empresas cliente.</p>
         </a>
+        
+        <a href="{{ url_for('main.tarjetas') }}" class="card">
+            <h3>💳 Gestionar Tarjetas</h3>
+            <p>Administrar tarjetas corporativas por sucursal.</p>
+        </a>
+        
+        {% if current_user.rol in ['administrador', 'admin', 'director'] %}
         <a href="{{ url_for('auth.register') }}" class="card">
             <h3>Gestionar Usuarios</h3>
             <p>Crear y administrar cuentas de empleados.</p>
         </a>
+        
+        <a href="{{ url_for('main.sucursales') }}" class="card">
+            <h3>🏢 Sucursales</h3>
+            <p>Configurar sucursales del sistema.</p>
+        </a>
+        
+        <a href="{{ url_for('main.autorizaciones') }}" class="card auth-card {% if autorizaciones_pendientes > 0 %}has-pending{% endif %}">
+            <h3>🔐 Todas las Autorizaciones 
+                {% if autorizaciones_pendientes > 0 %}
+                <span class="badge-pending">{{ autorizaciones_pendientes }}</span>
+                {% endif %}
+            </h3>
+            <p>Aprobar o rechazar solicitudes de uso de tarjetas.</p>
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 
 </div>
 {% endblock %}
-

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylestarjetas.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="crud-container">
+    <div class="page-header">
+        <h2>💳 Tarjetas Corporativas</h2>
+    </div>
+    
+    <!-- Formulario para nueva tarjeta -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Registrar Nueva Tarjeta</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('main.nueva_tarjeta') }}" method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numero_tarjeta">Número/Terminación *</label>
+                        <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
+                               required maxlength="10" placeholder="Ej: 1234">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nombre_tarjeta">Nombre de la Tarjeta *</label>
+                        <input type="text" id="nombre_tarjeta" name="nombre_tarjeta" 
+                               required placeholder="Ej: VISA Corporativa Ensenada">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="banco">Banco</label>
+                        <input type="text" id="banco" name="banco" placeholder="Ej: Banamex">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="titular">Titular</label>
+                        <input type="text" id="titular" name="titular" 
+                               placeholder="Ej: VIAJES KINESSIA SA DE CV">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sucursal_id">Sucursal Asignada</label>
+                        <select id="sucursal_id" name="sucursal_id">
+                            <option value="">Sin asignar (disponible para todos)</option>
+                            {% for sucursal in sucursales %}
+                                <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">💾 Guardar Tarjeta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de tarjetas -->
+    <div class="table-container">
+        <div class="card">
+            <div class="card-header">
+                <h3>Tarjetas Registradas</h3>
+            </div>
+            <div class="card-body">
+                {% if tarjetas %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Nombre</th>
+                            <th>Banco</th>
+                            <th>Sucursal</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tarjeta in tarjetas %}
+                        <tr>
+                            <td><strong>{{ tarjeta.numero_tarjeta }}</strong></td>
+                            <td>{{ tarjeta.nombre_tarjeta }}</td>
+                            <td>{{ tarjeta.banco or '-' }}</td>
+                            <td>
+                                {% if tarjeta.sucursal %}
+                                    <span class="badge badge-info">{{ tarjeta.sucursal.nombre }}</span>
+                                {% else %}
+                                    <span class="badge">Sin asignar</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tarjeta.activa %}
+                                    <span class="badge badge-success">Activa</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactiva</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions">
+                                <a href="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" 
+                                   class="btn-sm btn-edit">✏️ Editar</a>
+                                <a href="{{ url_for('main.eliminar_tarjeta', id=tarjeta.id) }}" 
+                                   class="btn-sm btn-delete"
+                                   onclick="return confirm('¿Eliminar esta tarjeta?')">🗑️</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <p>No hay tarjetas registradas. ¡Agrega la primera!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylestarjeta_edit.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="crud-container">
+    <div class="card">
+        <div class="card-header">
+            <h3>✏️ Editar Tarjeta: {{ tarjeta.nombre_tarjeta }}</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" method="POST">
+                <!-- Datos básicos de la tarjeta -->
+                <div class="form-group">
+                    <label for="numero_tarjeta">Número/Terminación *</label>
+                    <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
+                           value="{{ tarjeta.numero_tarjeta }}" required maxlength="10">
+                </div>
+                
+                <div class="form-group">
+                    <label for="nombre_tarjeta">Nombre de la Tarjeta *</label>
+                    <input type="text" id="nombre_tarjeta" name="nombre_tarjeta" 
+                           value="{{ tarjeta.nombre_tarjeta }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="banco">Banco</label>
+                    <input type="text" id="banco" name="banco" 
+                           value="{{ tarjeta.banco or '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="titular">Titular</label>
+                    <input type="text" id="titular" name="titular" 
+                           value="{{ tarjeta.titular or '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sucursal_id">Sucursal (opcional)</label>
+                    <select id="sucursal_id" name="sucursal_id">
+                        <option value="">Sin asignar</option>
+                        {% for sucursal in sucursales %}
+                            <option value="{{ sucursal.id }}" 
+                                    {% if tarjeta.sucursal_id == sucursal.id %}selected{% endif %}>
+                                {{ sucursal.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small>Si asignas sucursal sin agentes específicos, todos los de esa sucursal podrán usarla.</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" id="activa" name="activa" 
+                               {% if tarjeta.activa %}checked{% endif %}>
+                        <label for="activa">Tarjeta Activa</label>
+                    </div>
+                </div>
+                
+                <!-- Sección de Asignación de Agentes -->
+                <div class="agentes-section">
+                    <h4>
+                        👥 Asignar Agentes
+                        <span class="asignados-count" id="contadorAsignados">{{ usuarios_asignados_ids|length }}</span>
+                    </h4>
+                    <p class="agentes-description">
+                        Selecciona los agentes que pueden usar esta tarjeta. Si no seleccionas ninguno, 
+                        la tarjeta estará disponible según la sucursal asignada.
+                    </p>
+                    
+                    <!-- Filtros -->
+                    <div class="filter-bar">
+                        <input type="text" id="filtroNombre" placeholder="🔍 Buscar por nombre...">
+                        <select id="filtroSucursal">
+                            <option value="">Todas las sucursales</option>
+                            {% for sucursal in sucursales %}
+                                <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn-select-all" onclick="toggleSelectAll()">
+                            Seleccionar/Deseleccionar Todos
+                        </button>
+                    </div>
+                    
+                    <!-- Grid de Agentes -->
+                    <div class="agentes-grid" id="agentesGrid">
+                        {% for usuario in usuarios %}
+                            <label class="agente-item {% if usuario.id in usuarios_asignados_ids %}selected{% endif %}"
+                                   data-nombre="{{ usuario.nombre|lower }}"
+                                   data-sucursal="{{ usuario.sucursal_id or '' }}">
+                                <input type="checkbox" 
+                                       name="agentes_ids" 
+                                       value="{{ usuario.id }}"
+                                       {% if usuario.id in usuarios_asignados_ids %}checked{% endif %}
+                                       onchange="updateCounter(); this.parentElement.classList.toggle('selected')">
+                                <div class="agente-info">
+                                    <div class="agente-nombre">{{ usuario.nombre }}</div>
+                                    <div class="agente-meta">
+                                        {{ usuario.rol }}
+                                        {% if usuario.sucursal %}
+                                            <span class="badge-sucursal">{{ usuario.sucursal.nombre }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <a href="{{ url_for('main.tarjetas') }}" class="btn btn-cancel">Cancelar</a>
+                    <button type="submit" class="btn btn-submit">💾 Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Actualizar contador de asignados
+function updateCounter() {
+    const checked = document.querySelectorAll('input[name="agentes_ids"]:checked').length;
+    document.getElementById('contadorAsignados').textContent = checked;
+}
+
+// Seleccionar/Deseleccionar todos (visibles)
+function toggleSelectAll() {
+    const visibleItems = document.querySelectorAll('.agente-item:not([style*="display: none"]) input[type="checkbox"]');
+    const allChecked = Array.from(visibleItems).every(cb => cb.checked);
+    
+    visibleItems.forEach(cb => {
+        cb.checked = !allChecked;
+        cb.parentElement.classList.toggle('selected', !allChecked);
+    });
+    
+    updateCounter();
+}
+
+// Filtrar por nombre
+document.getElementById('filtroNombre').addEventListener('input', function() {
+    filterAgentes();
+});
+
+// Filtrar por sucursal
+document.getElementById('filtroSucursal').addEventListener('change', function() {
+    filterAgentes();
+});
+
+function filterAgentes() {
+    const nombre = document.getElementById('filtroNombre').value.toLowerCase();
+    const sucursal = document.getElementById('filtroSucursal').value;
+    
+    document.querySelectorAll('.agente-item').forEach(item => {
+        const matchNombre = item.dataset.nombre.includes(nombre);
+        const matchSucursal = !sucursal || item.dataset.sucursal === sucursal;
+        
+        item.style.display = (matchNombre && matchSucursal) ? 'flex' : 'none';
+    });
+}
+</script>
+{% endblock %}

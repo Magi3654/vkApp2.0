@@ -12,43 +12,83 @@
             <p>Completa la información del cargo a tarjeta de crédito.</p>
         </div>
         
-        <form action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
+        <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
             <div class="form-grid">
                 <!-- Columna Izquierda -->
                 <div class="form-column">
+                    <!-- Selector de Tarjeta -->
                     <div class="form-group">
-                        <label for="tarjeta">Terminación Tarjeta (4 dígitos)</label>
-                        <input type="text" id="tarjeta" name="tarjeta" required maxlength="4" pattern="\d{4}" title="Introduce los 4 dígitos de la tarjeta.">
+                        <label for="tarjeta_id">Tarjeta Corporativa</label>
+                        <div class="dropdown-input" id="dropdownContainer">
+                            <select id="tarjeta_id" name="tarjeta_id">
+                                <option value="">Selecciona una tarjeta...</option>
+                                {% for item in tarjetas_info %}
+                                    <option value="{{ item.tarjeta.id }}" 
+                                            data-numero="{{ item.tarjeta.numero_tarjeta }}"
+                                            data-requiere="{{ item.requiere_autorizacion|lower }}"
+                                            data-tiene-auth="{{ item.tiene_autorizacion|lower }}"
+                                            data-puede-usar="{{ item.puede_usar|lower }}"
+                                            class="{% if item.puede_usar %}tarjeta-option-disponible{% elif item.tiene_autorizacion %}tarjeta-option-requiere{% else %}tarjeta-option-bloqueada{% endif %}">
+                                        {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }})
+                                        {% if not item.puede_usar and not item.tiene_autorizacion %}
+                                            🔒
+                                        {% elif item.requiere_autorizacion and item.tiene_autorizacion %}
+                                            ✓
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <span class="toggle-manual" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
+                        
+                        <!-- Input manual (oculto por defecto) -->
+                        <div class="manual-input" id="manualContainer">
+                            <input type="text" id="tarjeta_manual" name="tarjeta_manual" 
+                                   maxlength="4" pattern="\d{4}" 
+                                   placeholder="Últimos 4 dígitos"
+                                   title="Introduce los 4 dígitos de la tarjeta.">
+                            <span class="toggle-manual" id="toggleDropdown">Volver al selector</span>
+                        </div>
+                        
+                        <!-- Info de la tarjeta seleccionada -->
+                        <div id="tarjetaInfo" class="tarjeta-info" style="display: none;"></div>
                     </div>
+                    
                     <div class="form-group">
                         <label for="folio">Folio</label>
                         <input type="text" id="folio" name="folio" readonly required>
                         <small>Se genera automáticamente por tarjeta</small>
                     </div>
+                    
                     <div class="form-group">
                         <label for="fecha_venta">Fecha de Venta</label>
                         <input type="date" id="fecha_venta" name="fecha_venta" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="total_ticket">Total del Ticket</label>
                         <input type="number" step="0.01" id="total_ticket" name="total_ticket" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="diez_porciento">10%</label>
                         <input type="number" step="0.01" id="diez_porciento" name="diez_porciento" required>
                     </div>
-                     <div class="form-group">
+                    
+                    <div class="form-group">
                         <label for="cargo">Cargo</label>
                         <input type="number" step="0.01" id="cargo" name="cargo" required>
                     </div>
                 </div>
+                
                 <!-- Columna Derecha -->
                 <div class="form-column">
                     <div class="form-group">
                         <label for="total">Total</label>
                         <input type="number" step="0.01" id="total" name="total" required>
                     </div>
-                     <div class="form-group">
+                    
+                    <div class="form-group">
                         <label for="facturar_a">Facturar a</label>
                         <select id="facturar_a" name="facturar_a" required>
                             <option value="" disabled selected>Selecciona una empresa...</option>
@@ -57,6 +97,7 @@
                             {% endfor %}
                         </select>
                     </div>
+                    
                     <div class="form-group">
                         <label for="aerolinea_id">Aerolínea</label>
                         <select id="aerolinea_id" name="aerolinea_id">
@@ -66,38 +107,149 @@
                             {% endfor %}
                         </select>
                     </div>
+                    
                     <div class="form-group">
                         <label for="solicito">Solicitó</label>
                         <input type="text" id="solicito" name="solicito" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="clave_sabre">Clave Sabre</label>
                         <input type="text" id="clave_sabre" name="clave_sabre" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="forma_pago">Forma de Pago</label>
                         <input type="text" id="forma_pago" name="forma_pago" required>
                     </div>
                 </div>
             </div>
+            
             <div class="form-actions">
-                <button type="submit" class="btn-submit">Guardar Papeleta</button>
+                <button type="submit" id="btnSubmit" class="btn-submit">Guardar Papeleta</button>
                 <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-cancel">Cancelar</a>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Modal para solicitar autorización -->
+<div class="modal-overlay" id="modalAutorizacion">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔐 Solicitar Autorización</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <form action="{{ url_for('main.solicitar_autorizacion') }}" method="POST">
+            <div class="modal-body">
+                <p>Esta tarjeta pertenece a otra sucursal. Necesitas autorización de Dirección General para usarla.</p>
+                <input type="hidden" name="tarjeta_id" id="modal_tarjeta_id">
+                
+                <div class="form-group">
+                    <label for="motivo">Motivo de la solicitud:</label>
+                    <textarea name="motivo" id="motivo" required 
+                              placeholder="Ej: Falta de fondos en tarjeta de sucursal, urgencia del cliente, etc."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-submit">Enviar Solicitud</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-// Generar folio automáticamente según la tarjeta
 document.addEventListener('DOMContentLoaded', function() {
-    const tarjetaInput = document.getElementById('tarjeta');
+    const tarjetaSelect = document.getElementById('tarjeta_id');
+    const tarjetaManual = document.getElementById('tarjeta_manual');
     const folioInput = document.getElementById('folio');
-
-    tarjetaInput.addEventListener('input', function() {
+    const tarjetaInfo = document.getElementById('tarjetaInfo');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const toggleManual = document.getElementById('toggleManual');
+    const toggleDropdown = document.getElementById('toggleDropdown');
+    const dropdownContainer = document.getElementById('dropdownContainer');
+    const manualContainer = document.getElementById('manualContainer');
+    const formPapeleta = document.getElementById('formPapeleta');
+    
+    let modoManual = false;
+    let puedeEnviar = false;
+    
+    // Toggle entre dropdown y manual
+    toggleManual.addEventListener('click', function() {
+        modoManual = true;
+        dropdownContainer.classList.add('hidden');
+        manualContainer.classList.add('active');
+        tarjetaSelect.value = '';
+        tarjetaInfo.style.display = 'none';
+        puedeEnviar = true;
+        actualizarBoton();
+    });
+    
+    toggleDropdown.addEventListener('click', function() {
+        modoManual = false;
+        dropdownContainer.classList.remove('hidden');
+        manualContainer.classList.remove('active');
+        tarjetaManual.value = '';
+        folioInput.value = '';
+        puedeEnviar = false;
+        actualizarBoton();
+    });
+    
+    // Cuando cambia el select de tarjeta
+    tarjetaSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        
+        if (!this.value) {
+            tarjetaInfo.style.display = 'none';
+            folioInput.value = '';
+            puedeEnviar = false;
+            actualizarBoton();
+            return;
+        }
+        
+        const numero = option.dataset.numero;
+        const requiere = option.dataset.requiere === 'true';
+        const tieneAuth = option.dataset.tieneAuth === 'true';
+        const puedeUsar = option.dataset.puedeUsar === 'true';
+        
+        // Mostrar info de la tarjeta
+        tarjetaInfo.style.display = 'block';
+        
+        if (puedeUsar) {
+            tarjetaInfo.className = 'tarjeta-info puede-usar';
+            tarjetaInfo.innerHTML = '✅ Puedes usar esta tarjeta.';
+            puedeEnviar = true;
+        } else if (requiere && !tieneAuth) {
+            tarjetaInfo.className = 'tarjeta-info sin-auth';
+            tarjetaInfo.innerHTML = `
+                🔒 Esta tarjeta requiere autorización de Dirección.<br>
+                <button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})">
+                    Solicitar Autorización
+                </button>
+            `;
+            puedeEnviar = false;
+        }
+        
+        actualizarBoton();
+        
+        // Obtener folio
+        if (numero) {
+            fetch(`{{ url_for("main.siguiente_folio_papeleta") }}?tarjeta=${numero}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.folio) {
+                        folioInput.value = data.folio;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // Cuando escribe en input manual
+    tarjetaManual.addEventListener('input', function() {
         const tarjeta = this.value;
-
-        // Solo buscar cuando tenga 4 dígitos
+        
         if (tarjeta.length === 4 && /^\d{4}$/.test(tarjeta)) {
             fetch(`{{ url_for("main.siguiente_folio_papeleta") }}?tarjeta=${tarjeta}`)
                 .then(response => response.json())
@@ -106,12 +258,67 @@ document.addEventListener('DOMContentLoaded', function() {
                         folioInput.value = data.folio;
                     }
                 })
-                .catch(error => console.error('Error cargando folio:', error));
+                .catch(error => console.error('Error:', error));
+            puedeEnviar = true;
         } else {
             folioInput.value = '';
+            puedeEnviar = false;
+        }
+        actualizarBoton();
+    });
+    
+    // Actualizar estado del botón
+    function actualizarBoton() {
+        if (puedeEnviar) {
+            btnSubmit.disabled = false;
+            btnSubmit.style.opacity = '1';
+            btnSubmit.style.cursor = 'pointer';
+        } else {
+            btnSubmit.disabled = true;
+            btnSubmit.style.opacity = '0.5';
+            btnSubmit.style.cursor = 'not-allowed';
+        }
+    }
+    
+    // Validar antes de enviar
+    formPapeleta.addEventListener('submit', function(e) {
+        if (!puedeEnviar) {
+            e.preventDefault();
+            alert('Debes seleccionar una tarjeta válida o solicitar autorización.');
+            return false;
+        }
+        
+        // Limpiar el campo que no se usa
+        if (modoManual) {
+            tarjetaSelect.value = '';
+        } else {
+            tarjetaManual.value = '';
         }
     });
+    
+    // Inicializar
+    actualizarBoton();
+    
+    // Establecer fecha de hoy por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_venta').value = hoy;
+});
+
+// Funciones del modal
+function abrirModalAutorizacion(tarjetaId) {
+    document.getElementById('modal_tarjeta_id').value = tarjetaId;
+    document.getElementById('modalAutorizacion').classList.add('active');
+}
+
+function cerrarModal() {
+    document.getElementById('modalAutorizacion').classList.remove('active');
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('modalAutorizacion').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModal();
+    }
 });
 </script>
 {% endblock %}
-

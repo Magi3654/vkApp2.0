@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesautorizaciones.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="crud-container">
+    <div class="page-header">
+        <h2>
+            🔐 Autorizaciones
+            {% if es_director %}
+                {% set pendientes = autorizaciones|selectattr('estatus', 'equalto', 'pendiente')|list|length %}
+                {% if pendientes > 0 %}
+                    <span class="badge-count">{{ pendientes }} pendientes</span>
+                {% endif %}
+            {% endif %}
+        </h2>
+    </div>
+    
+    {% if es_director %}
+        <p style="color: #666; margin-bottom: 2rem;">
+            Como Director, puedes aprobar o rechazar las solicitudes de uso de tarjetas de otras sucursales.
+        </p>
+    {% else %}
+        <p style="color: #666; margin-bottom: 2rem;">
+            Aquí puedes ver el estado de tus solicitudes de autorización.
+        </p>
+    {% endif %}
+    
+    {% if autorizaciones %}
+        {% for auth in autorizaciones %}
+        <div class="card auth-card {{ auth.estatus }}">
+            <div class="card-header">
+                <div>
+                    <strong>Solicitud #{{ auth.id }}</strong>
+                    <span class="time-ago">
+                        - {{ auth.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                    </span>
+                </div>
+                <span class="badge badge-{{ 'warning' if auth.estatus == 'pendiente' else ('success' if auth.estatus == 'aprobada' else 'danger') }}">
+                    {{ auth.estatus|upper }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="auth-info">
+                    <div class="auth-info-item">
+                        <label>Solicitante</label>
+                        <span>{{ auth.solicitante.nombre }}</span>
+                    </div>
+                    <div class="auth-info-item">
+                        <label>Tarjeta</label>
+                        <span>{{ auth.tarjeta.nombre_tarjeta }} ({{ auth.tarjeta.numero_tarjeta }})</span>
+                    </div>
+                    <div class="auth-info-item">
+                        <label>Sucursal de la tarjeta</label>
+                        <span>{{ auth.tarjeta.sucursal.nombre if auth.tarjeta.sucursal else 'Sin asignar' }}</span>
+                    </div>
+                    <div class="auth-info-item">
+                        <label>Tipo</label>
+                        <span>{{ auth.tipo|replace('_', ' ')|title }}</span>
+                    </div>
+                </div>
+                
+                <div class="auth-motivo">
+                    <label>Motivo de la solicitud:</label>
+                    <p>{{ auth.motivo }}</p>
+                </div>
+                
+                {% if auth.estatus != 'pendiente' %}
+                    <div class="auth-motivo" style="background: {% if auth.estatus == 'aprobada' %}#d4edda{% else %}#f8d7da{% endif %}">
+                        <label>Respuesta de {{ auth.autorizador.nombre if auth.autorizador else 'Sistema' }}:</label>
+                        <p>{{ auth.comentario_respuesta or 'Sin comentarios' }}</p>
+                        <small class="time-ago">{{ auth.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if auth.fecha_respuesta else '' }}</small>
+                    </div>
+                {% endif %}
+                
+                {% if es_director and auth.estatus == 'pendiente' %}
+                <div class="auth-actions">
+                    <button type="button" class="btn btn-success" 
+                            onclick="abrirModalRespuesta({{ auth.id }}, 'aprobar')">
+                        ✅ Aprobar
+                    </button>
+                    <button type="button" class="btn btn-danger" 
+                            onclick="abrirModalRespuesta({{ auth.id }}, 'rechazar')">
+                        ❌ Rechazar
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="icon">📋</div>
+                <p>
+                    {% if es_director %}
+                        No hay solicitudes pendientes de autorización.
+                    {% else %}
+                        No tienes solicitudes de autorización.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para responder autorización -->
+<div class="modal-overlay" id="modalRespuesta">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Responder Autorización</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <form id="formRespuesta" method="POST">
+            <div class="modal-body">
+                <input type="hidden" name="accion" id="accionInput">
+                
+                <div class="form-group">
+                    <label for="comentario">Comentario (opcional):</label>
+                    <textarea name="comentario" id="comentario" 
+                              placeholder="Agrega un comentario para el solicitante..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" style="background: #6c757d; color: white;" 
+                        onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn" id="btnConfirmar">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalRespuesta(authId, accion) {
+    const form = document.getElementById('formRespuesta');
+    const titulo = document.getElementById('modalTitulo');
+    const accionInput = document.getElementById('accionInput');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    
+    form.action = `/autorizaciones/responder/${authId}`;
+    accionInput.value = accion;
+    
+    if (accion === 'aprobar') {
+        titulo.textContent = '✅ Aprobar Autorización';
+        btnConfirmar.className = 'btn btn-success';
+        btnConfirmar.textContent = 'Aprobar';
+    } else {
+        titulo.textContent = '❌ Rechazar Autorización';
+        btnConfirmar.className = 'btn btn-danger';
+        btnConfirmar.textContent = 'Rechazar';
+    }
+    
+    document.getElementById('modalRespuesta').classList.add('active');
+}
+
+function cerrarModal() {
+    document.getElementById('modalRespuesta').classList.remove('active');
+    document.getElementById('comentario').value = '';
+}
+
+document.getElementById('modalRespuesta').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModal();
+    }
+});
+</script>
+{% endblock %}
