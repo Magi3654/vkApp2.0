@@ -1,12 +1,14 @@
-/* CSS HEX */
+/* CSS HEX - Actualizado con tu Paleta */
 :root {
-    --white: #ffffffff;
-    --battleship-gray: #8c9b93ff;
-    --off-red-rgb: #D52027;
-    --chili-red: #D52027;
-    --black: #000000ff;
-    --raisin-black: #282424ff;
-    --font-size: 1rem; /* Base font size */
+    /* Tu paleta personalizada */
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    
+    --white: #ffffff; /* Mantenemos blanco puro para textos sobre rojo */
+    --font-size: 1rem;
 }
 
 /* Reset global y fuente por defecto */
@@ -19,6 +21,9 @@
 
 html, body {
     height: 100%;
+    /* Añadido: Fondo suave para toda la página */
+    background-color: var(--bright-snow);
+    color: var(--graphite);
 }
 
 /* --- ESTILOS DEL HEADER/MENÚ DE NAVEGACIÓN --- */
@@ -26,10 +31,12 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--chili-red); /* Usamos tu variable de color */
+    /* Cambio: Gradiente elegante en lugar de rojo plano */
+    background: linear-gradient(90deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     padding: 0.75rem 2rem;
     color: var(--white);
-    height: 4rem; /* Tomado de tu clase .header original */
+    height: 4rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil para separar del contenido */
 }
 
 .nav-logo a {
@@ -37,6 +44,7 @@ html, body {
     text-decoration: none;
     font-weight: bold;
     font-size: 1.5em;
+    letter-spacing: 0.5px;
 }
 
 .nav-right {
@@ -56,11 +64,13 @@ html, body {
     text-decoration: none;
     padding: 0.5rem;
     border-radius: 4px;
-    transition: background-color 0.2s ease-in-out;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
 }
 
 .nav-links a:hover {
     background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
 }
 
 .nav-user {
@@ -70,18 +80,22 @@ html, body {
 }
 
 .nav-user a {
-    background-color: rgba(0,0,0,0.2);
+    /* Fondo oscuro semitransparente para destacar sobre el rojo */
+    background-color: rgba(0, 0, 0, 0.2);
     padding: 0.5rem 1rem;
     border-radius: 4px;
     color: var(--white);
     text-decoration: none;
-    transition: background-color 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .nav-user a:hover {
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255,255,255,0.3);
 }
 
+/* --- LOGO CENTRAL --- */
 .logokinessia {
     display: flex;
     justify-content: center;
@@ -89,28 +103,47 @@ html, body {
     margin: 4rem 2rem; 
     padding: 1rem;
 }
+
 .logokinessia img {
     max-width: 100%; 
     width: 3.5rem;    
-    height: auto;    
+    height: auto;
+    /* Opcional: Si el logo es oscuro y necesitas contraste, descomenta esto:
+       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); 
+    */
 }
 
-.button-start .start{
-    background: var(--chili-red);
+/* --- BOTÓN START --- */
+.button-start .start {
+    /* Gradiente potente para el CTA principal */
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
     font-weight: bold;
     font-size: 2rem;
     width: 15rem;
     height: 5rem;
-    margin: 1rem ;
+    margin: 1rem;
     border: none;
     border-radius: 1.5rem;
-    display:block;
+    display: block;
     margin-left: auto;
     margin-right: auto;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(153, 1, 0, 0.3); /* Sombra roja sutil */
+    transition: all 0.3s ease;
 }
 
-.footer{
+.button-start .start:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(153, 1, 0, 0.4);
+}
+
+.button-start .start:active {
+    transform: translateY(-1px);
+}
+
+/* --- FOOTER --- */
+.footer {
     display: flex;
     position: fixed;
     bottom: 0;
@@ -118,8 +151,13 @@ html, body {
     height: 2rem;
     justify-content: center;
     align-items: center;
-    background-color: var(--chili-red);
+    /* Opción A: Usar Oxblood para consistencia con el header */
+    background-color: var(--oxblood);
+    /* Opción B: Usar Graphite si prefieres un pie de página neutro oscuro */
+    /* background-color: var(--graphite); */
+    
     color: var(--white);
-    font-size: .5rem;
+    font-size: .75rem; /* Ajusté ligeramente el tamaño para legibilidad */
     font-weight: 400;
+    letter-spacing: 0.5px;
 }

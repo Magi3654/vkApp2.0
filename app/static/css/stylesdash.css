@@ -1,15 +1,17 @@
-/* Estilos específicos para el Dashboard */
+/* Estilos específicos para el Dashboard - Actualizado */
 
 :root {
-    /* Colores base para el dashboard (tomados de tu CSS) */
-    --bg-color: #f8f9fa; /* Un gris muy claro para el fondo */
+    /* Mapeo de tu paleta a variables semánticas del dashboard */
+    --bg-color: var(--bright-snow); 
     --card-bg: #ffffff;
-    --text-color: #212529; /* Coincide con --raisin-black */
-    --subtle-text-color: #6c757d; /* Coincide con --battleship-gray */
-    --border-color: #dee2e6;
+    --text-color: var(--graphite);
+    --subtle-text-color: #666666; /* Un gris medio neutro para subtítulos */
+    --border-color: var(--alabaster-grey);
     --shadow-color: rgba(0, 0, 0, 0.05);
-    /* Heredamos los colores de tu marca desde styles.css */
-    /* --chili-red, --white, etc. */
+    
+    /* Colores de acento */
+    --accent-primary: var(--brick-ember);
+    --accent-dark: var(--oxblood);
 }
 
 .dashboard {
@@ -24,20 +26,21 @@
 }
 
 .dashboard-header h1 {
-    color: var(--raisin-black);
+    color: var(--text-color);
     font-size: 2.25rem;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
 }
 
 .dashboard-header p {
-    color: var(--battleship-gray);
+    color: var(--subtle-text-color);
     font-size: 1.1rem;
 }
 
 .section-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--raisin-black);
+    color: var(--text-color);
     margin-top: 2.5rem;
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
@@ -45,8 +48,9 @@
 }
 
 .section-title.admin-section {
-    color: var(--chili-red);
-    border-bottom-color: var(--chili-red);
+    /* Usamos Oxblood para secciones administrativas (más sobrio/autoridad) */
+    color: var(--accent-dark);
+    border-bottom-color: var(--accent-dark);
 }
 
 /* Grid para las tarjetas */
@@ -63,19 +67,21 @@
     padding: 1.5rem;
     text-decoration: none;
     color: var(--text-color);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     box-shadow: 0 4px 6px var(--shadow-color);
 }
 
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    /* Opcional: Borde rojo sutil al hover */
+    border-color: rgba(185, 5, 4, 0.2); 
 }
 
 .card h3 {
     margin-bottom: 0.5rem;
     font-size: 1.2rem;
-    color: var(--raisin-black);
+    color: var(--text-color);
 }
 
 .card p {
@@ -89,12 +95,14 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    border-left: 5px solid var(--chili-red);
+    /* Borde lateral en rojo vivo (Brick) para indicar acción */
+    border-left: 5px solid var(--accent-primary);
 }
 
 .new-item-card .card-icon {
-    background-color: var(--chili-red);
-    color: var(--white);
+    /* Gradiente en el icono para consistencia con botones de otros archivos */
+    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-primary) 100%);
+    color: white;
     border-radius: 50%;
     width: 50px;
     height: 50px;
@@ -103,6 +111,7 @@
     justify-content: center;
     flex-shrink: 0;
     transition: transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(185, 5, 4, 0.2);
 }
 
 .new-item-card .card-body {
@@ -112,4 +121,3 @@
 .new-item-card:hover .card-icon {
     transform: scale(1.1);
 }
-

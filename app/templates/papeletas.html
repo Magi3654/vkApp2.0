@@ -18,7 +18,7 @@
                 <div class="form-column">
                     <!-- Selector de Tarjeta -->
                     <div class="form-group">
-                        <label for="tarjeta_id">Tarjeta Corporativa</label>
+                        <label for="tarjeta_id">Tarjeta Corporativa *</label>
                         <div class="dropdown-input" id="dropdownContainer">
                             <select id="tarjeta_id" name="tarjeta_id">
                                 <option value="">Selecciona una tarjeta...</option>
@@ -28,106 +28,146 @@
                                             data-requiere="{{ item.requiere_autorizacion|lower }}"
                                             data-tiene-auth="{{ item.tiene_autorizacion|lower }}"
                                             data-puede-usar="{{ item.puede_usar|lower }}"
-                                            class="{% if item.puede_usar %}tarjeta-option-disponible{% elif item.tiene_autorizacion %}tarjeta-option-requiere{% else %}tarjeta-option-bloqueada{% endif %}">
+                                            data-usuarios="{{ item.usuarios_asignados|join(', ') if item.usuarios_asignados else '' }}"
+                                            class="{% if item.puede_usar %}tarjeta-disponible{% else %}tarjeta-bloqueada{% endif %}">
                                         {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }})
-                                        {% if not item.puede_usar and not item.tiene_autorizacion %}
-                                            🔒
-                                        {% elif item.requiere_autorizacion and item.tiene_autorizacion %}
-                                            ✓
-                                        {% endif %}
+                                        {% if item.puede_usar %}✓{% else %}🔒{% endif %}
                                     </option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <span class="toggle-manual" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
+                        <span class="toggle-link" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
                         
                         <!-- Input manual (oculto por defecto) -->
                         <div class="manual-input" id="manualContainer">
                             <input type="text" id="tarjeta_manual" name="tarjeta_manual" 
                                    maxlength="4" pattern="\d{4}" 
-                                   placeholder="Últimos 4 dígitos"
-                                   title="Introduce los 4 dígitos de la tarjeta.">
-                            <span class="toggle-manual" id="toggleDropdown">Volver al selector</span>
+                                   placeholder="Últimos 4 dígitos">
+                            <span class="toggle-link" id="toggleDropdown">Volver al selector</span>
                         </div>
                         
                         <!-- Info de la tarjeta seleccionada -->
-                        <div id="tarjetaInfo" class="tarjeta-info" style="display: none;"></div>
+                        <div id="tarjetaInfo" class="tarjeta-info"></div>
                     </div>
                     
                     <div class="form-group">
                         <label for="folio">Folio</label>
                         <input type="text" id="folio" name="folio" readonly required>
-                        <small>Se genera automáticamente por tarjeta</small>
+                        <small>Se genera automáticamente</small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="fecha_venta">Fecha de Venta</label>
+                        <label for="fecha_venta">Fecha de Venta *</label>
                         <input type="date" id="fecha_venta" name="fecha_venta" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="total_ticket">Total del Ticket</label>
-                        <input type="number" step="0.01" id="total_ticket" name="total_ticket" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="diez_porciento">10%</label>
-                        <input type="number" step="0.01" id="diez_porciento" name="diez_porciento" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cargo">Cargo</label>
-                        <input type="number" step="0.01" id="cargo" name="cargo" required>
-                    </div>
-                </div>
-                
-                <!-- Columna Derecha -->
-                <div class="form-column">
-                    <div class="form-group">
-                        <label for="total">Total</label>
-                        <input type="number" step="0.01" id="total" name="total" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="facturar_a">Facturar a</label>
+                        <label for="facturar_a">Facturar a *</label>
                         <select id="facturar_a" name="facturar_a" required>
-                            <option value="" disabled selected>Selecciona una empresa...</option>
+                            <option value="">Selecciona una empresa...</option>
                             {% for empresa in empresas %}
                                 <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
                             {% endfor %}
                         </select>
+                        <small id="cargoEmpresaInfo"></small>
                     </div>
                     
                     <div class="form-group">
+                        <label for="tipo_cargo">Tipo de Cargo *</label>
+                        <select id="tipo_cargo" name="tipo_cargo" required>
+                            <option value="">Selecciona...</option>
+                            <option value="aerolinea">✈️ Aerolínea</option>
+                            <option value="hotel">🏨 Hotel</option>
+                            <option value="auto">🚗 Renta de Auto</option>
+                            <option value="otro">📝 Otro</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Selector de Aerolínea (visible solo si tipo_cargo = aerolinea) -->
+                    <div class="form-group" id="aerolineaGroup">
                         <label for="aerolinea_id">Aerolínea</label>
                         <select id="aerolinea_id" name="aerolinea_id">
-                            <option value="" disabled selected>Selecciona una aerolínea...</option>
+                            <option value="">Selecciona una aerolínea...</option>
                             {% for aerolinea in aerolineas %}
                                 <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="solicito">Solicitó</label>
-                        <input type="text" id="solicito" name="solicito" required>
+                    <!-- Campo para especificar proveedor (hotel, auto, otro) -->
+                    <div class="form-group" id="proveedorGroup" style="display: none;">
+                        <label for="proveedor">Nombre del Proveedor *</label>
+                        <input type="text" id="proveedor" name="proveedor" 
+                               placeholder="Ej: Marriott, Hertz, etc.">
                     </div>
                     
                     <div class="form-group">
-                        <label for="clave_sabre">Clave Sabre</label>
-                        <input type="text" id="clave_sabre" name="clave_sabre" required>
+                        <label for="solicito">Solicitó *</label>
+                        <input type="text" id="solicito" name="solicito" required 
+                               placeholder="Nombre del solicitante">
+                    </div>
+                </div>
+                
+                <!-- Columna Derecha -->
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="clave_sabre">Clave Sabre / Reserva *</label>
+                        <input type="text" id="clave_sabre" name="clave_sabre" required
+                               placeholder="Ej: ABC123">
                     </div>
                     
                     <div class="form-group">
-                        <label for="forma_pago">Forma de Pago</label>
-                        <input type="text" id="forma_pago" name="forma_pago" required>
+                        <label for="forma_pago">Forma de Pago *</label>
+                        <select id="forma_pago" name="forma_pago" required>
+                            <option value="">Selecciona...</option>
+                            <option value="Crédito">Crédito</option>
+                            <option value="Contado">Contado</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Depósito">Depósito</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Sección de Montos -->
+                    <div class="montos-section">
+                        <h4>💰 Desglose de Montos</h4>
+                        
+                        <div class="form-group">
+                            <label for="total_ticket">Total del Ticket *</label>
+                            <input type="number" step="0.01" min="0" id="total_ticket" name="total_ticket" 
+                                   required placeholder="0.00" class="monto-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="diez_porciento">
+                                10% Comisión
+                                <button type="button" class="btn-calcular" id="btnCalcular10" title="Calcular 10%">
+                                    🔢
+                                </button>
+                            </label>
+                            <input type="number" step="0.01" min="0" id="diez_porciento" name="diez_porciento" 
+                                   required placeholder="0.00" class="monto-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cargo">Cargo por Servicio</label>
+                            <input type="number" step="0.01" min="0" id="cargo" name="cargo" 
+                                   required placeholder="0.00" class="monto-input" value="0">
+                        </div>
+                        
+                        <div class="form-group total-group">
+                            <label for="total">TOTAL A COBRAR</label>
+                            <input type="number" step="0.01" min="0" id="total" name="total" 
+                                   required readonly class="monto-total">
+                        </div>
                     </div>
                 </div>
             </div>
             
             <div class="form-actions">
-                <button type="submit" id="btnSubmit" class="btn-submit">Guardar Papeleta</button>
                 <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-cancel">Cancelar</a>
+                <button type="submit" id="btnSubmit" class="btn-submit" disabled>
+                    💾 Guardar Papeleta
+                </button>
             </div>
         </form>
     </div>
@@ -142,18 +182,18 @@
         </div>
         <form action="{{ url_for('main.solicitar_autorizacion') }}" method="POST">
             <div class="modal-body">
-                <p>Esta tarjeta pertenece a otra sucursal. Necesitas autorización de Dirección General para usarla.</p>
+                <p>No tienes acceso a esta tarjeta. Necesitas autorización de Dirección General.</p>
                 <input type="hidden" name="tarjeta_id" id="modal_tarjeta_id">
                 
                 <div class="form-group">
-                    <label for="motivo">Motivo de la solicitud:</label>
-                    <textarea name="motivo" id="motivo" required 
-                              placeholder="Ej: Falta de fondos en tarjeta de sucursal, urgencia del cliente, etc."></textarea>
+                    <label for="motivo">Motivo de la solicitud: *</label>
+                    <textarea name="motivo" id="motivo" required rows="4"
+                              placeholder="Ej: Cliente urgente, tarjeta de sucursal sin fondos, etc."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
-                <button type="submit" class="btn-submit">Enviar Solicitud</button>
+                <button type="submit" class="btn-submit">📤 Enviar Solicitud</button>
             </div>
         </form>
     </div>
@@ -161,6 +201,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // === ELEMENTOS DEL DOM ===
     const tarjetaSelect = document.getElementById('tarjeta_id');
     const tarjetaManual = document.getElementById('tarjeta_manual');
     const folioInput = document.getElementById('folio');
@@ -172,16 +213,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const manualContainer = document.getElementById('manualContainer');
     const formPapeleta = document.getElementById('formPapeleta');
     
+    // Campos de montos
+    const totalTicket = document.getElementById('total_ticket');
+    const diezPorciento = document.getElementById('diez_porciento');
+    const cargo = document.getElementById('cargo');
+    const totalFinal = document.getElementById('total');
+    const btnCalcular10 = document.getElementById('btnCalcular10');
+    
+    // Empresa y cargos
+    const empresaSelect = document.getElementById('facturar_a');
+    const cargoEmpresaInfo = document.getElementById('cargoEmpresaInfo');
+    
     let modoManual = false;
     let puedeEnviar = false;
     
-    // Toggle entre dropdown y manual
+    // === TOGGLE MANUAL/DROPDOWN ===
     toggleManual.addEventListener('click', function() {
         modoManual = true;
         dropdownContainer.classList.add('hidden');
         manualContainer.classList.add('active');
         tarjetaSelect.value = '';
         tarjetaInfo.style.display = 'none';
+        tarjetaInfo.innerHTML = '';
         puedeEnviar = true;
         actualizarBoton();
     });
@@ -196,12 +249,13 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarBoton();
     });
     
-    // Cuando cambia el select de tarjeta
+    // === SELECTOR DE TARJETA ===
     tarjetaSelect.addEventListener('change', function() {
         const option = this.options[this.selectedIndex];
         
         if (!this.value) {
             tarjetaInfo.style.display = 'none';
+            tarjetaInfo.innerHTML = '';
             folioInput.value = '';
             puedeEnviar = false;
             actualizarBoton();
@@ -209,33 +263,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const numero = option.dataset.numero;
-        const requiere = option.dataset.requiere === 'true';
-        const tieneAuth = option.dataset.tieneAuth === 'true';
         const puedeUsar = option.dataset.puedeUsar === 'true';
+        const usuariosAsignados = option.dataset.usuarios;
         
-        // Mostrar info de la tarjeta
         tarjetaInfo.style.display = 'block';
         
         if (puedeUsar) {
             tarjetaInfo.className = 'tarjeta-info puede-usar';
-            tarjetaInfo.innerHTML = '✅ Puedes usar esta tarjeta.';
+            let html = '✅ Puedes usar esta tarjeta.';
+            if (usuariosAsignados) {
+                html += `<br><small>👥 Asignada a: ${usuariosAsignados}</small>`;
+            }
+            tarjetaInfo.innerHTML = html;
             puedeEnviar = true;
-        } else if (requiere && !tieneAuth) {
+        } else {
             tarjetaInfo.className = 'tarjeta-info sin-auth';
-            tarjetaInfo.innerHTML = `
-                🔒 Esta tarjeta requiere autorización de Dirección.<br>
-                <button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})">
-                    Solicitar Autorización
-                </button>
-            `;
+            let html = '🔒 No tienes acceso a esta tarjeta.';
+            if (usuariosAsignados) {
+                html += `<br><small>👥 Asignada a: ${usuariosAsignados}</small>`;
+            }
+            html += `<br><button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})">
+                📝 Solicitar Autorización
+            </button>`;
+            tarjetaInfo.innerHTML = html;
             puedeEnviar = false;
         }
         
         actualizarBoton();
         
-        // Obtener folio
+        // Obtener folio automático
         if (numero) {
-            fetch(`{{ url_for("main.siguiente_folio_papeleta") }}?tarjeta=${numero}`)
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.folio) {
@@ -246,12 +304,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Cuando escribe en input manual
+    // === INPUT MANUAL DE TARJETA ===
     tarjetaManual.addEventListener('input', function() {
         const tarjeta = this.value;
         
         if (tarjeta.length === 4 && /^\d{4}$/.test(tarjeta)) {
-            fetch(`{{ url_for("main.siguiente_folio_papeleta") }}?tarjeta=${tarjeta}`)
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${tarjeta}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.folio) {
@@ -267,20 +325,80 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarBoton();
     });
     
-    // Actualizar estado del botón
-    function actualizarBoton() {
-        if (puedeEnviar) {
-            btnSubmit.disabled = false;
-            btnSubmit.style.opacity = '1';
-            btnSubmit.style.cursor = 'pointer';
-        } else {
-            btnSubmit.disabled = true;
-            btnSubmit.style.opacity = '0.5';
-            btnSubmit.style.cursor = 'not-allowed';
-        }
+    // === CÁLCULO AUTOMÁTICO DE MONTOS ===
+    function calcularTotal() {
+        const ticket = parseFloat(totalTicket.value) || 0;
+        const comision = parseFloat(diezPorciento.value) || 0;
+        const cargoServicio = parseFloat(cargo.value) || 0;
+        
+        const total = ticket + comision + cargoServicio;
+        totalFinal.value = total.toFixed(2);
     }
     
-    // Validar antes de enviar
+    // Calcular 10% automáticamente
+    btnCalcular10.addEventListener('click', function() {
+        const ticket = parseFloat(totalTicket.value) || 0;
+        const diez = ticket * 0.10;
+        diezPorciento.value = diez.toFixed(2);
+        calcularTotal();
+    });
+    
+    // Recalcular total cuando cambian los valores
+    totalTicket.addEventListener('input', calcularTotal);
+    diezPorciento.addEventListener('input', calcularTotal);
+    cargo.addEventListener('input', calcularTotal);
+    
+    // === CARGAR CARGOS DE EMPRESA ===
+    empresaSelect.addEventListener('change', function() {
+        const empresaId = this.value;
+        
+        if (!empresaId) {
+            cargoEmpresaInfo.innerHTML = '';
+            cargo.value = '0';
+            calcularTotal();
+            return;
+        }
+        
+        fetch(`/api/cargos-empresa/${empresaId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.cargo_visible !== null || data.cargo_oculto !== null) {
+                    const cargoVisible = data.cargo_visible || 0;
+                    const cargoOculto = data.cargo_oculto || 0;
+                    
+                    // Usar cargo visible por defecto
+                    cargo.value = cargoVisible.toFixed(2);
+                    
+                    let info = '';
+                    if (cargoVisible > 0) {
+                        info += `💰 Cargo visible: $${cargoVisible.toFixed(2)}`;
+                    }
+                    if (cargoOculto > 0) {
+                        info += info ? ' | ' : '';
+                        info += `🔒 Cargo oculto: $${cargoOculto.toFixed(2)}`;
+                    }
+                    cargoEmpresaInfo.innerHTML = info;
+                    cargoEmpresaInfo.style.color = '#28a745';
+                } else {
+                    cargoEmpresaInfo.innerHTML = 'ℹ️ Sin cargos configurados';
+                    cargoEmpresaInfo.style.color = '#6c757d';
+                    cargo.value = '0';
+                }
+                calcularTotal();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                cargoEmpresaInfo.innerHTML = '';
+            });
+    });
+    
+    // === ACTUALIZAR BOTÓN ===
+    function actualizarBoton() {
+        btnSubmit.disabled = !puedeEnviar;
+        btnSubmit.classList.toggle('disabled', !puedeEnviar);
+    }
+    
+    // === VALIDAR ANTES DE ENVIAR ===
     formPapeleta.addEventListener('submit', function(e) {
         if (!puedeEnviar) {
             e.preventDefault();
@@ -296,15 +414,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Inicializar
+    // === INICIALIZACIÓN ===
     actualizarBoton();
     
-    // Establecer fecha de hoy por defecto
+    // Fecha de hoy por defecto
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha_venta').value = hoy;
+    
+    // Inicializar total en 0
+    totalFinal.value = '0.00';
+    
+    // === TIPO DE CARGO (Aerolínea, Hotel, Auto, Otro) ===
+    const tipoCargo = document.getElementById('tipo_cargo');
+    const aerolineaGroup = document.getElementById('aerolineaGroup');
+    const proveedorGroup = document.getElementById('proveedorGroup');
+    const aerolineaSelect = document.getElementById('aerolinea_id');
+    const proveedorInput = document.getElementById('proveedor');
+    
+    tipoCargo.addEventListener('change', function() {
+        const tipo = this.value;
+        
+        if (tipo === 'aerolinea') {
+            aerolineaGroup.style.display = 'flex';
+            proveedorGroup.style.display = 'none';
+            aerolineaSelect.required = true;
+            proveedorInput.required = false;
+            proveedorInput.value = '';
+        } else if (tipo === 'hotel' || tipo === 'auto' || tipo === 'otro') {
+            aerolineaGroup.style.display = 'none';
+            proveedorGroup.style.display = 'flex';
+            aerolineaSelect.required = false;
+            aerolineaSelect.value = '';
+            proveedorInput.required = true;
+            
+            // Cambiar placeholder según tipo
+            if (tipo === 'hotel') {
+                proveedorInput.placeholder = 'Ej: Marriott, Hilton, Holiday Inn...';
+            } else if (tipo === 'auto') {
+                proveedorInput.placeholder = 'Ej: Hertz, Avis, National...';
+            } else {
+                proveedorInput.placeholder = 'Especifica el proveedor o servicio...';
+            }
+        } else {
+            aerolineaGroup.style.display = 'flex';
+            proveedorGroup.style.display = 'none';
+            aerolineaSelect.required = false;
+            proveedorInput.required = false;
+        }
+    });
 });
 
-// Funciones del modal
+// === FUNCIONES DEL MODAL ===
 function abrirModalAutorizacion(tarjetaId) {
     document.getElementById('modal_tarjeta_id').value = tarjetaId;
     document.getElementById('modalAutorizacion').classList.add('active');
@@ -312,11 +472,19 @@ function abrirModalAutorizacion(tarjetaId) {
 
 function cerrarModal() {
     document.getElementById('modalAutorizacion').classList.remove('active');
+    document.getElementById('motivo').value = '';
 }
 
 // Cerrar modal al hacer clic fuera
 document.getElementById('modalAutorizacion').addEventListener('click', function(e) {
     if (e.target === this) {
+        cerrarModal();
+    }
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
         cerrarModal();
     }
 });

@@ -5,45 +5,78 @@
 {% endblock %}
 
 {% block content %}
-<div class="table-container">
-    <div class="table-header">
-        <h2>Papeletas Registradas</h2>
-        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">Añadir Nueva Papeleta</a>
+<div class="papeletas-container">
+    <div class="page-header">
+        <h2>📋 Papeletas Registradas</h2>
+        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">+ Nueva Papeleta</a>
     </div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Fecha Venta</th>
-                <th>Facturar a</th>
-                <th>Aerolínea</th>
-                <th>Total</th>
-                <th>Tarjeta</th>
-                <th>Creado por</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for papeleta in papeletas_registradas %}
-            <tr>
-                <td>{{ papeleta.folio }}</td>
-                <td>{{ papeleta.fecha_venta }}</td>
-                <td>{{ papeleta.facturar_a }}</td>
-                <td>{{ papeleta.aerolinea.nombre if papeleta.aerolinea else '---' }}</td>
-                <td>${{ papeleta.total }}</td>
-                <td>**** {{ papeleta.tarjeta }}</td>
-                <td>{{ papeleta.usuario.nombre }}</td>
-                <td class="actions">
-                    <a href="#" class="btn-edit">Editar</a>
-                    <a href="#" class="btn-delete">Eliminar</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="8" class="no-data">No hay papeletas registradas todavía.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    
+    {% if papeletas_por_tarjeta %}
+        {% for tarjeta, papeletas in papeletas_por_tarjeta.items() %}
+        <div class="tarjeta-group">
+            <div class="tarjeta-header">
+                <div class="tarjeta-info-header">
+                    <span class="tarjeta-icon">💳</span>
+                    <div class="tarjeta-details">
+                        <h3>{{ tarjeta.nombre if tarjeta.nombre else 'Tarjeta ' + tarjeta.numero }}</h3>
+                        <span class="tarjeta-numero">**** {{ tarjeta.numero }}</span>
+                        {% if tarjeta.banco %}
+                            <span class="tarjeta-banco">{{ tarjeta.banco }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="tarjeta-stats">
+                    <span class="stat-badge">{{ papeletas|length }} papeleta{{ 's' if papeletas|length > 1 else '' }}</span>
+                    <span class="stat-total">${{ "%.2f"|format(papeletas|sum(attribute='total_ticket')|float) }}</span>
+                </div>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Facturar a</th>
+                        <th>Aerolínea/Proveedor</th>
+                        <th>Total Ticket</th>
+                        <th>Creado por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for papeleta in papeletas %}
+                    <tr>
+                        <td><strong>{{ papeleta.folio }}</strong></td>
+                        <td>{{ papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '---' }}</td>
+                        <td>{{ papeleta.facturar_a }}</td>
+                        <td>
+                            {% if papeleta.aerolinea %}
+                                ✈️ {{ papeleta.aerolinea.nombre }}
+                            {% elif papeleta.proveedor %}
+                                📝 {{ papeleta.proveedor }}
+                            {% else %}
+                                ---
+                            {% endif %}
+                        </td>
+                        <td class="monto">${{ "%.2f"|format(papeleta.total_ticket|float) }}</td>
+                        <td>{{ papeleta.usuario.nombre }}</td>
+                        <td class="actions">
+                            <a href="{{ url_for('main.editar_papeleta', id=papeleta.id) }}" class="btn-edit">Editar</a>
+                            <a href="{{ url_for('main.eliminar_papeleta', id=papeleta.id) }}" class="btn-delete" onclick="return confirm('¿Eliminar papeleta {{ papeleta.folio }}?')">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No hay papeletas registradas</h3>
+            <p>Comienza agregando una nueva papeleta.</p>
+            <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">+ Crear Primera Papeleta</a>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

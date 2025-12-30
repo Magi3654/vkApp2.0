@@ -1,6 +1,21 @@
 /* stylesautorizaciones.css - Estilos para el panel de autorizaciones */
 
 /* ============================================
+   VARIABLES DE COLOR (TU PALETA)
+   ============================================ */
+:root {
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    
+    /* Semántica de estado */
+    --status-success: #198754; /* Verde estándar corporativo */
+    --status-warning: #ffc107; /* Amarillo alerta */
+}
+
+/* ============================================
    CONTENEDOR PRINCIPAL
    ============================================ */
 .crud-container {
@@ -21,7 +36,7 @@
 
 .page-header h2 {
     margin: 0;
-    color: #333;
+    color: var(--graphite);
     font-size: 1.75rem;
     display: flex;
     align-items: center;
@@ -29,7 +44,8 @@
 }
 
 .badge-count {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    /* Usamos tu gradiente rojo para notificaciones importantes */
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
     padding: 0.35rem 0.85rem;
     border-radius: 20px;
@@ -60,39 +76,42 @@
     margin-bottom: 1.5rem;
     overflow: hidden;
     transition: all 0.3s ease;
+    border: 1px solid var(--alabaster-grey); /* Borde sutil */
 }
 
 .card:hover {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
+/* Bordes laterales de estado */
 .auth-card {
-    border-left: 5px solid #ffc107;
+    border-left: 5px solid var(--status-warning); /* Pendiente por defecto */
 }
 
 .auth-card.aprobada {
-    border-left-color: #28a745;
+    border-left-color: var(--status-success);
 }
 
 .auth-card.rechazada {
-    border-left-color: #dc3545;
+    border-left-color: var(--brick-ember); /* Rojo marca para rechazo */
 }
 
 .auth-card.pendiente {
-    border-left-color: #ffc107;
+    border-left-color: var(--status-warning);
 }
 
 .card-header {
-    background: #f8f9fa;
+    background: var(--bright-snow);
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--alabaster-grey);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .card-header strong {
-    color: #333;
+    color: var(--graphite);
     font-size: 1rem;
 }
 
@@ -131,7 +150,7 @@
 
 .auth-info-item span {
     font-weight: 600;
-    color: #333;
+    color: var(--graphite);
     font-size: 0.95rem;
 }
 
@@ -139,10 +158,11 @@
    MOTIVO Y RESPUESTA
    ============================================ */
 .auth-motivo {
-    background: #f8f9fa;
+    background: var(--bright-snow);
     padding: 1rem 1.25rem;
     border-radius: 8px;
     margin-bottom: 1rem;
+    border: 1px solid var(--alabaster-grey);
 }
 
 .auth-motivo label {
@@ -156,7 +176,7 @@
 
 .auth-motivo p {
     margin: 0;
-    color: #333;
+    color: var(--graphite);
     line-height: 1.5;
 }
 
@@ -166,24 +186,24 @@
     color: #888;
 }
 
-/* Respuesta aprobada */
+/* Respuesta aprobada - Mantenemos verde suave */
 .auth-motivo.respuesta-aprobada {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
 }
 
 .auth-motivo.respuesta-aprobada label {
-    color: #155724;
+    color: var(--status-success);
 }
 
-/* Respuesta rechazada */
+/* Respuesta rechazada - Rojo suave (marca) */
 .auth-motivo.respuesta-rechazada {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
+    background: #fff5f5;
+    border: 1px solid #ffcccc;
 }
 
 .auth-motivo.respuesta-rechazada label {
-    color: #721c24;
+    color: var(--oxblood);
 }
 
 /* ============================================
@@ -200,18 +220,22 @@
 }
 
 .badge-warning {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+    background: #fff3cd;
     color: #856404;
+    border: 1px solid #ffeeba;
 }
 
 .badge-success {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    color: #155724;
+    background: #d1e7dd;
+    color: #0f5132;
+    border: 1px solid #badbcc;
 }
 
 .badge-danger {
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    color: #721c24;
+    /* Rojo marca para badges de rechazo/peligro */
+    background: #f8d7da;
+    color: var(--oxblood);
+    border: 1px solid #f5c2c7;
 }
 
 /* ============================================
@@ -223,7 +247,7 @@
     flex-wrap: wrap;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--alabaster-grey);
 }
 
 .btn {
@@ -240,33 +264,38 @@
     transition: all 0.3s ease;
 }
 
+/* Aprobar: Mantenemos verde por usabilidad, pero ajustado */
 .btn-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
     color: white;
 }
 
 .btn-success:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
 }
 
+/* Rechazar: Usamos el rojo potente de tu marca */
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
 }
 
 .btn-danger:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    box-shadow: 0 4px 12px rgba(185, 5, 4, 0.4);
 }
 
+/* Secundario: Gris sobrio */
 .btn-secondary {
-    background: #6c757d;
-    color: white;
+    background: var(--bright-snow);
+    color: var(--graphite);
+    border: 1px solid var(--alabaster-grey);
 }
 
 .btn-secondary:hover {
-    background: #5a6268;
+    background: var(--alabaster-grey);
+    color: black;
 }
 
 /* ============================================
@@ -282,11 +311,13 @@
     font-size: 4rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    color: var(--alabaster-grey);
 }
 
 .empty-state p {
     margin: 0;
     font-size: 1.1rem;
+    color: var(--graphite);
 }
 
 /* ============================================
@@ -299,7 +330,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6); /* Oscurecido ligeramente */
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -318,6 +349,7 @@
     width: 90%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease;
+    border: 1px solid var(--alabaster-grey);
 }
 
 @keyframes modalSlideIn {
@@ -337,12 +369,12 @@
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--alabaster-grey);
 }
 
 .modal-header h3 {
     margin: 0;
-    color: #333;
+    color: var(--graphite);
     font-size: 1.25rem;
 }
 
@@ -358,7 +390,7 @@
 }
 
 .modal-close:hover {
-    color: #333;
+    color: var(--brick-ember); /* Rojo al hacer hover cerrar */
     transform: rotate(90deg);
 }
 
@@ -374,25 +406,28 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #555;
+    color: var(--graphite);
 }
 
 .form-group textarea {
     width: 100%;
     min-height: 100px;
     padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--alabaster-grey);
     border-radius: 8px;
     resize: vertical;
     font-family: inherit;
     font-size: 0.95rem;
     transition: all 0.2s ease;
+    background: var(--bright-snow);
+    color: var(--graphite);
 }
 
 .form-group textarea:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    border-color: var(--brick-ember); /* Foco en rojo marca */
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.15);
+    background: white;
 }
 
 .modal-footer {

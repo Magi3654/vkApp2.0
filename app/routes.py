@@ -8,10 +8,35 @@ from .models import (
     CargoServicio, Descuento, TarifaFija, Sucursal, TarjetaCorporativa, Autorizacion,
     TarjetaUsuario
 )
-from datetime import datetime
+# Cambio 1: Agregamos timedelta para cálculos de tiempo
+from datetime import datetime, timedelta
 from sqlalchemy import func
+from collections import OrderedDict
 
 main = Blueprint('main', __name__)
+
+# =============================================================================
+# FUNCIONES AUXILIARES (Corrección de Timezone)
+# =============================================================================
+
+def es_vigente_local(autorizacion, horas=24):
+    """
+    Verifica si una autorización está vigente manejando correctamente 
+    las zonas horarias (offset-aware vs offset-naive) para evitar el TypeError.
+    """
+    if not autorizacion or not autorizacion.fecha_respuesta:
+        return False
+    
+    fecha_resp = autorizacion.fecha_respuesta
+    
+    # Si la fecha de la BD tiene zona horaria, usamos current time con esa zona
+    if fecha_resp.tzinfo is not None:
+        ahora = datetime.now(fecha_resp.tzinfo)
+    else:
+        # Si no tiene zona horaria, usamos UTC simple
+        ahora = datetime.utcnow()
+        
+    return ahora < (fecha_resp + timedelta(hours=horas))
 
 
 # =============================================================================
@@ -27,7 +52,6 @@ def index():
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    # Contar autorizaciones pendientes para mostrar badge (solo para director)
     autorizaciones_pendientes = 0
     if current_user.rol in ['director', 'administrador', 'admin']:
         autorizaciones_pendientes = Autorizacion.query.filter_by(estatus='pendiente').count()
@@ -44,7 +68,6 @@ def dashboard():
 @main.route('/api/siguiente-folio-desglose')
 @login_required
 def siguiente_folio_desglose():
-    """Retorna el siguiente folio disponible para desgloses."""
     ultimo_folio = db.session.query(func.max(Desglose.folio)).scalar()
     siguiente = (ultimo_folio or 0) + 1
     return jsonify({'folio': siguiente})
@@ -53,11 +76,9 @@ def siguiente_folio_desglose():
 @main.route('/api/siguiente-folio-papeleta')
 @login_required
 def siguiente_folio_papeleta():
-    """Retorna el siguiente folio disponible para una tarjeta específica."""
     tarjeta = request.args.get('tarjeta', '')
     tarjeta_id = request.args.get('tarjeta_id', '')
 
-    # Si viene tarjeta_id, obtener el número de la tarjeta
     if tarjeta_id:
         tarjeta_obj = TarjetaCorporativa.query.get(tarjeta_id)
         if tarjeta_obj:
@@ -66,7 +87,6 @@ def siguiente_folio_papeleta():
     if not tarjeta or len(tarjeta) < 2:
         return jsonify({'error': 'Tarjeta inválida'}), 400
 
-    # Buscar el último folio para esta tarjeta
     ultima_papeleta = Papeleta.query.filter(
         Papeleta.folio.like(f"{tarjeta}-%")
     ).order_by(Papeleta.id.desc()).first()
@@ -87,7 +107,6 @@ def siguiente_folio_papeleta():
 @main.route('/api/cargos-empresa/<int:empresa_id>')
 @login_required
 def cargos_empresa(empresa_id):
-    """Retorna los cargos por servicio de una empresa."""
     empresa = Empresa.query.get_or_404(empresa_id)
 
     cargo_visible = None
@@ -108,7 +127,6 @@ def cargos_empresa(empresa_id):
 @main.route('/api/verificar-tarjeta/<int:tarjeta_id>')
 @login_required
 def verificar_tarjeta(tarjeta_id):
-    """Verifica si una tarjeta requiere autorización para el usuario actual."""
     tarjeta = TarjetaCorporativa.query.get_or_404(tarjeta_id)
     
     requiere_autorizacion = tarjeta.requiere_autorizacion(current_user)
@@ -116,14 +134,14 @@ def verificar_tarjeta(tarjeta_id):
     autorizacion_id = None
     
     if requiere_autorizacion:
-        # Buscar si tiene una autorización vigente
         autorizacion = Autorizacion.query.filter_by(
             tarjeta_id=tarjeta_id,
             solicitante_id=current_user.id,
             estatus='aprobada'
         ).order_by(Autorizacion.fecha_respuesta.desc()).first()
         
-        if autorizacion and autorizacion.esta_vigente(horas=24):
+        # Cambio: Usamos la funcion auxiliar en lugar del metodo del modelo
+        if autorizacion and es_vigente_local(autorizacion, horas=24):
             tiene_autorizacion = True
             autorizacion_id = autorizacion.id
     
@@ -142,14 +160,12 @@ def verificar_tarjeta(tarjeta_id):
 @main.route('/api/tarjetas-disponibles')
 @login_required
 def tarjetas_disponibles():
-    """Retorna las tarjetas disponibles para el usuario actual."""
     tarjetas = TarjetaCorporativa.query.filter_by(activa=True).all()
     
     resultado = []
     for t in tarjetas:
         requiere_auth = t.requiere_autorizacion(current_user)
         
-        # Verificar si tiene autorización vigente
         tiene_auth = False
         if requiere_auth:
             auth = Autorizacion.query.filter_by(
@@ -157,7 +173,8 @@ def tarjetas_disponibles():
                 solicitante_id=current_user.id,
                 estatus='aprobada'
             ).order_by(Autorizacion.fecha_respuesta.desc()).first()
-            tiene_auth = auth and auth.esta_vigente(horas=24)
+            # Cambio: Usamos funcion auxiliar local
+            tiene_auth = es_vigente_local(auth, horas=24)
         
         resultado.append({
             'id': t.id,
@@ -170,7 +187,6 @@ def tarjetas_disponibles():
             'puede_usar': not requiere_auth or tiene_auth
         })
     
-    # Ordenar: primero las que puede usar, luego las que requieren autorización
     resultado.sort(key=lambda x: (not x['puede_usar'], x['nombre_tarjeta']))
     
     return jsonify(resultado)
@@ -183,7 +199,6 @@ def tarjetas_disponibles():
 @main.route('/tarjetas')
 @login_required
 def tarjetas():
-    """Lista todas las tarjetas corporativas."""
     if not current_user.es_gerente_o_superior():
         flash('Acceso no autorizado.', 'danger')
         return redirect(url_for('main.dashboard'))
@@ -199,7 +214,6 @@ def tarjetas():
 @main.route('/tarjetas/nueva', methods=['POST'])
 @login_required
 def nueva_tarjeta():
-    """Crea una nueva tarjeta corporativa."""
     if not current_user.es_gerente_o_superior():
         flash('Acceso no autorizado.', 'danger')
         return redirect(url_for('main.dashboard'))
@@ -212,7 +226,6 @@ def nueva_tarjeta():
             flash('El número y nombre de la tarjeta son obligatorios.', 'warning')
             return redirect(url_for('main.tarjetas'))
         
-        # Verificar si ya existe
         if TarjetaCorporativa.query.filter_by(numero_tarjeta=numero).first():
             flash(f'Ya existe una tarjeta con el número {numero}.', 'warning')
             return redirect(url_for('main.tarjetas'))
@@ -243,7 +256,6 @@ def nueva_tarjeta():
 @main.route('/tarjetas/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_tarjeta(id):
-    """Edita una tarjeta corporativa y sus asignaciones de agentes."""
     if not current_user.es_gerente_o_superior():
         flash('Acceso no autorizado.', 'danger')
         return redirect(url_for('main.dashboard'))
@@ -252,7 +264,6 @@ def editar_tarjeta(id):
     
     if request.method == 'POST':
         try:
-            # Actualizar datos básicos
             tarjeta.numero_tarjeta = request.form.get('numero_tarjeta', '').strip()
             tarjeta.nombre_tarjeta = request.form.get('nombre_tarjeta', '').strip()
             tarjeta.banco = request.form.get('banco', '').strip() or None
@@ -263,14 +274,11 @@ def editar_tarjeta(id):
             
             tarjeta.activa = request.form.get('activa') == 'on'
             
-            # Procesar asignaciones de agentes
             agentes_ids = request.form.getlist('agentes_ids')
             agentes_ids = [int(aid) for aid in agentes_ids if aid]
             
-            # Eliminar asignaciones anteriores
             TarjetaUsuario.query.filter_by(tarjeta_id=tarjeta.id).delete()
             
-            # Crear nuevas asignaciones
             for usuario_id in agentes_ids:
                 nueva_asignacion = TarjetaUsuario(
                     tarjeta_id=tarjeta.id,
@@ -288,13 +296,9 @@ def editar_tarjeta(id):
             db.session.rollback()
             flash(f'Error al actualizar: {str(e)}', 'danger')
     
-    # GET: Cargar datos para el formulario
     sucursales = Sucursal.query.filter_by(activa=True).all()
-    
-    # Mostrar TODOS los usuarios
     usuarios = Usuario.query.order_by(Usuario.nombre).all()
     
-    # IDs de usuarios ya asignados a esta tarjeta
     usuarios_asignados_ids = [
         asig.usuario_id for asig in TarjetaUsuario.query.filter_by(
             tarjeta_id=tarjeta.id, 
@@ -312,14 +316,12 @@ def editar_tarjeta(id):
 @main.route('/tarjetas/eliminar/<int:id>')
 @login_required
 def eliminar_tarjeta(id):
-    """Elimina una tarjeta corporativa."""
     if not current_user.es_admin():
         flash('Solo los administradores pueden eliminar tarjetas.', 'danger')
         return redirect(url_for('main.tarjetas'))
     
     tarjeta = TarjetaCorporativa.query.get_or_404(id)
     
-    # Verificar si tiene papeletas asociadas
     if tarjeta.papeletas.count() > 0:
         flash('No se puede eliminar: la tarjeta tiene papeletas asociadas.', 'warning')
         return redirect(url_for('main.tarjetas'))
@@ -339,15 +341,12 @@ def eliminar_tarjeta(id):
 @main.route('/autorizaciones')
 @login_required
 def autorizaciones():
-    """Lista de autorizaciones (pendientes para director, propias para agentes)."""
     if current_user.rol in ['director', 'administrador', 'admin']:
-        # Director ve todas las pendientes
         lista = Autorizacion.query.filter_by(estatus='pendiente').order_by(
             Autorizacion.fecha_solicitud.asc()
         ).all()
         es_director = True
     else:
-        # Agentes ven solo las suyas
         lista = Autorizacion.query.filter_by(solicitante_id=current_user.id).order_by(
             Autorizacion.fecha_solicitud.desc()
         ).all()
@@ -361,7 +360,6 @@ def autorizaciones():
 @main.route('/autorizaciones/solicitar', methods=['POST'])
 @login_required
 def solicitar_autorizacion():
-    """Solicita autorización para usar una tarjeta."""
     try:
         tarjeta_id = request.form.get('tarjeta_id')
         motivo = request.form.get('motivo', '').strip()
@@ -372,7 +370,6 @@ def solicitar_autorizacion():
         
         tarjeta = TarjetaCorporativa.query.get_or_404(tarjeta_id)
         
-        # Verificar si ya tiene una solicitud pendiente para esta tarjeta
         existente = Autorizacion.query.filter_by(
             tarjeta_id=tarjeta_id,
             solicitante_id=current_user.id,
@@ -383,13 +380,12 @@ def solicitar_autorizacion():
             flash('Ya tienes una solicitud pendiente para esta tarjeta.', 'warning')
             return redirect(url_for('main.autorizaciones'))
         
-        # Crear la solicitud
         nueva_auth = Autorizacion(
             tipo='uso_tarjeta',
             solicitante_id=current_user.id,
             tarjeta_id=tarjeta_id,
             motivo=motivo,
-            sucursal_id=current_user.sucursal_id or 1  # Default a primera sucursal si no tiene
+            sucursal_id=current_user.sucursal_id or 1
         )
         
         db.session.add(nueva_auth)
@@ -408,7 +404,6 @@ def solicitar_autorizacion():
 @main.route('/autorizaciones/responder/<int:id>', methods=['POST'])
 @login_required
 def responder_autorizacion(id):
-    """Aprueba o rechaza una autorización (solo director)."""
     if current_user.rol not in ['director', 'administrador', 'admin']:
         flash('Solo Dirección puede aprobar autorizaciones.', 'danger')
         return redirect(url_for('main.dashboard'))
@@ -443,28 +438,70 @@ def responder_autorizacion(id):
 
 
 # =============================================================================
-# RUTAS DE PAPELETAS (ACTUALIZADAS)
+# RUTAS DE PAPELETAS
 # =============================================================================
 
 @main.route('/papeletas', methods=['GET'])
 @login_required
 def consulta_papeletas():
-    """Muestra la lista de papeletas (filtradas por sucursal si aplica)."""
+    """Muestra la lista de papeletas agrupadas por tarjeta."""
     if current_user.es_admin():
-        # Admin ve todas
-        papeletas_list = Papeleta.query.order_by(Papeleta.id.desc()).all()
+        papeletas_list = Papeleta.query.order_by(Papeleta.tarjeta, Papeleta.fecha_venta.desc()).all()
     elif current_user.es_gerente_o_superior():
-        # Gerente ve las de su sucursal
         papeletas_list = Papeleta.query.filter_by(
             sucursal_id=current_user.sucursal_id
-        ).order_by(Papeleta.id.desc()).all()
+        ).order_by(Papeleta.tarjeta, Papeleta.fecha_venta.desc()).all()
     else:
-        # Agente ve solo las suyas
         papeletas_list = Papeleta.query.filter_by(
             usuario_id=current_user.id
-        ).order_by(Papeleta.id.desc()).all()
+        ).order_by(Papeleta.tarjeta, Papeleta.fecha_venta.desc()).all()
     
-    return render_template('consulta_papeletas.html', papeletas_registradas=papeletas_list)
+    papeletas_por_tarjeta = OrderedDict()
+    
+    for papeleta in papeletas_list:
+        tarjeta_numero = papeleta.tarjeta
+        
+        tarjeta_info = None
+        if papeleta.tarjeta_id:
+            tarjeta_obj = TarjetaCorporativa.query.get(papeleta.tarjeta_id)
+            if tarjeta_obj:
+                tarjeta_info = {
+                    'numero': tarjeta_obj.numero_tarjeta,
+                    'nombre': tarjeta_obj.nombre_tarjeta,
+                    'banco': tarjeta_obj.banco
+                }
+        
+        if not tarjeta_info:
+            tarjeta_info = {
+                'numero': tarjeta_numero,
+                'nombre': None,
+                'banco': None
+            }
+        
+        class TarjetaKey:
+            def __init__(self, numero, nombre, banco):
+                self.numero = numero
+                self.nombre = nombre
+                self.banco = banco
+            
+            def __hash__(self):
+                return hash(self.numero)
+            
+            def __eq__(self, other):
+                return self.numero == other.numero
+        
+        tarjeta_key = TarjetaKey(
+            tarjeta_info['numero'],
+            tarjeta_info['nombre'],
+            tarjeta_info['banco']
+        )
+        
+        if tarjeta_key not in papeletas_por_tarjeta:
+            papeletas_por_tarjeta[tarjeta_key] = []
+        
+        papeletas_por_tarjeta[tarjeta_key].append(papeleta)
+    
+    return render_template('consulta_papeletas.html', papeletas_por_tarjeta=papeletas_por_tarjeta)
 
 
 @main.route('/papeletas/nueva', methods=['GET'])
@@ -477,7 +514,6 @@ def nueva_papeleta_form():
         TarjetaCorporativa.nombre_tarjeta
     ).all()
     
-    # Preparar info de tarjetas con estado de autorización
     tarjetas_info = []
     for t in tarjetas_list:
         requiere_auth = t.requiere_autorizacion(current_user)
@@ -489,13 +525,21 @@ def nueva_papeleta_form():
                 solicitante_id=current_user.id,
                 estatus='aprobada'
             ).order_by(Autorizacion.fecha_respuesta.desc()).first()
-            tiene_auth = auth and auth.esta_vigente(horas=24)
+            # Cambio: Usamos funcion auxiliar local
+            tiene_auth = es_vigente_local(auth, horas=24)
+        
+        usuarios_asignados = []
+        asignaciones = TarjetaUsuario.query.filter_by(tarjeta_id=t.id, activo=True).all()
+        for asig in asignaciones:
+            if asig.usuario:
+                usuarios_asignados.append(asig.usuario.nombre)
         
         tarjetas_info.append({
             'tarjeta': t,
             'requiere_autorizacion': requiere_auth,
             'tiene_autorizacion': tiene_auth,
-            'puede_usar': not requiere_auth or tiene_auth
+            'puede_usar': not requiere_auth or tiene_auth,
+            'usuarios_asignados': usuarios_asignados
         })
     
     return render_template(
@@ -511,7 +555,6 @@ def nueva_papeleta_form():
 def nueva_papeleta_post():
     """Recibe los datos del formulario y crea una nueva papeleta."""
     try:
-        # 1. Obtener tarjeta (puede ser del dropdown o manual)
         tarjeta_id = request.form.get('tarjeta_id')
         tarjeta_manual = request.form.get('tarjeta_manual', '').strip()
         
@@ -520,7 +563,6 @@ def nueva_papeleta_post():
         autorizacion_id = None
         
         if tarjeta_id:
-            # Usar tarjeta del catálogo
             tarjeta_obj = TarjetaCorporativa.query.get(tarjeta_id)
             if not tarjeta_obj:
                 flash('Tarjeta no encontrada.', 'danger')
@@ -528,7 +570,6 @@ def nueva_papeleta_post():
             
             tarjeta_numero = tarjeta_obj.numero_tarjeta
             
-            # Verificar autorización si es necesaria
             if tarjeta_obj.requiere_autorizacion(current_user):
                 auth = Autorizacion.query.filter_by(
                     tarjeta_id=tarjeta_id,
@@ -536,14 +577,14 @@ def nueva_papeleta_post():
                     estatus='aprobada'
                 ).order_by(Autorizacion.fecha_respuesta.desc()).first()
                 
-                if not auth or not auth.esta_vigente(horas=24):
+                # Cambio: Usamos funcion auxiliar local
+                if not es_vigente_local(auth, horas=24):
                     flash('Necesitas autorización vigente para usar esta tarjeta.', 'danger')
                     return redirect(url_for('main.nueva_papeleta_form'))
                 
                 autorizacion_id = auth.id
         
         elif tarjeta_manual:
-            # Usar tarjeta manual
             if len(tarjeta_manual) != 4 or not tarjeta_manual.isdigit():
                 flash('La terminación de tarjeta debe ser de 4 dígitos.', 'warning')
                 return redirect(url_for('main.nueva_papeleta_form'))
@@ -552,28 +593,22 @@ def nueva_papeleta_post():
             flash('Debe seleccionar o ingresar una tarjeta.', 'warning')
             return redirect(url_for('main.nueva_papeleta_form'))
         
-        # 2. Convertir fecha
         fecha_venta_str = request.form.get('fecha_venta')
         fecha_venta = datetime.strptime(fecha_venta_str, '%Y-%m-%d').date() if fecha_venta_str else None
 
-        # 3. Procesar empresa
         empresa_id_str = request.form.get('facturar_a')
         empresa_id = int(empresa_id_str) if empresa_id_str else None
 
-        # 4. Obtener nombre de empresa
         facturar_a_nombre = ''
         if empresa_id:
             empresa = Empresa.query.get(empresa_id)
             facturar_a_nombre = empresa.nombre_empresa if empresa else ''
 
-        # 5. Procesar aerolínea
         aerolinea_id_str = request.form.get('aerolinea_id')
         aerolinea_id = int(aerolinea_id_str) if aerolinea_id_str else None
 
-        # 6. Generar folio
         folio = request.form.get('folio')
         if not folio:
-            # Generar automáticamente si no viene
             ultima = Papeleta.query.filter(
                 Papeleta.folio.like(f"{tarjeta_numero}-%")
             ).order_by(Papeleta.id.desc()).first()
@@ -587,7 +622,6 @@ def nueva_papeleta_post():
                 num = 1
             folio = f"{tarjeta_numero}-{num:03d}"
 
-        # 7. Crear la papeleta
         nueva = Papeleta(
             folio=folio,
             tarjeta=tarjeta_numero,
@@ -620,8 +654,77 @@ def nueva_papeleta_post():
     return redirect(url_for('main.consulta_papeletas'))
 
 
+@main.route('/papeletas/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_papeleta(id):
+    """Edita una papeleta existente."""
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    if not current_user.es_admin() and papeleta.usuario_id != current_user.id:
+        flash('No tienes permiso para editar esta papeleta.', 'danger')
+        return redirect(url_for('main.consulta_papeletas'))
+    
+    if request.method == 'POST':
+        try:
+            papeleta.fecha_venta = datetime.strptime(request.form.get('fecha_venta'), '%Y-%m-%d').date()
+            papeleta.total_ticket = float(request.form.get('total_ticket', 0))
+            papeleta.diez_porciento = float(request.form.get('diez_porciento', 0))
+            papeleta.cargo = float(request.form.get('cargo', 0))
+            papeleta.total = float(request.form.get('total', 0))
+            papeleta.solicito = request.form.get('solicito', '')
+            papeleta.clave_sabre = request.form.get('clave_sabre', '')
+            papeleta.forma_pago = request.form.get('forma_pago', '')
+            
+            empresa_id = request.form.get('facturar_a')
+            if empresa_id:
+                papeleta.empresa_id = int(empresa_id)
+                empresa = Empresa.query.get(empresa_id)
+                papeleta.facturar_a = empresa.nombre_empresa if empresa else ''
+            
+            aerolinea_id = request.form.get('aerolinea_id')
+            papeleta.aerolinea_id = int(aerolinea_id) if aerolinea_id else None
+            
+            db.session.commit()
+            flash(f'Papeleta {papeleta.folio} actualizada con éxito.', 'success')
+            return redirect(url_for('main.consulta_papeletas'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar: {str(e)}', 'danger')
+    
+    empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
+    aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
+    
+    return render_template('papeleta_edit.html', 
+                           papeleta=papeleta, 
+                           empresas=empresas_list,
+                           aerolineas=aerolineas_list)
+
+
+@main.route('/papeletas/eliminar/<int:id>')
+@login_required
+def eliminar_papeleta(id):
+    """Elimina una papeleta."""
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    if not current_user.es_admin() and papeleta.usuario_id != current_user.id:
+        flash('No tienes permiso para eliminar esta papeleta.', 'danger')
+        return redirect(url_for('main.consulta_papeletas'))
+    
+    try:
+        folio = papeleta.folio
+        db.session.delete(papeleta)
+        db.session.commit()
+        flash(f'Papeleta {folio} eliminada.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al eliminar: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.consulta_papeletas'))
+
+
 # =============================================================================
-# RUTAS DE DESGLOSES (Sin cambios significativos)
+# RUTAS DE DESGLOSES
 # =============================================================================
 
 @main.route('/desgloses', methods=['GET'])
@@ -741,7 +844,7 @@ def eliminar_desglose(folio):
 
 
 # =============================================================================
-# RUTAS DE EMPRESAS (Sin cambios)
+# RUTAS DE EMPRESAS
 # =============================================================================
 
 @main.route('/empresas', methods=['GET'])
@@ -868,13 +971,12 @@ def eliminar_empresa(id):
 
 
 # =============================================================================
-# RUTAS DE SUCURSALES (CRUD)
+# RUTAS DE SUCURSALES
 # =============================================================================
 
 @main.route('/sucursales')
 @login_required
 def sucursales():
-    """Lista de sucursales (solo admin)."""
     if not current_user.es_admin():
         flash('Acceso no autorizado.', 'danger')
         return redirect(url_for('main.dashboard'))

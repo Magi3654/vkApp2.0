@@ -1,7 +1,16 @@
-/* Estilos para la página de gestión de Empresas (Diseño de 2 Columnas) */
+/* Estilos para la página de gestión de Empresas (Diseño de 2 Columnas) - Actualizado */
+
+:root {
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+}
 
 .crud-container {
-    /* Volvemos al layout de grid con dos columnas */
+    /* Layout de grid con dos columnas */
     display: grid;
     grid-template-columns: 1fr 2fr; /* El formulario ocupa 1/3 y la tabla 2/3 */
     gap: 2.5rem;
@@ -17,30 +26,46 @@
 }
 
 .form-section, .table-section {
-    padding: 2.5rem;
+    padding: 0; /* Quitamos padding del contenedor para que el header toque los bordes */
     background-color: var(--white);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--alabaster-grey);
+    overflow: hidden; /* Para que el header respete el radio del borde */
+    display: flex;
+    flex-direction: column;
 }
 
+/* Header con Gradiente Corporativo */
 .form-header, .table-header {
     margin-bottom: 2rem;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 1rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
 }
 
 .form-header h2, .table-header h2 {
-    color: var(--raisin-black);
+    color: white;
     margin: 0;
+    font-size: 1.35rem;
 }
 
 .form-header p {
-    color: var(--battleship-gray);
+    color: rgba(255, 255, 255, 0.85);
     margin-top: 0.25rem;
+    font-size: 0.9rem;
 }
 
+/* Ajuste de padding interno para el contenido que no es header */
+.crud-form, .table-content-wrapper {
+    padding: 0 2rem 2rem 2rem; /* Recuperamos el padding aquí */
+}
+
+/* ============================================
+   ELEMENTOS DE FORMULARIO
+   ============================================ */
 .crud-form fieldset {
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--alabaster-grey);
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 1.5rem;
@@ -49,6 +74,7 @@
 .crud-form legend {
     font-weight: 600;
     padding: 0 0.5rem;
+    color: var(--brick-ember); /* Detalle de color en el título del grupo */
 }
 
 .form-group {
@@ -59,14 +85,23 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    color: var(--graphite);
 }
 
 .form-group input {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--alabaster-grey);
     border-radius: 8px;
     font-size: 1rem;
+    color: var(--graphite);
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
 }
 
 .form-actions {
@@ -77,8 +112,11 @@
     justify-content: flex-end;
 }
 
+/* ============================================
+   BOTONES PRINCIPALES
+   ============================================ */
 .btn-submit {
-    background-color: var(--chili-red);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: var(--white);
     border: none;
     padding: 0.8rem 1.8rem;
@@ -86,23 +124,33 @@
     font-weight: bold;
     cursor: pointer;
     text-decoration: none;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-submit:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
 }
 
 .btn-cancel {
-    background-color: #6c757d;
-    color: white;
+    background-color: var(--bright-snow);
+    color: var(--graphite);
     text-decoration: none;
     padding: 0.8rem 1.8rem;
     border-radius: 8px;
     font-weight: bold;
+    border: 1px solid var(--alabaster-grey);
+    transition: all 0.2s ease;
 }
 
-/* Estilos de la Tabla */
+.btn-cancel:hover {
+    background-color: var(--alabaster-grey);
+    color: black;
+}
+
+/* ============================================
+   ESTILOS DE LA TABLA
+   ============================================ */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -111,33 +159,71 @@
 .data-table th, .data-table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--alabaster-grey);
 }
 
 .data-table th {
-    background-color: #f8f9fa;
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table td {
+    color: var(--graphite);
 }
 
 .data-table tbody tr:hover {
-    background-color: #f1f1f1;
+    background-color: #fafafa;
 }
 
+/* ============================================
+   ACCIONES DE TABLA
+   ============================================ */
 .actions a {
     text-decoration: none;
     padding: 0.4rem 0.8rem;
-    border-radius: 5px;
+    border-radius: 6px;
     margin-right: 0.5rem;
-    color: white;
     font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-block;
 }
 
-.btn-edit { background-color: #007bff; }
-.btn-delete { background-color: #dc3545; }
+/* Botón Editar: Sutil */
+.btn-edit { 
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    border: 1px solid var(--alabaster-grey);
+}
+
+.btn-edit:hover {
+    background-color: var(--alabaster-grey);
+    color: black;
+}
+
+/* Botón Eliminar: Rojo pálido */
+.btn-delete { 
+    background-color: #fff5f5;
+    color: var(--brick-ember);
+    border: 1px solid #ffecec;
+}
+
+.btn-delete:hover {
+    background-color: var(--brick-ember);
+    color: white;
+    border-color: var(--brick-ember);
+}
 
 .no-data {
     text-align: center;
-    padding: 2rem;
-    color: var(--battleship-gray);
+    padding: 3rem;
+    color: #888;
     font-style: italic;
+    background-color: var(--bright-snow);
+    margin: 2rem;
+    border-radius: 8px;
 }
-

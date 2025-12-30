@@ -451,6 +451,8 @@ class Papeleta(db.Model):
     usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'))
     aerolinea_id = db.Column(db.BigInteger, db.ForeignKey('aerolineas.id'))
+    tipo_cargo = db.Column(db.String(50))  # 'aerolinea', 'hotel', 'auto', 'otro'
+    proveedor = db.Column(db.String(255))   # Nombre del hotel, rentadora, etc.
     
     # Nuevos campos
     desglose_folio = db.Column(db.BigInteger, db.ForeignKey('desgloses.folio'))

@@ -1,6 +1,24 @@
 /* stylestarjetas.css - Estilos para la gestión de tarjetas corporativas */
 
 /* ============================================
+   VARIABLES DE COLOR (TU PALETA)
+   ============================================ */
+:root {
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+    
+    /* Estados */
+    --status-success-bg: #d1e7dd;
+    --status-success-text: #0f5132;
+    --status-warning-bg: #fff3cd;
+    --status-warning-text: #856404;
+}
+
+/* ============================================
    CONTENEDOR PRINCIPAL
    ============================================ */
 .crud-container {
@@ -21,12 +39,13 @@
 
 .page-header h2 {
     margin: 0;
-    color: #333;
+    color: var(--graphite);
     font-size: 1.75rem;
 }
 
+/* Botón principal de acción (ej: Nueva Tarjeta) */
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -43,29 +62,31 @@
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
 }
 
 /* ============================================
    CARDS
    ============================================ */
 .card {
-    background: white;
+    background: var(--white);
     border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     margin-bottom: 1.5rem;
+    border: 1px solid var(--alabaster-grey);
 }
 
 .card-header {
-    background: #f8f9fa;
+    /* Gradiente corporativo para encabezados de sección */
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
 .card-header h3 {
     margin: 0;
-    color: #333;
+    color: white;
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -92,7 +113,7 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #555;
+    color: var(--graphite);
     font-size: 0.9rem;
 }
 
@@ -100,18 +121,19 @@
 .form-group select {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--alabaster-grey);
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.2s ease;
-    background: white;
+    background: var(--white);
+    color: var(--graphite);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    border-color: var(--brick-ember); /* Foco en rojo */
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.15);
 }
 
 .form-group input::placeholder {
@@ -124,11 +146,11 @@
     justify-content: flex-end;
     margin-top: 1.5rem;
     padding-top: 1rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--alabaster-grey);
 }
 
 .btn-submit {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -144,13 +166,13 @@
 
 .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
 }
 
 .btn-cancel {
-    background-color: #6c757d;
-    color: white;
-    border: none;
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    border: 1px solid var(--alabaster-grey);
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
     cursor: pointer;
@@ -160,7 +182,8 @@
 }
 
 .btn-cancel:hover {
-    background-color: #5a6268;
+    background-color: var(--alabaster-grey);
+    color: black;
 }
 
 /* ============================================
@@ -178,16 +201,20 @@ table {
 th, td {
     padding: 1rem 1.25rem;
     text-align: left;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--alabaster-grey);
 }
 
 th {
-    background: #f8f9fa;
+    background: var(--bright-snow);
     font-weight: 600;
-    color: #555;
+    color: var(--graphite);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+td {
+    color: var(--graphite);
 }
 
 tbody tr {
@@ -195,13 +222,14 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background: #f8f9fa;
+    background: #fafafa;
 }
 
 td strong {
-    color: #333;
+    color: var(--graphite);
     font-family: 'Monaco', 'Consolas', monospace;
     font-size: 1.05rem;
+    letter-spacing: 1px;
 }
 
 /* ============================================
@@ -216,29 +244,30 @@ td strong {
 }
 
 .badge-success {
-    background: #d4edda;
-    color: #155724;
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
 }
 
 .badge-danger {
+    /* Rojo marca para badges de alerta */
     background: #f8d7da;
-    color: #721c24;
+    color: var(--oxblood);
 }
 
 .badge-info {
-    background: #d1ecf1;
-    color: #0c5460;
+    background: #e3f2fd;
+    color: #0d47a1;
 }
 
 .badge-warning {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
 }
 
 /* Badge sin asignar */
 .badge:not([class*="badge-"]) {
-    background: #e9ecef;
-    color: #6c757d;
+    background: var(--alabaster-grey);
+    color: #666;
 }
 
 /* ============================================
@@ -262,33 +291,40 @@ td strong {
     transition: all 0.2s ease;
 }
 
+/* Editar: Sutil Gris */
 .btn-edit {
-    background: #ffc107;
-    color: #212529;
+    background: var(--bright-snow);
+    color: var(--graphite);
+    border: 1px solid var(--alabaster-grey);
 }
 
 .btn-edit:hover {
-    background: #e0a800;
+    background: var(--alabaster-grey);
+    color: black;
     transform: translateY(-1px);
 }
 
+/* Eliminar: Rojo pálido */
 .btn-delete {
-    background: #dc3545;
-    color: white;
+    background: #fff5f5;
+    color: var(--brick-ember);
+    border: 1px solid #ffecec;
 }
 
 .btn-delete:hover {
-    background: #c82333;
+    background: var(--brick-ember);
+    color: white;
     transform: translateY(-1px);
 }
 
+/* Ver: Gris oscuro (Neutro) */
 .btn-view {
-    background: #17a2b8;
+    background: var(--graphite);
     color: white;
 }
 
 .btn-view:hover {
-    background: #138496;
+    background: black;
     transform: translateY(-1px);
 }
 
@@ -299,17 +335,22 @@ td strong {
     text-align: center;
     padding: 4rem 2rem;
     color: #666;
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--alabaster-grey);
 }
 
 .empty-state .icon {
     font-size: 4rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    color: var(--alabaster-grey);
 }
 
 .empty-state p {
     margin: 0;
     font-size: 1.1rem;
+    color: var(--graphite);
 }
 
 /* ============================================

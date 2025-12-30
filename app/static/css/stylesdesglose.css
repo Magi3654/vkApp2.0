@@ -1,19 +1,40 @@
-/* Estilos para la página de gestión de Desgloses */
+/* Estilos para la página de gestión de Desgloses - Actualizado */
 
+:root {
+    /* Tu paleta base */
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+}
+
+/* ============================================
+   FORMULARIO DE GESTIÓN
+   ============================================ */
 .form-container {
     max-width: 1000px;
     margin: 2rem auto;
     padding: 2.5rem;
     background-color: var(--white);
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    /* Sombra suave y borde sutil */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--alabaster-grey);
 }
 
 .form-header {
     text-align: center;
     margin-bottom: 2rem;
-    border-bottom: 1px solid #e0e0e0;
+    /* Línea decorativa roja en lugar de gris estándar */
+    border-bottom: 2px solid var(--bright-snow); 
     padding-bottom: 1rem;
+}
+
+.form-header h2 {
+    color: var(--graphite);
+    margin: 0;
 }
 
 .crud-form .form-grid {
@@ -30,36 +51,83 @@
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
+    color: var(--graphite);
+    font-size: 0.9rem;
 }
 
 .form-group input, .form-group select {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--alabaster-grey);
     border-radius: 8px;
     font-size: 1rem;
+    color: var(--graphite);
+    transition: all 0.2s ease;
+    background-color: var(--white);
 }
 
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--brick-ember); /* Foco rojo */
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
+}
+
+/* ============================================
+   ACCIONES DEL FORMULARIO
+   ============================================ */
 .form-actions {
     text-align: right;
     margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
 }
 
 .btn-submit {
-    background-color: var(--chili-red);
+    /* Gradiente rojo marca */
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: var(--white);
     border: none;
     padding: 0.8rem 1.8rem;
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Estilos para la tabla de consulta */
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
+}
+
+.btn-cancel {
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    text-decoration: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px; /* Ajustado a 8px para coincidir con submit */
+    display: inline-block;
+    border: 1px solid var(--alabaster-grey);
+    transition: all 0.2s ease;
+    margin-left: 0; /* Quitamos margen manual si usamos flex gap */
+}
+
+.btn-cancel:hover {
+    background-color: var(--alabaster-grey);
+    color: black;
+}
+
+/* ============================================
+   TABLA DE CONSULTA
+   ============================================ */
 .table-container {
     max-width: 1200px;
     margin: 3rem auto;
     padding: 2rem;
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--alabaster-grey);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .table-header {
@@ -69,13 +137,27 @@
     margin-bottom: 1.5rem;
 }
 
+.table-header h2 {
+    color: var(--graphite);
+    margin: 0;
+}
+
 .btn-new {
-    background-color: var(--chili-red);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: var(--white);
     text-decoration: none;
     padding: 0.6rem 1.2rem;
     border-radius: 8px;
     font-weight: bold;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-new:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(185, 5, 4, 0.3);
 }
 
 .data-table {
@@ -86,39 +168,71 @@
 .data-table th, .data-table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--alabaster-grey);
 }
 
 .data-table th {
-    background-color: #f8f9fa;
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
 }
 
+.data-table td {
+    color: var(--graphite);
+}
+
+.data-table tr:hover td {
+    background-color: #fafafa;
+}
+
+/* ============================================
+   ACCIONES DE TABLA (BOTONES PEQUEÑOS)
+   ============================================ */
 .actions a {
     text-decoration: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 5px;
+    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
     margin-right: 0.5rem;
-    color: white;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-block;
 }
 
-.btn-edit { background-color: #007bff; }
-.btn-delete { background-color: #dc3545; }
-.btn-cancel {
-    background-color: #6c757d;
-    color: white;
-    text-decoration: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 5px;
-    display: inline-block;
-    margin-left: 1rem;
+/* Botón Editar: Sutil (Gris claro) */
+.btn-edit { 
+    background-color: var(--bright-snow);
+    color: var(--graphite);
+    border: 1px solid var(--alabaster-grey);
 }
-.btn-cancel:hover {
-    background-color: #5a6268;
+
+.btn-edit:hover {
+    background-color: var(--alabaster-grey);
+    color: black;
+}
+
+/* Botón Eliminar: Rojo pálido (Estilo "Danger" ligero) */
+.btn-delete { 
+    background-color: #fff5f5; 
+    color: var(--brick-ember);
+    border: 1px solid #ffecec;
+}
+
+.btn-delete:hover {
+    background-color: var(--brick-ember);
+    color: white;
+    border-color: var(--brick-ember);
 }
 
 .no-data {
     text-align: center;
-    padding: 2rem;
-    color: var(--battleship-gray);
+    padding: 3rem;
+    color: #888;
+    font-style: italic;
+    background: var(--bright-snow);
+    border-radius: 8px;
+    margin-top: 1rem;
 }
-

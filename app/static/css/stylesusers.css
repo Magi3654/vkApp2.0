@@ -1,11 +1,31 @@
+/* Estilos para formularios generales (Login/Registro/Edición) */
 
-.title-page{
+:root {
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+}
+
+body {
+    /* Aseguramos que el fondo de la página sea el gris claro corporativo */
+    background-color: var(--bright-snow);
+    font-family: "Noto Sans Display", sans-serif;
+    color: var(--graphite);
+}
+
+.title-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--battleship-gray);
-    font-size: 20px;
-    margin: 1.5rem;
+    color: var(--graphite); /* Título más oscuro para legibilidad */
+    font-size: 24px; /* Un poco más grande para jerarquía */
+    font-weight: 600;
+    margin: 2rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 form {
@@ -13,60 +33,96 @@ form {
     flex-direction: column;
     max-width: 400px;
     margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    background-color: var(--white);
+    border: 1px solid var(--alabaster-grey);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); /* Sombra más suave y moderna */
 }
 
 label {
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--graphite);
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"],
 select {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--alabaster-grey);
+    border-radius: 8px;
     width: 100%;
     box-sizing: border-box;
-}
-.submit{
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    color: #fff;
-    background-color: var(--chili-red);
-    border: none;
-    border-radius: 5px;
-   
-}
-button:hover {
-    background-color:var(--battleship-gray);
+    font-size: 1rem;
+    background-color: var(--bright-snow); /* Fondo sutil para inputs */
+    color: var(--graphite);
+    transition: all 0.2s ease;
 }
 
-button:active {
-    background-color: #780000;
-    box-shadow: 0 2px #666;
-    transform: translateY(2px);
+/* Efecto Focus Corporativo */
+input:focus,
+select:focus {
+    outline: none;
+    background-color: var(--white);
+    border-color: var(--brick-ember);
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
 }
-.back-button .button{
-    margin: 2rem;
-    display: inline-block;
+
+.submit {
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--white);
+    /* Gradiente corporativo */
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    border: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+    box-shadow: 0 4px 6px rgba(153, 1, 0, 0.2);
+}
+
+.submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(153, 1, 0, 0.3);
+}
+
+.submit:active {
+    transform: translateY(0);
+    background: var(--oxblood);
+}
+
+/* Botón de regreso */
+.back-button {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.back-button .button {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 20px 40px;
-    font-size: 16px;
-    font-weight: bold;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
-    color: var(--white);
-    background-color: var(--chili-red);
-    border: none;
-    border-radius: 5px;
+    color: var(--graphite);
+    background-color: var(--white);
+    border: 1px solid var(--alabaster-grey);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.back-button .button:hover {
+    background-color: var(--alabaster-grey);
+    color: black;
+    transform: translateY(-1px);
 }
