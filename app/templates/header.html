@@ -1,19 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <title>Kinessia Trip Hub</title>
-</head>
-<body>
-
-    <nav class="main-nav">
+<nav class="main-nav">
     <div class="logokinessia">
-        <!-- CORRECCIÓN: Se añade 'main.' al endpoint 'index' -->
         <a href="{{ url_for('main.index') }}">
             <img src="{{ url_for('static', filename='img/logo_kinessia.png') }}" alt="Kinessia Trip Hub Logo">
         </a>
@@ -22,14 +8,12 @@
     <div class="nav-right">
         <ul class="nav-links">
             <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-            <!-- ENLACE CORREGIDO: Apunta a la tabla de consulta -->
             <li><a href="{{ url_for('main.desgloses') }}">Consultar Desgloses</a></li>
-            <!-- ENLACE CORREGIDO: Apunta a la tabla de consulta -->
             <li><a href="{{ url_for('main.consulta_papeletas') }}">Consultar Papeletas</a></li>
             
-            {% if current_user.is_authenticated and current_user.rol_relacion.nombre == 'administrador' %}
+            {% if current_user.is_authenticated and current_user.es_admin() %}
                 <li><a href="{{ url_for('main.empresas') }}">Empresas</a></li>
-                <li><a href="{{ url_for('auth.register') }}">Alta Usuarios</a></li>
+                <li><a href="{{ url_for('main.usuarios') }}">Gestión Usuarios</a></li>
             {% endif %}
         </ul>
 
@@ -41,8 +25,3 @@
         </div>
     </div>
 </nav>
-
-
-
-</body>
-</html>
