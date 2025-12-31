@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- 1. Enlace a la hoja de estilos principal (para toda la app) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- 2. Bloque para que cada página pueda añadir sus propios estilos (como el dashboard) -->
+    <!-- Estilos principales (incluye toasts) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_navbar.css') }}">
+    
     {% block page_styles %}{% endblock %}
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -18,23 +22,10 @@
 </head>
 <body>
     <header>
-        <!-- Incluimos el menú de navegación desde otro archivo -->
         {% include 'header.html' %}
     </header>
 
     <main class="container">
-        <!-- Contenedor para mostrar mensajes de éxito o error -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-messages">
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
-
-        <!-- Aquí es donde se inyectará el contenido de cada página (dashboard, desgloses, etc.) -->
         {% block content %}{% endblock %}
     </main>
 
@@ -42,6 +33,82 @@
         © 2025 Kinessia Trip. Todos los derechos reservados.
     </footer>
 
+    <!-- Sistema de Notificaciones Toast -->
+    <div class="toast-container" id="toastContainer">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="toast toast-{{ category }}" data-auto-close="5000">
+                    <div class="toast-icon">
+                        {% if category == 'success' %}<i class="fas fa-check"></i>{% endif %}
+                        {% if category == 'danger' or category == 'error' %}<i class="fas fa-times"></i>{% endif %}
+                        {% if category == 'warning' %}<i class="fas fa-exclamation-triangle"></i>{% endif %}
+                        {% if category == 'info' %}<i class="fas fa-info"></i>{% endif %}
+                    </div>
+                    <div class="toast-content">
+                        <div class="toast-title">
+                            {% if category == 'success' %}Éxito{% endif %}
+                            {% if category == 'danger' or category == 'error' %}Error{% endif %}
+                            {% if category == 'warning' %}Atención{% endif %}
+                            {% if category == 'info' %}Información{% endif %}
+                        </div>
+                        <div class="toast-message">{{ message }}</div>
+                    </div>
+                    <button type="button" class="toast-close" onclick="closeToast(this)"><i class="fas fa-times"></i></button>
+                    <div class="toast-progress"></div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        function closeToast(btn) {
+            const toast = btn.closest('.toast');
+            toast.classList.add('toast-exit');
+            setTimeout(() => toast.remove(), 300);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const toasts = document.querySelectorAll('.toast[data-auto-close]');
+            toasts.forEach(toast => {
+                const duration = parseInt(toast.dataset.autoClose) || 5000;
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.classList.add('toast-exit');
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, duration);
+            });
+        });
+        
+        function showToast(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check', danger: 'fa-times', error: 'fa-times', warning: 'fa-exclamation-triangle', info: 'fa-info' };
+            const titles = { success: 'Éxito', danger: 'Error', error: 'Error', warning: 'Atención', info: 'Información' };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fas ${icons[type] || 'fa-info'}"></i></div>
+                <div class="toast-content">
+                    <div class="toast-title">${titles[type] || 'Notificación'}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button type="button" class="toast-close" onclick="closeToast(this)"><i class="fas fa-times"></i></button>
+                <div class="toast-progress" style="animation-duration: ${duration}ms"></div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.add('toast-exit');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, duration);
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>
-

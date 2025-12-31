@@ -1261,3 +1261,53 @@ def eliminar_sucursal(id):
     db.session.commit()
     flash(f'Sucursal "{nombre}" eliminada.', 'info')
     return redirect(url_for('main.sucursales'))
+
+# Agregar esta ruta al archivo routes.py
+
+# =============================================================================
+# API - ACTUALIZAR NÚMERO DE FACTURA
+# =============================================================================
+
+@main.route('/api/papeleta/<int:id>/factura', methods=['POST'])
+@login_required
+def actualizar_factura_papeleta(id):
+    """Actualiza el número de factura de una papeleta (solo admin/contabilidad)"""
+    if not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No tienes permisos para esta acción'}), 403
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    data = request.get_json()
+    
+    numero_factura = data.get('numero_factura', '').strip()
+    
+    # Guardar valor anterior para auditoría
+    valor_anterior = papeleta.numero_factura
+    
+    # Actualizar
+    papeleta.numero_factura = numero_factura if numero_factura else None
+    
+    try:
+        db.session.commit()
+        
+        # Log de auditoría (opcional)
+        # audit_log = AuditLog(
+        #     tabla_nombre='papeletas',
+        #     registro_id=str(id),
+        #     accion='UPDATE',
+        #     datos_anteriores={'numero_factura': valor_anterior},
+        #     datos_nuevos={'numero_factura': papeleta.numero_factura},
+        #     campos_modificados=['numero_factura'],
+        #     usuario_id=current_user.id,
+        #     usuario_email=current_user.correo
+        # )
+        # db.session.add(audit_log)
+        # db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'numero_factura': papeleta.numero_factura,
+            'message': 'Factura actualizada correctamente'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

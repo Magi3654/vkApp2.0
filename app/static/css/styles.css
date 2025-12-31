@@ -1,163 +1,281 @@
-/* CSS HEX - Actualizado con tu Paleta */
-:root {
-    /* Tu paleta personalizada */
-    --bright-snow: #f6f6f6;
-    --alabaster-grey: #e8e8e8;
-    --graphite: #333333;
-    --oxblood: #990100;
-    --brick-ember: #b90504;
-    
-    --white: #ffffff; /* Mantenemos blanco puro para textos sobre rojo */
-    --font-size: 1rem;
-}
+/* =============================================================================
+   NOTIFICACIONES TOAST - Kinessia Hub
+   ============================================================================= */
 
-/* Reset global y fuente por defecto */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Noto Sans Display", sans-serif;
-}
-
-html, body {
-    height: 100%;
-    /* Añadido: Fondo suave para toda la página */
-    background-color: var(--bright-snow);
-    color: var(--graphite);
-}
-
-/* --- ESTILOS DEL HEADER/MENÚ DE NAVEGACIÓN --- */
-.main-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    /* Cambio: Gradiente elegante en lugar de rojo plano */
-    background: linear-gradient(90deg, var(--oxblood) 0%, var(--brick-ember) 100%);
-    padding: 0.75rem 2rem;
-    color: var(--white);
-    height: 4rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil para separar del contenido */
-}
-
-.nav-logo a {
-    color: var(--white);
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 1.5em;
-    letter-spacing: 0.5px;
-}
-
-.nav-right {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
-
-.nav-links {
-    list-style: none;
-    display: flex;
-    gap: 1.5rem;
-}
-
-.nav-links a {
-    color: var(--white);
-    text-decoration: none;
-    padding: 0.5rem;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-}
-
-.nav-links a:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
-}
-
-.nav-user {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.nav-user a {
-    /* Fondo oscuro semitransparente para destacar sobre el rojo */
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    color: var(--white);
-    text-decoration: none;
-    transition: all 0.2s ease-in-out;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.nav-user a:hover {
-    background-color: rgba(0, 0, 0, 0.4);
-    border-color: rgba(255,255,255,0.3);
-}
-
-/* --- LOGO CENTRAL --- */
-.logokinessia {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 4rem 2rem; 
-    padding: 1rem;
-}
-
-.logokinessia img {
-    max-width: 100%; 
-    width: 3.5rem;    
-    height: auto;
-    /* Opcional: Si el logo es oscuro y necesitas contraste, descomenta esto:
-       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); 
-    */
-}
-
-/* --- BOTÓN START --- */
-.button-start .start {
-    /* Gradiente potente para el CTA principal */
-    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
-    color: white;
-    font-weight: bold;
-    font-size: 2rem;
-    width: 15rem;
-    height: 5rem;
-    margin: 1rem;
-    border: none;
-    border-radius: 1.5rem;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(153, 1, 0, 0.3); /* Sombra roja sutil */
-    transition: all 0.3s ease;
-}
-
-.button-start .start:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(153, 1, 0, 0.4);
-}
-
-.button-start .start:active {
-    transform: translateY(-1px);
-}
-
-/* --- FOOTER --- */
-.footer {
-    display: flex;
+/* Contenedor de notificaciones */
+.toast-container {
     position: fixed;
-    bottom: 0;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
     width: 100%;
-    height: 2rem;
-    justify-content: center;
+    pointer-events: none;
+}
+
+/* Toast base */
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+    animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+    border-left: 4px solid #6b7280;
+}
+
+/* Animación de entrada */
+@keyframes slideIn {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Animación de salida */
+.toast.toast-exit {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+/* Barra de progreso */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: currentColor;
+    opacity: 0.3;
+    animation: progress 5s linear forwards;
+}
+
+@keyframes progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Icono del toast */
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
-    /* Opción A: Usar Oxblood para consistencia con el header */
-    background-color: var(--oxblood);
-    /* Opción B: Usar Graphite si prefieres un pie de página neutro oscuro */
-    /* background-color: var(--graphite); */
+    justify-content: center;
+    font-size: 14px;
+}
+
+/* Contenido del toast */
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+/* Botón de cerrar */
+.toast-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-size: 18px;
+    line-height: 1;
+    margin: -4px -8px -4px 0;
+}
+
+.toast-close:hover {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* === TIPOS DE TOAST === */
+
+/* Success - Verde */
+.toast-success {
+    border-left-color: #10b981;
+}
+
+.toast-success .toast-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.toast-success .toast-progress {
+    background: #10b981;
+}
+
+/* Danger/Error - Rojo */
+.toast-danger,
+.toast-error {
+    border-left-color: #ef4444;
+}
+
+.toast-danger .toast-icon,
+.toast-error .toast-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.toast-danger .toast-progress,
+.toast-error .toast-progress {
+    background: #ef4444;
+}
+
+/* Warning - Amarillo/Naranja */
+.toast-warning {
+    border-left-color: #f59e0b;
+}
+
+.toast-warning .toast-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.toast-warning .toast-progress {
+    background: #f59e0b;
+}
+
+/* Info - Azul */
+.toast-info {
+    border-left-color: #3b82f6;
+}
+
+.toast-info .toast-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.toast-info .toast-progress {
+    background: #3b82f6;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 480px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
     
-    color: var(--white);
-    font-size: .75rem; /* Ajusté ligeramente el tamaño para legibilidad */
-    font-weight: 400;
-    letter-spacing: 0.5px;
+    .toast {
+        padding: 14px 16px;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+    }
+}
+
+/* === ESTILOS ALTERNATIVOS (flash-messages clásico) === */
+/* Por si prefieres mantener el estilo inline */
+.flash-messages {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    width: calc(100% - 40px);
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    border-left: 4px solid #6b7280;
+    font-size: 14px;
+}
+
+.alert-success {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #065f46;
+}
+
+.alert-danger {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #991b1b;
+}
+
+.alert-warning {
+    border-left-color: #f59e0b;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    color: #92400e;
+}
+
+.alert-info {
+    border-left-color: #3b82f6;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    color: #1e40af;
 }
