@@ -2,6 +2,127 @@
 
 {% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
+    <style>
+        /* Estilos para papeleta extemporánea */
+        .extemporanea-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .extemporanea-section.active {
+            background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%);
+        }
+        .extemporanea-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .extemporanea-header input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .extemporanea-header label {
+            font-weight: 600;
+            color: #92400e;
+            cursor: pointer;
+            margin: 0;
+        }
+        .extemporanea-fields {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #d97706;
+        }
+        .extemporanea-fields.active {
+            display: block;
+        }
+        .extemporanea-fields .form-group {
+            margin-bottom: 1rem;
+        }
+        .extemporanea-fields label {
+            color: #92400e;
+            font-weight: 500;
+        }
+        .extemporanea-fields textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .extemporanea-warning {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #92400e;
+            margin-top: 0.5rem;
+        }
+        
+        /* Estilos para sección de reembolso */
+        .reembolso-section {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border: 2px solid #ec4899;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .reembolso-section.active {
+            background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%);
+        }
+        .reembolso-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .reembolso-header input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .reembolso-header label {
+            font-weight: 600;
+            color: #9d174d;
+            cursor: pointer;
+            margin: 0;
+        }
+        .reembolso-fields {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #db2777;
+        }
+        .reembolso-fields.active {
+            display: block;
+        }
+        .reembolso-fields .form-group {
+            margin-bottom: 1rem;
+        }
+        .reembolso-fields label {
+            color: #9d174d;
+            font-weight: 500;
+        }
+        .reembolso-fields textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .reembolso-fields .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .reembolso-warning {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #9d174d;
+            margin-top: 0.5rem;
+            background: rgba(255,255,255,0.5);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -13,6 +134,94 @@
         </div>
         
         <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
+            
+            <!-- Sección Extemporánea -->
+            <div class="extemporanea-section" id="extemporaneaSection">
+                <div class="extemporanea-header">
+                    <input type="checkbox" id="extemporanea" name="extemporanea" value="1">
+                    <label for="extemporanea">🕐 Es papeleta extemporánea (cargo ya realizado, registro tardío)</label>
+                </div>
+                <div class="extemporanea-fields" id="extemporaneaFields">
+                    <div class="extemporanea-warning">
+                        ⚠️ Las papeletas extemporáneas no requieren autorización de tarjeta ya que el cargo ya fue procesado.
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_cargo_real">Fecha real del cargo *</label>
+                        <input type="date" id="fecha_cargo_real" name="fecha_cargo_real">
+                        <small>Fecha en que realmente se hizo el cargo a la tarjeta</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo_extemporanea">Motivo del registro tardío *</label>
+                        <textarea id="motivo_extemporanea" name="motivo_extemporanea" 
+                                  placeholder="Explica por qué no se registró a tiempo (ej: viaje de negocios, olvido, sistema caído, etc.)"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección Reembolso -->
+            <div class="reembolso-section" id="reembolsoSection">
+                <div class="reembolso-header">
+                    <input type="checkbox" id="tiene_reembolso" name="tiene_reembolso" value="1">
+                    <label for="tiene_reembolso">🔄 Este cargo tiene/tendrá reembolso (duplicado, cancelación, error)</label>
+                </div>
+                <div class="reembolso-fields" id="reembolsoFields">
+                    <div class="reembolso-warning">
+                        💡 Usa esta opción para cargos duplicados, boletos cancelados o errores que serán reembolsados.
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo_reembolso">Motivo del reembolso *</label>
+                        <select id="motivo_reembolso" name="motivo_reembolso">
+                            <option value="">Selecciona el motivo...</option>
+                            <option value="duplicado">🔁 Compra duplicada (doble cargo)</option>
+                            <option value="cancelacion">❌ Cancelación de boleto/reserva</option>
+                            <option value="cambio">🔄 Cambio de itinerario con diferencia</option>
+                            <option value="error_monto">💰 Error en el monto cobrado</option>
+                            <option value="no_show">🚫 No show (pasajero no se presentó)</option>
+                            <option value="otro">📝 Otro motivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="motivoOtroGroup" style="display: none;">
+                        <label for="motivo_reembolso_otro">Especifica el motivo *</label>
+                        <textarea id="motivo_reembolso_otro" name="motivo_reembolso_otro" 
+                                  placeholder="Describe el motivo del reembolso..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="monto_reembolso">Monto a reembolsar *</label>
+                            <input type="number" step="0.01" min="0" id="monto_reembolso" name="monto_reembolso" 
+                                   placeholder="0.00" class="monto-input">
+                            <small>Deja en 0 si es reembolso total del ticket</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="estatus_reembolso">Estatus del reembolso</label>
+                            <select id="estatus_reembolso" name="estatus_reembolso">
+                                <option value="pendiente">⏳ Pendiente de solicitar</option>
+                                <option value="en_proceso">🔄 En proceso con aerolínea</option>
+                                <option value="completado">✅ Reembolso recibido</option>
+                                <option value="rechazado">❌ Rechazado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fecha_solicitud_reembolso">Fecha de solicitud</label>
+                            <input type="date" id="fecha_solicitud_reembolso" name="fecha_solicitud_reembolso">
+                        </div>
+                        <div class="form-group">
+                            <label for="referencia_reembolso">Referencia / Caso</label>
+                            <input type="text" id="referencia_reembolso" name="referencia_reembolso" 
+                                   placeholder="Ej: CASO-12345, REF-ABC">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="papeleta_relacionada">Papeleta relacionada (si es duplicado)</label>
+                        <input type="text" id="papeleta_relacionada" name="papeleta_relacionada_folio" 
+                               placeholder="Folio de la otra papeleta (ej: 8821-015)">
+                        <small>Si es compra duplicada, indica el folio de la otra papeleta</small>
+                    </div>
+                </div>
+            </div>
+            
             <div class="form-grid">
                 <!-- Columna Izquierda -->
                 <div class="form-column">
@@ -29,9 +238,15 @@
                                             data-tiene-auth="{{ item.tiene_autorizacion|lower }}"
                                             data-puede-usar="{{ item.puede_usar|lower }}"
                                             data-usuarios="{{ item.usuarios_asignados|join(', ') if item.usuarios_asignados else '' }}"
+                                            data-tiempo-restante="{{ item.tiempo_restante or '' }}"
+                                            data-fecha-expiracion="{{ item.fecha_expiracion or '' }}"
                                             class="{% if item.puede_usar %}tarjeta-disponible{% else %}tarjeta-bloqueada{% endif %}">
                                         {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }})
-                                        {% if item.puede_usar %}✓{% else %}🔒{% endif %}
+                                        {% if item.puede_usar %}
+                                            ✓ {% if item.tiempo_restante %}(⏱️ {{ item.tiempo_restante }}){% endif %}
+                                        {% else %}
+                                            🔒
+                                        {% endif %}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -117,8 +332,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="forma_pago">Forma de Pago *</label>
-                        <select id="forma_pago" name="forma_pago" required>
+                        <label for="forma_pago">Forma de Pago</label>
+                        <select id="forma_pago" name="forma_pago">
                             <option value="">Selecciona...</option>
                             <option value="Crédito">Crédito</option>
                             <option value="Contado">Contado</option>
@@ -140,18 +355,19 @@
                         <div class="form-group">
                             <label for="diez_porciento">
                                 10% Comisión
+                                <input type="checkbox" id="check_comision" checked style="margin-left: 0.5rem;">
                                 <button type="button" class="btn-calcular" id="btnCalcular10" title="Calcular 10%">
                                     🔢
                                 </button>
                             </label>
                             <input type="number" step="0.01" min="0" id="diez_porciento" name="diez_porciento" 
-                                   required placeholder="0.00" class="monto-input">
+                                   placeholder="0.00" class="monto-input" value="0">
                         </div>
                         
                         <div class="form-group">
                             <label for="cargo">Cargo por Servicio</label>
                             <input type="number" step="0.01" min="0" id="cargo" name="cargo" 
-                                   required placeholder="0.00" class="monto-input" value="0">
+                                   placeholder="0.00" class="monto-input" value="0">
                         </div>
                         
                         <div class="form-group total-group">
@@ -265,13 +481,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const numero = option.dataset.numero;
         const puedeUsar = option.dataset.puedeUsar === 'true';
         const usuariosAsignados = option.dataset.usuarios;
+        const tiempoRestante = option.dataset.tiempoRestante;
+        const fechaExpiracion = option.dataset.fechaExpiracion;
         
         tarjetaInfo.style.display = 'block';
         
         if (puedeUsar) {
             tarjetaInfo.className = 'tarjeta-info puede-usar';
             let html = '✅ Puedes usar esta tarjeta.';
-            if (usuariosAsignados) {
+            
+            // Mostrar tiempo restante si tiene autorización temporal
+            if (tiempoRestante) {
+                html += `<br><small>⏱️ <strong>Autorización temporal:</strong> expira en ${tiempoRestante}</small>`;
+                html += `<br><small>📅 Válida hasta: ${fechaExpiracion}</small>`;
+            } else if (usuariosAsignados) {
                 html += `<br><small>👥 Asignada a: ${usuariosAsignados}</small>`;
             }
             tarjetaInfo.innerHTML = html;
@@ -282,8 +505,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (usuariosAsignados) {
                 html += `<br><small>👥 Asignada a: ${usuariosAsignados}</small>`;
             }
+            html += `<br><small>💡 Puedes solicitar autorización temporal (válida por 24 horas)</small>`;
             html += `<br><button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})">
-                📝 Solicitar Autorización
+                📝 Solicitar Autorización (24 hrs)
             </button>`;
             tarjetaInfo.innerHTML = html;
             puedeEnviar = false;
@@ -398,12 +622,176 @@ document.addEventListener('DOMContentLoaded', function() {
         btnSubmit.classList.toggle('disabled', !puedeEnviar);
     }
     
+    // === PAPELETA EXTEMPORÁNEA ===
+    const extemporaneaCheckbox = document.getElementById('extemporanea');
+    const extemporaneaSection = document.getElementById('extemporaneaSection');
+    const extemporaneaFields = document.getElementById('extemporaneaFields');
+    const fechaCargoReal = document.getElementById('fecha_cargo_real');
+    const motivoExtemporanea = document.getElementById('motivo_extemporanea');
+    let esExtemporanea = false;
+    
+    extemporaneaCheckbox.addEventListener('change', function() {
+        esExtemporanea = this.checked;
+        extemporaneaSection.classList.toggle('active', esExtemporanea);
+        extemporaneaFields.classList.toggle('active', esExtemporanea);
+        
+        if (esExtemporanea) {
+            // Si es extemporánea, permitir usar cualquier tarjeta
+            fechaCargoReal.required = true;
+            motivoExtemporanea.required = true;
+            
+            // Re-evaluar tarjeta seleccionada - ahora puede usarla
+            const selectedOption = tarjetaSelect.options[tarjetaSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                puedeEnviar = true;
+                tarjetaInfo.className = 'tarjeta-info puede-usar';
+                tarjetaInfo.innerHTML = '✅ Papeleta extemporánea - No requiere autorización.<br><small>🕐 El cargo ya fue procesado anteriormente.</small>';
+                tarjetaInfo.style.display = 'block';
+            }
+        } else {
+            // Si no es extemporánea, volver a validar normalmente
+            fechaCargoReal.required = false;
+            motivoExtemporanea.required = false;
+            fechaCargoReal.value = '';
+            motivoExtemporanea.value = '';
+            
+            // Re-evaluar tarjeta seleccionada
+            if (tarjetaSelect.value) {
+                tarjetaSelect.dispatchEvent(new Event('change'));
+            } else if (tarjetaManual.value.length === 4) {
+                puedeEnviar = true;
+            } else {
+                puedeEnviar = false;
+            }
+        }
+        actualizarBoton();
+    });
+    
+    // Modificar validación de tarjeta para considerar extemporáneas
+    const originalTarjetaChange = tarjetaSelect.onchange;
+    tarjetaSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        
+        if (!this.value) {
+            tarjetaInfo.style.display = 'none';
+            tarjetaInfo.innerHTML = '';
+            folioInput.value = '';
+            puedeEnviar = false;
+            actualizarBoton();
+            return;
+        }
+        
+        const numero = option.dataset.numero;
+        const puedeUsar = option.dataset.puedeUsar === 'true';
+        
+        // Si es extemporánea, siempre puede usar la tarjeta
+        if (esExtemporanea) {
+            tarjetaInfo.className = 'tarjeta-info puede-usar';
+            tarjetaInfo.innerHTML = '✅ Papeleta extemporánea - No requiere autorización.<br><small>🕐 El cargo ya fue procesado anteriormente.</small>';
+            tarjetaInfo.style.display = 'block';
+            puedeEnviar = true;
+        }
+        
+        actualizarBoton();
+        
+        // Obtener folio automático
+        if (numero) {
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.folio) {
+                        folioInput.value = data.folio;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    // === SECCIÓN DE REEMBOLSO ===
+    const reembolsoCheckbox = document.getElementById('tiene_reembolso');
+    const reembolsoSection = document.getElementById('reembolsoSection');
+    const reembolsoFields = document.getElementById('reembolsoFields');
+    const motivoReembolsoSelect = document.getElementById('motivo_reembolso');
+    const motivoOtroGroup = document.getElementById('motivoOtroGroup');
+    const montoReembolso = document.getElementById('monto_reembolso');
+    let tieneReembolso = false;
+    
+    reembolsoCheckbox.addEventListener('change', function() {
+        tieneReembolso = this.checked;
+        reembolsoSection.classList.toggle('active', tieneReembolso);
+        reembolsoFields.classList.toggle('active', tieneReembolso);
+        
+        if (tieneReembolso) {
+            motivoReembolsoSelect.required = true;
+        } else {
+            motivoReembolsoSelect.required = false;
+            motivoReembolsoSelect.value = '';
+            montoReembolso.value = '';
+            document.getElementById('referencia_reembolso').value = '';
+            document.getElementById('fecha_solicitud_reembolso').value = '';
+            document.getElementById('papeleta_relacionada').value = '';
+            motivoOtroGroup.style.display = 'none';
+        }
+    });
+    
+    // Mostrar campo "otro motivo" si selecciona "otro"
+    motivoReembolsoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+            motivoOtroGroup.style.display = 'block';
+            document.getElementById('motivo_reembolso_otro').required = true;
+        } else {
+            motivoOtroGroup.style.display = 'none';
+            document.getElementById('motivo_reembolso_otro').required = false;
+            document.getElementById('motivo_reembolso_otro').value = '';
+        }
+    });
+    
+    // Auto-llenar monto de reembolso con el total del ticket
+    const totalTicketInput = document.getElementById('total_ticket');
+    totalTicketInput.addEventListener('change', function() {
+        if (tieneReembolso && !montoReembolso.value) {
+            montoReembolso.value = this.value;
+        }
+    });
+    
     // === VALIDAR ANTES DE ENVIAR ===
     formPapeleta.addEventListener('submit', function(e) {
         if (!puedeEnviar) {
             e.preventDefault();
             alert('Debes seleccionar una tarjeta válida o solicitar autorización.');
             return false;
+        }
+        
+        // Validar campos de extemporánea si está marcada
+        if (esExtemporanea) {
+            if (!fechaCargoReal.value) {
+                e.preventDefault();
+                alert('Debes ingresar la fecha real del cargo.');
+                fechaCargoReal.focus();
+                return false;
+            }
+            if (!motivoExtemporanea.value.trim()) {
+                e.preventDefault();
+                alert('Debes ingresar el motivo del registro tardío.');
+                motivoExtemporanea.focus();
+                return false;
+            }
+        }
+        
+        // Validar campos de reembolso si está marcado
+        if (tieneReembolso) {
+            if (!motivoReembolsoSelect.value) {
+                e.preventDefault();
+                alert('Debes seleccionar el motivo del reembolso.');
+                motivoReembolsoSelect.focus();
+                return false;
+            }
+            if (motivoReembolsoSelect.value === 'otro' && !document.getElementById('motivo_reembolso_otro').value.trim()) {
+                e.preventDefault();
+                alert('Debes especificar el motivo del reembolso.');
+                document.getElementById('motivo_reembolso_otro').focus();
+                return false;
+            }
         }
         
         // Limpiar el campo que no se usa

@@ -6,37 +6,13 @@ from flask_login import login_required, current_user
 from .models import (
     db, Usuario, Rol, Papeleta, Desglose, Empresa, Aerolinea, EmpresaBooking, 
     CargoServicio, Descuento, TarifaFija, Sucursal, TarjetaCorporativa, Autorizacion,
-    TarjetaUsuario
+    TarjetaUsuario, AuditLog
 )
-# Cambio 1: Agregamos timedelta para cálculos de tiempo
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy import func
 from collections import OrderedDict
 
 main = Blueprint('main', __name__)
-
-# =============================================================================
-# FUNCIONES AUXILIARES (Corrección de Timezone)
-# =============================================================================
-
-def es_vigente_local(autorizacion, horas=24):
-    """
-    Verifica si una autorización está vigente manejando correctamente 
-    las zonas horarias (offset-aware vs offset-naive) para evitar el TypeError.
-    """
-    if not autorizacion or not autorizacion.fecha_respuesta:
-        return False
-    
-    fecha_resp = autorizacion.fecha_respuesta
-    
-    # Si la fecha de la BD tiene zona horaria, usamos current time con esa zona
-    if fecha_resp.tzinfo is not None:
-        ahora = datetime.now(fecha_resp.tzinfo)
-    else:
-        # Si no tiene zona horaria, usamos UTC simple
-        ahora = datetime.utcnow()
-        
-    return ahora < (fecha_resp + timedelta(hours=horas))
 
 
 # =============================================================================
@@ -124,14 +100,79 @@ def cargos_empresa(empresa_id):
     })
 
 
+@main.route('/api/papeleta/<int:id>')
+@login_required
+def api_papeleta_detalle(id):
+    """API para obtener el detalle de una papeleta."""
+    papeleta = Papeleta.query.get(id)
+    
+    if not papeleta:
+        return jsonify({'error': 'Papeleta no encontrada'}), 404
+    
+    # Obtener nombre de la tarjeta
+    tarjeta_nombre = ''
+    if papeleta.tarjeta_rel:
+        tarjeta_nombre = papeleta.tarjeta_rel.nombre_tarjeta
+    
+    # Obtener nombre de aerolínea
+    aerolinea_nombre = ''
+    if papeleta.aerolinea:
+        aerolinea_nombre = papeleta.aerolinea.nombre
+    
+    # Obtener folio de papeleta relacionada
+    papeleta_relacionada_folio = ''
+    if papeleta.papeleta_relacionada_id:
+        pap_rel = Papeleta.query.get(papeleta.papeleta_relacionada_id)
+        if pap_rel:
+            papeleta_relacionada_folio = pap_rel.folio
+    
+    return jsonify({
+        'id': papeleta.id,
+        'folio': papeleta.folio,
+        'tarjeta': papeleta.tarjeta,
+        'tarjeta_nombre': tarjeta_nombre,
+        'fecha_venta': papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '',
+        'total_ticket': float(papeleta.total_ticket or 0),
+        'diez_porciento': float(papeleta.diez_porciento or 0),
+        'cargo': float(papeleta.cargo or 0),
+        'total': float(papeleta.total or 0),
+        'facturar_a': papeleta.facturar_a or '',
+        'solicito': papeleta.solicito or '',
+        'clave_sabre': papeleta.clave_sabre or '',
+        'forma_pago': papeleta.forma_pago or '',
+        'aerolinea': aerolinea_nombre,
+        'proveedor': papeleta.proveedor or '',
+        'tipo_cargo': papeleta.tipo_cargo or '',
+        # Extemporánea
+        'extemporanea': papeleta.extemporanea or False,
+        'fecha_cargo_real': papeleta.fecha_cargo_real.strftime('%d/%m/%Y') if papeleta.fecha_cargo_real else '',
+        'motivo_extemporanea': papeleta.motivo_extemporanea or '',
+        # Reembolso
+        'tiene_reembolso': papeleta.tiene_reembolso or False,
+        'estatus_reembolso': papeleta.estatus_reembolso or '',
+        'motivo_reembolso': papeleta.motivo_reembolso or '',
+        'monto_reembolso': float(papeleta.monto_reembolso) if papeleta.monto_reembolso else None,
+        'fecha_solicitud_reembolso': papeleta.fecha_solicitud_reembolso.strftime('%d/%m/%Y') if papeleta.fecha_solicitud_reembolso else '',
+        'referencia_reembolso': papeleta.referencia_reembolso or '',
+        'papeleta_relacionada': papeleta_relacionada_folio,
+        # Metadata
+        'usuario': papeleta.usuario.nombre if papeleta.usuario else '',
+        'created_at': papeleta.created_at.strftime('%d/%m/%Y %H:%M') if papeleta.created_at else ''
+    })
+
+
 @main.route('/api/verificar-tarjeta/<int:tarjeta_id>')
 @login_required
 def verificar_tarjeta(tarjeta_id):
+    from datetime import timedelta
+    
     tarjeta = TarjetaCorporativa.query.get_or_404(tarjeta_id)
     
     requiere_autorizacion = tarjeta.requiere_autorizacion(current_user)
     tiene_autorizacion = False
     autorizacion_id = None
+    tiempo_restante = None
+    fecha_expiracion = None
     
     if requiere_autorizacion:
         autorizacion = Autorizacion.query.filter_by(
@@ -140,10 +181,26 @@ def verificar_tarjeta(tarjeta_id):
             estatus='aprobada'
         ).order_by(Autorizacion.fecha_respuesta.desc()).first()
         
-        # Cambio: Usamos la funcion auxiliar en lugar del metodo del modelo
-        if autorizacion and es_vigente_local(autorizacion, horas=24):
+        if autorizacion and autorizacion.esta_vigente(horas=24):
             tiene_autorizacion = True
             autorizacion_id = autorizacion.id
+            
+            # Calcular tiempo restante (manejar timezone)
+            fecha_resp = autorizacion.fecha_respuesta
+            if fecha_resp.tzinfo is not None:
+                fecha_resp = fecha_resp.replace(tzinfo=None)
+            
+            expira = fecha_resp + timedelta(hours=24)
+            fecha_expiracion = expira.strftime('%d/%m/%Y %H:%M')
+            
+            diferencia = expira - datetime.utcnow()
+            horas_restantes = diferencia.total_seconds() / 3600
+            
+            if horas_restantes > 1:
+                tiempo_restante = f"{int(horas_restantes)} hora{'s' if int(horas_restantes) > 1 else ''}"
+            else:
+                minutos = int((horas_restantes * 60))
+                tiempo_restante = f"{minutos} minuto{'s' if minutos > 1 else ''}"
     
     return jsonify({
         'tarjeta_id': tarjeta_id,
@@ -153,7 +210,9 @@ def verificar_tarjeta(tarjeta_id):
         'requiere_autorizacion': requiere_autorizacion,
         'tiene_autorizacion': tiene_autorizacion,
         'autorizacion_id': autorizacion_id,
-        'puede_usar': not requiere_autorizacion or tiene_autorizacion
+        'puede_usar': not requiere_autorizacion or tiene_autorizacion,
+        'tiempo_restante': tiempo_restante,
+        'fecha_expiracion': fecha_expiracion
     })
 
 
@@ -173,8 +232,7 @@ def tarjetas_disponibles():
                 solicitante_id=current_user.id,
                 estatus='aprobada'
             ).order_by(Autorizacion.fecha_respuesta.desc()).first()
-            # Cambio: Usamos funcion auxiliar local
-            tiene_auth = es_vigente_local(auth, horas=24)
+            tiene_auth = auth and auth.esta_vigente(horas=24)
         
         resultado.append({
             'id': t.id,
@@ -508,6 +566,8 @@ def consulta_papeletas():
 @login_required
 def nueva_papeleta_form():
     """Muestra el formulario para crear una nueva papeleta."""
+    from datetime import timedelta
+    
     empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
     aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
     tarjetas_list = TarjetaCorporativa.query.filter_by(activa=True).order_by(
@@ -518,6 +578,8 @@ def nueva_papeleta_form():
     for t in tarjetas_list:
         requiere_auth = t.requiere_autorizacion(current_user)
         tiene_auth = False
+        tiempo_restante = None
+        fecha_expiracion = None
         
         if requiere_auth:
             auth = Autorizacion.query.filter_by(
@@ -525,8 +587,26 @@ def nueva_papeleta_form():
                 solicitante_id=current_user.id,
                 estatus='aprobada'
             ).order_by(Autorizacion.fecha_respuesta.desc()).first()
-            # Cambio: Usamos funcion auxiliar local
-            tiene_auth = es_vigente_local(auth, horas=24)
+            
+            if auth and auth.esta_vigente(horas=24):
+                tiene_auth = True
+                
+                # Calcular tiempo restante (manejar timezone)
+                fecha_resp = auth.fecha_respuesta
+                if fecha_resp.tzinfo is not None:
+                    fecha_resp = fecha_resp.replace(tzinfo=None)
+                
+                expira = fecha_resp + timedelta(hours=24)
+                fecha_expiracion = expira.strftime('%d/%m/%Y %H:%M')
+                
+                diferencia = expira - datetime.utcnow()
+                horas_restantes = diferencia.total_seconds() / 3600
+                
+                if horas_restantes > 1:
+                    tiempo_restante = f"{int(horas_restantes)}h"
+                else:
+                    minutos = int((horas_restantes * 60))
+                    tiempo_restante = f"{minutos}min"
         
         usuarios_asignados = []
         asignaciones = TarjetaUsuario.query.filter_by(tarjeta_id=t.id, activo=True).all()
@@ -539,7 +619,9 @@ def nueva_papeleta_form():
             'requiere_autorizacion': requiere_auth,
             'tiene_autorizacion': tiene_auth,
             'puede_usar': not requiere_auth or tiene_auth,
-            'usuarios_asignados': usuarios_asignados
+            'usuarios_asignados': usuarios_asignados,
+            'tiempo_restante': tiempo_restante,
+            'fecha_expiracion': fecha_expiracion
         })
     
     return render_template(
@@ -558,6 +640,9 @@ def nueva_papeleta_post():
         tarjeta_id = request.form.get('tarjeta_id')
         tarjeta_manual = request.form.get('tarjeta_manual', '').strip()
         
+        # Verificar si es papeleta extemporánea
+        es_extemporanea = request.form.get('extemporanea') == '1'
+        
         tarjeta_numero = None
         tarjeta_obj = None
         autorizacion_id = None
@@ -570,15 +655,15 @@ def nueva_papeleta_post():
             
             tarjeta_numero = tarjeta_obj.numero_tarjeta
             
-            if tarjeta_obj.requiere_autorizacion(current_user):
+            # Solo validar autorización si NO es extemporánea
+            if not es_extemporanea and tarjeta_obj.requiere_autorizacion(current_user):
                 auth = Autorizacion.query.filter_by(
                     tarjeta_id=tarjeta_id,
                     solicitante_id=current_user.id,
                     estatus='aprobada'
                 ).order_by(Autorizacion.fecha_respuesta.desc()).first()
                 
-                # Cambio: Usamos funcion auxiliar local
-                if not es_vigente_local(auth, horas=24):
+                if not auth or not auth.esta_vigente(horas=24):
                     flash('Necesitas autorización vigente para usar esta tarjeta.', 'danger')
                     return redirect(url_for('main.nueva_papeleta_form'))
                 
@@ -592,6 +677,22 @@ def nueva_papeleta_post():
         else:
             flash('Debe seleccionar o ingresar una tarjeta.', 'warning')
             return redirect(url_for('main.nueva_papeleta_form'))
+        
+        # Validar campos de extemporánea
+        fecha_cargo_real = None
+        motivo_extemporanea = None
+        
+        if es_extemporanea:
+            fecha_cargo_real_str = request.form.get('fecha_cargo_real')
+            if not fecha_cargo_real_str:
+                flash('Debe ingresar la fecha real del cargo para papeletas extemporáneas.', 'warning')
+                return redirect(url_for('main.nueva_papeleta_form'))
+            fecha_cargo_real = datetime.strptime(fecha_cargo_real_str, '%Y-%m-%d').date()
+            
+            motivo_extemporanea = request.form.get('motivo_extemporanea', '').strip()
+            if not motivo_extemporanea:
+                flash('Debe ingresar el motivo del registro tardío.', 'warning')
+                return redirect(url_for('main.nueva_papeleta_form'))
         
         fecha_venta_str = request.form.get('fecha_venta')
         fecha_venta = datetime.strptime(fecha_venta_str, '%Y-%m-%d').date() if fecha_venta_str else None
@@ -622,6 +723,38 @@ def nueva_papeleta_post():
                 num = 1
             folio = f"{tarjeta_numero}-{num:03d}"
 
+        # Validar campos de reembolso
+        tiene_reembolso = request.form.get('tiene_reembolso') == '1'
+        motivo_reembolso = None
+        monto_reembolso = None
+        estatus_reembolso = None
+        fecha_solicitud_reembolso = None
+        referencia_reembolso = None
+        papeleta_relacionada_id = None
+        
+        if tiene_reembolso:
+            motivo_reembolso = request.form.get('motivo_reembolso', '')
+            if motivo_reembolso == 'otro':
+                motivo_reembolso = request.form.get('motivo_reembolso_otro', '').strip()
+            
+            monto_str = request.form.get('monto_reembolso', '').strip()
+            monto_reembolso = float(monto_str) if monto_str else None
+            
+            estatus_reembolso = request.form.get('estatus_reembolso', 'pendiente')
+            
+            fecha_sol_str = request.form.get('fecha_solicitud_reembolso', '').strip()
+            if fecha_sol_str:
+                fecha_solicitud_reembolso = datetime.strptime(fecha_sol_str, '%Y-%m-%d').date()
+            
+            referencia_reembolso = request.form.get('referencia_reembolso', '').strip() or None
+            
+            # Buscar papeleta relacionada por folio
+            folio_relacionado = request.form.get('papeleta_relacionada_folio', '').strip()
+            if folio_relacionado:
+                pap_rel = Papeleta.query.filter_by(folio=folio_relacionado).first()
+                if pap_rel:
+                    papeleta_relacionada_id = pap_rel.id
+        
         nueva = Papeleta(
             folio=folio,
             tarjeta=tarjeta_numero,
@@ -639,13 +772,30 @@ def nueva_papeleta_post():
             aerolinea_id=aerolinea_id,
             usuario_id=current_user.id,
             autorizacion_id=autorizacion_id,
-            sucursal_id=current_user.sucursal_id
+            sucursal_id=current_user.sucursal_id,
+            # Campos de extemporánea
+            extemporanea=es_extemporanea,
+            fecha_cargo_real=fecha_cargo_real,
+            motivo_extemporanea=motivo_extemporanea,
+            # Campos de reembolso
+            tiene_reembolso=tiene_reembolso,
+            motivo_reembolso=motivo_reembolso,
+            monto_reembolso=monto_reembolso,
+            estatus_reembolso=estatus_reembolso,
+            fecha_solicitud_reembolso=fecha_solicitud_reembolso,
+            referencia_reembolso=referencia_reembolso,
+            papeleta_relacionada_id=papeleta_relacionada_id
         )
 
         db.session.add(nueva)
         db.session.commit()
 
-        flash(f'Papeleta con folio {nueva.folio} creada con éxito.', 'success')
+        if tiene_reembolso:
+            flash(f'Papeleta con folio {nueva.folio} registrada con reembolso {estatus_reembolso}.', 'success')
+        elif es_extemporanea:
+            flash(f'Papeleta extemporánea con folio {nueva.folio} registrada con éxito.', 'success')
+        else:
+            flash(f'Papeleta con folio {nueva.folio} creada con éxito.', 'success')
         
     except Exception as e:
         db.session.rollback()
@@ -657,15 +807,33 @@ def nueva_papeleta_post():
 @main.route('/papeletas/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_papeleta(id):
-    """Edita una papeleta existente."""
-    papeleta = Papeleta.query.get_or_404(id)
-    
-    if not current_user.es_admin() and papeleta.usuario_id != current_user.id:
-        flash('No tienes permiso para editar esta papeleta.', 'danger')
+    """Edita una papeleta existente. Solo administración puede editar."""
+    # Solo admin puede editar
+    if not current_user.es_admin():
+        flash('Solo administración puede editar papeletas.', 'danger')
         return redirect(url_for('main.consulta_papeletas'))
+    
+    papeleta = Papeleta.query.get_or_404(id)
     
     if request.method == 'POST':
         try:
+            # Verificar motivo de edición
+            motivo_edicion = request.form.get('motivo_edicion', '').strip()
+            if not motivo_edicion or len(motivo_edicion) < 10:
+                flash('Debe proporcionar un motivo de edición (mínimo 10 caracteres).', 'warning')
+                return redirect(url_for('main.consulta_papeletas'))
+            
+            # Guardar datos anteriores para auditoría
+            datos_anteriores = {
+                'fecha_venta': str(papeleta.fecha_venta),
+                'total_ticket': float(papeleta.total_ticket),
+                'total': float(papeleta.total),
+                'facturar_a': papeleta.facturar_a,
+                'solicito': papeleta.solicito,
+                'clave_sabre': papeleta.clave_sabre
+            }
+            
+            # Actualizar papeleta
             papeleta.fecha_venta = datetime.strptime(request.form.get('fecha_venta'), '%Y-%m-%d').date()
             papeleta.total_ticket = float(request.form.get('total_ticket', 0))
             papeleta.diez_porciento = float(request.form.get('diez_porciento', 0))
@@ -684,6 +852,25 @@ def editar_papeleta(id):
             aerolinea_id = request.form.get('aerolinea_id')
             papeleta.aerolinea_id = int(aerolinea_id) if aerolinea_id else None
             
+            # Registrar en auditoría
+            audit = AuditLog(
+                tabla_nombre='papeletas',
+                registro_id=str(papeleta.id),
+                accion='UPDATE',
+                datos_anteriores=datos_anteriores,
+                datos_nuevos={
+                    'fecha_venta': str(papeleta.fecha_venta),
+                    'total_ticket': float(papeleta.total_ticket),
+                    'total': float(papeleta.total),
+                    'facturar_a': papeleta.facturar_a,
+                    'motivo_edicion': motivo_edicion
+                },
+                usuario_id=current_user.id,
+                usuario_email=current_user.correo,
+                sucursal_id=current_user.sucursal_id
+            )
+            db.session.add(audit)
+            
             db.session.commit()
             flash(f'Papeleta {papeleta.folio} actualizada con éxito.', 'success')
             return redirect(url_for('main.consulta_papeletas'))
@@ -701,21 +888,62 @@ def editar_papeleta(id):
                            aerolineas=aerolineas_list)
 
 
-@main.route('/papeletas/eliminar/<int:id>')
+@main.route('/papeletas/eliminar/<int:id>', methods=['POST'])
 @login_required
 def eliminar_papeleta(id):
-    """Elimina una papeleta."""
+    """Elimina una papeleta. Solo administración puede eliminar con motivo."""
+    # Solo admin puede eliminar
+    if not current_user.es_admin():
+        flash('Solo administración puede eliminar papeletas.', 'danger')
+        return redirect(url_for('main.consulta_papeletas'))
+    
     papeleta = Papeleta.query.get_or_404(id)
     
-    if not current_user.es_admin() and papeleta.usuario_id != current_user.id:
-        flash('No tienes permiso para eliminar esta papeleta.', 'danger')
+    # Verificar motivo de eliminación
+    motivo_tipo = request.form.get('motivo_eliminacion_tipo', '').strip()
+    motivo_detalle = request.form.get('motivo_eliminacion_detalle', '').strip()
+    
+    if not motivo_tipo:
+        flash('Debe seleccionar un tipo de motivo para eliminar.', 'warning')
+        return redirect(url_for('main.consulta_papeletas'))
+    
+    if not motivo_detalle or len(motivo_detalle) < 10:
+        flash('Debe proporcionar detalle del motivo (mínimo 10 caracteres).', 'warning')
         return redirect(url_for('main.consulta_papeletas'))
     
     try:
         folio = papeleta.folio
+        
+        # Registrar en auditoría antes de eliminar
+        audit = AuditLog(
+            tabla_nombre='papeletas',
+            registro_id=str(papeleta.id),
+            accion='DELETE',
+            datos_anteriores={
+                'folio': papeleta.folio,
+                'tarjeta': papeleta.tarjeta,
+                'fecha_venta': str(papeleta.fecha_venta),
+                'total_ticket': float(papeleta.total_ticket),
+                'total': float(papeleta.total),
+                'facturar_a': papeleta.facturar_a,
+                'solicito': papeleta.solicito,
+                'clave_sabre': papeleta.clave_sabre,
+                'usuario_id': papeleta.usuario_id
+            },
+            datos_nuevos={
+                'motivo_tipo': motivo_tipo,
+                'motivo_detalle': motivo_detalle,
+                'eliminado_por': current_user.nombre
+            },
+            usuario_id=current_user.id,
+            usuario_email=current_user.correo,
+            sucursal_id=current_user.sucursal_id
+        )
+        db.session.add(audit)
+        
         db.session.delete(papeleta)
         db.session.commit()
-        flash(f'Papeleta {folio} eliminada.', 'info')
+        flash(f'Papeleta {folio} eliminada. Motivo: {motivo_tipo}', 'info')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al eliminar: {str(e)}', 'danger')

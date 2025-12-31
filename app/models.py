@@ -349,7 +349,16 @@ class Autorizacion(db.Model):
         if not self.fecha_respuesta:
             return False
         from datetime import timedelta
-        return datetime.utcnow() < self.fecha_respuesta + timedelta(hours=horas)
+        
+        # Usar datetime con timezone para comparación correcta
+        ahora = datetime.utcnow()
+        fecha_resp = self.fecha_respuesta
+        
+        # Si fecha_respuesta tiene timezone, quitarlo para comparar
+        if fecha_resp.tzinfo is not None:
+            fecha_resp = fecha_resp.replace(tzinfo=None)
+        
+        return ahora < fecha_resp + timedelta(hours=horas)
     
     def __repr__(self):
         return f'<Autorizacion {self.id} - {self.tipo}>'
@@ -454,6 +463,21 @@ class Papeleta(db.Model):
     tipo_cargo = db.Column(db.String(50))  # 'aerolinea', 'hotel', 'auto', 'otro'
     proveedor = db.Column(db.String(255))   # Nombre del hotel, rentadora, etc.
     
+    # Campos para papeletas extemporáneas
+    extemporanea = db.Column(db.Boolean, default=False)
+    motivo_extemporanea = db.Column(db.Text)
+    fecha_cargo_real = db.Column(db.Date)  # Fecha real del cargo a la tarjeta
+    
+    # Campos para reembolsos
+    tiene_reembolso = db.Column(db.Boolean, default=False)
+    estatus_reembolso = db.Column(db.String(50))  # 'pendiente', 'en_proceso', 'completado', 'rechazado'
+    motivo_reembolso = db.Column(db.Text)
+    monto_reembolso = db.Column(db.Numeric(10, 2))
+    fecha_solicitud_reembolso = db.Column(db.Date)
+    fecha_reembolso = db.Column(db.Date)
+    referencia_reembolso = db.Column(db.String(100))
+    papeleta_relacionada_id = db.Column(db.BigInteger, db.ForeignKey('papeletas.id'))
+    
     # Nuevos campos
     desglose_folio = db.Column(db.BigInteger, db.ForeignKey('desgloses.folio'))
     autorizacion_id = db.Column(db.BigInteger, db.ForeignKey('autorizaciones.id'))
@@ -470,6 +494,7 @@ class Papeleta(db.Model):
     tarjeta_rel = db.relationship('TarjetaCorporativa', back_populates='papeletas')
     autorizacion = db.relationship('Autorizacion')
     sucursal = db.relationship('Sucursal')
+    papeleta_relacionada = db.relationship('Papeleta', remote_side=[id], backref='papeletas_vinculadas')
     
     def __repr__(self):
         return f'<Papeleta {self.folio}>'

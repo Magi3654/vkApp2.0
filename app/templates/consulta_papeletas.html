@@ -1,82 +1,488 @@
 {% extends "base.html" %}
 
 {% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_consulta_papeletas.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="papeletas-container">
+<div class="papeletas-page">
+    <!-- Header -->
     <div class="page-header">
-        <h2>📋 Papeletas Registradas</h2>
-        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">+ Nueva Papeleta</a>
+        <div class="page-title">
+            <span class="icon">📋</span>
+            <div>
+                <h1>Consulta de Papeletas</h1>
+                <p>Selecciona una tarjeta para ver sus movimientos.</p>
+            </div>
+        </div>
+        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-nueva">
+            + Nueva Papeleta
+        </a>
     </div>
-    
+
     {% if papeletas_por_tarjeta %}
+    <!-- Tabs de Tarjetas -->
+    <div class="tarjetas-tabs">
         {% for tarjeta, papeletas in papeletas_por_tarjeta.items() %}
-        <div class="tarjeta-group">
-            <div class="tarjeta-header">
-                <div class="tarjeta-info-header">
-                    <span class="tarjeta-icon">💳</span>
-                    <div class="tarjeta-details">
-                        <h3>{{ tarjeta.nombre if tarjeta.nombre else 'Tarjeta ' + tarjeta.numero }}</h3>
-                        <span class="tarjeta-numero">**** {{ tarjeta.numero }}</span>
-                        {% if tarjeta.banco %}
-                            <span class="tarjeta-banco">{{ tarjeta.banco }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="tarjeta-stats">
-                    <span class="stat-badge">{{ papeletas|length }} papeleta{{ 's' if papeletas|length > 1 else '' }}</span>
-                    <span class="stat-total">${{ "%.2f"|format(papeletas|sum(attribute='total_ticket')|float) }}</span>
-                </div>
+        <div class="tarjeta-tab {% if loop.first %}active{% endif %}" data-tarjeta="{{ tarjeta.numero }}">
+            <div class="tarjeta-icon {% if 'visa' in (tarjeta.nombre or '')|lower %}visa{% elif 'amex' in (tarjeta.nombre or '')|lower or 'american' in (tarjeta.nombre or '')|lower %}amex{% elif 'master' in (tarjeta.nombre or '')|lower %}mastercard{% else %}default{% endif %}">
+                {% if 'visa' in (tarjeta.nombre or '')|lower %}
+                    VISA
+                {% elif 'amex' in (tarjeta.nombre or '')|lower or 'american' in (tarjeta.nombre or '')|lower %}
+                    AMEX
+                {% elif 'master' in (tarjeta.nombre or '')|lower %}
+                    MC
+                {% else %}
+                    💳
+                {% endif %}
+            </div>
+            <div class="tarjeta-info">
+                <h3>{{ tarjeta.nombre or 'Tarjeta ' + tarjeta.numero }}</h3>
+                <span>**** {{ tarjeta.numero }}</span>
+            </div>
+            <div class="check-icon">✓</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Contenido por Tarjeta -->
+    {% for tarjeta, papeletas in papeletas_por_tarjeta.items() %}
+    <div class="tarjeta-content {% if loop.first %}active{% endif %}" id="content-{{ tarjeta.numero }}">
+        <div class="movimientos-panel">
+            <div class="panel-header">
+                <h2>☰ Movimientos: <span>{{ tarjeta.nombre or 'Tarjeta ' + tarjeta.numero }}</span></h2>
+                <small>Mostrando {{ papeletas|length }} registro{{ 's' if papeletas|length > 1 else '' }}</small>
             </div>
             
-            <table class="data-table">
+            <table class="papeletas-table">
                 <thead>
                     <tr>
                         <th>Folio</th>
                         <th>Fecha</th>
-                        <th>Facturar a</th>
-                        <th>Aerolínea/Proveedor</th>
-                        <th>Total Ticket</th>
-                        <th>Creado por</th>
+                        <th>Cliente / Facturar a</th>
+                        <th>Proveedor</th>
+                        <th>Monto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for papeleta in papeletas %}
-                    <tr>
-                        <td><strong>{{ papeleta.folio }}</strong></td>
-                        <td>{{ papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '---' }}</td>
-                        <td>{{ papeleta.facturar_a }}</td>
+                    <tr {% if papeleta.tiene_reembolso %}class="reembolso-row"{% elif papeleta.extemporanea %}class="extemporanea-row"{% endif %}>
+                        <td class="folio-cell">
+                            {{ papeleta.folio }}
+                            {% if papeleta.extemporanea %}
+                                <span class="badge-extemporanea" title="Fecha cargo real: {{ papeleta.fecha_cargo_real.strftime('%d/%m/%Y') if papeleta.fecha_cargo_real else 'N/A' }}&#10;Motivo: {{ papeleta.motivo_extemporanea or 'Sin motivo' }}">🕐 EXTEMP</span>
+                            {% endif %}
+                            {% if papeleta.tiene_reembolso %}
+                                <span class="badge-reembolso {{ papeleta.estatus_reembolso or 'pendiente' }}" title="Motivo: {{ papeleta.motivo_reembolso or 'Sin especificar' }}&#10;Monto: ${{ '{:,.2f}'.format(papeleta.monto_reembolso|float) if papeleta.monto_reembolso else 'Total' }}&#10;Ref: {{ papeleta.referencia_reembolso or 'Sin referencia' }}">
+                                    {% if papeleta.estatus_reembolso == 'pendiente' %}⏳ REEMBOLSO{% endif %}
+                                    {% if papeleta.estatus_reembolso == 'en_proceso' %}🔄 EN PROCESO{% endif %}
+                                    {% if papeleta.estatus_reembolso == 'completado' %}✅ REEMBOLSADO{% endif %}
+                                    {% if papeleta.estatus_reembolso == 'rechazado' %}❌ RECHAZADO{% endif %}
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>
+                            {{ papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '---' }}
+                            {% if papeleta.extemporanea and papeleta.fecha_cargo_real %}
+                                <div class="fecha-cargo-real">Cargo real: {{ papeleta.fecha_cargo_real.strftime('%d/%m/%Y') }}</div>
+                            {% endif %}
+                            {% if papeleta.tiene_reembolso and papeleta.papeleta_relacionada %}
+                                <div class="reembolso-info">🔗 Rel: {{ papeleta.papeleta_relacionada.folio }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ papeleta.facturar_a or '---' }}</td>
+                        <td class="proveedor-cell">
                             {% if papeleta.aerolinea %}
-                                ✈️ {{ papeleta.aerolinea.nombre }}
+                                <span class="icon">✈️</span> {{ papeleta.aerolinea.nombre }}
                             {% elif papeleta.proveedor %}
-                                📝 {{ papeleta.proveedor }}
+                                <span class="icon">🏢</span> {{ papeleta.proveedor }}
                             {% else %}
                                 ---
                             {% endif %}
                         </td>
-                        <td class="monto">${{ "%.2f"|format(papeleta.total_ticket|float) }}</td>
-                        <td>{{ papeleta.usuario.nombre }}</td>
-                        <td class="actions">
-                            <a href="{{ url_for('main.editar_papeleta', id=papeleta.id) }}" class="btn-edit">Editar</a>
-                            <a href="{{ url_for('main.eliminar_papeleta', id=papeleta.id) }}" class="btn-delete" onclick="return confirm('¿Eliminar papeleta {{ papeleta.folio }}?')">Eliminar</a>
+                        <td class="monto-cell">${{ "{:,.2f}".format(papeleta.total_ticket|float) }}</td>
+                        <td class="acciones-cell">
+                            <button type="button" class="btn-action btn-view" 
+                                    title="Ver detalle" 
+                                    onclick="abrirModalVer('{{ papeleta.id }}')">
+                                👁️
+                            </button>
+                            {% if current_user.es_admin() %}
+                            <button type="button" class="btn-action btn-edit" 
+                                    title="Editar" 
+                                    onclick="abrirModalEditar('{{ papeleta.id }}', '{{ papeleta.folio }}')">
+                                ✏️
+                            </button>
+                            <button type="button" class="btn-action btn-delete" 
+                                    title="Eliminar"
+                                    onclick="abrirModalEliminar('{{ papeleta.id }}', '{{ papeleta.folio }}')">
+                                🗑️
+                            </button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% endfor %}
+    </div>
+    {% endfor %}
+
     {% else %}
+    <!-- Estado vacío -->
+    <div class="movimientos-panel">
         <div class="empty-state">
-            <div class="empty-icon">📭</div>
+            <div class="icon">📭</div>
             <h3>No hay papeletas registradas</h3>
-            <p>Comienza agregando una nueva papeleta.</p>
-            <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-new">+ Crear Primera Papeleta</a>
+            <p>Comienza creando una nueva papeleta.</p>
         </div>
+    </div>
     {% endif %}
 </div>
+
+<!-- Modal Ver Detalle -->
+<div class="modal-overlay" id="modalVer">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3>📋 Detalle de Papeleta</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalVer()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalVerContent">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Cargando...</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="cerrarModalVer()">Cerrar</button>
+            <button type="button" class="btn-print" onclick="imprimirPapeleta()">🖨️ Imprimir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar -->
+{% if current_user.es_admin() %}
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ Editar Papeleta</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalEditar()">&times;</button>
+        </div>
+        <form action="" method="POST" id="formEditar">
+            <input type="hidden" name="papeleta_id" id="editar_papeleta_id">
+            <div class="modal-body">
+                <p>Vas a editar la papeleta: <strong id="editar_folio"></strong></p>
+                <div class="form-group">
+                    <label for="motivo_edicion">Motivo de la edición *</label>
+                    <textarea id="motivo_edicion" name="motivo_edicion" required 
+                              placeholder="Explica por qué necesitas editar esta papeleta..."
+                              minlength="10"></textarea>
+                    <small>Mínimo 10 caracteres</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="cerrarModalEditar()">Cancelar</button>
+                <button type="submit" class="btn-submit">Continuar a Editar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div class="modal-overlay" id="modalEliminar">
+    <div class="modal-content modal-danger">
+        <div class="modal-header">
+            <h3>🗑️ Eliminar Papeleta</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalEliminar()">&times;</button>
+        </div>
+        <form action="" method="POST" id="formEliminar">
+            <input type="hidden" name="papeleta_id" id="eliminar_papeleta_id">
+            <div class="modal-body">
+                <div class="warning-box">
+                    ⚠️ Esta acción no se puede deshacer
+                </div>
+                <p>Vas a eliminar la papeleta: <strong id="eliminar_folio"></strong></p>
+                <div class="form-group">
+                    <label for="motivo_eliminacion">Motivo de la eliminación *</label>
+                    <select id="motivo_eliminacion_tipo" name="motivo_eliminacion_tipo" required>
+                        <option value="">Selecciona el motivo...</option>
+                        <option value="duplicado">Registro duplicado</option>
+                        <option value="error_datos">Error en los datos</option>
+                        <option value="cancelacion">Cancelación de operación</option>
+                        <option value="prueba">Registro de prueba</option>
+                        <option value="otro">Otro motivo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="motivo_eliminacion_detalle">Detalle del motivo *</label>
+                    <textarea id="motivo_eliminacion_detalle" name="motivo_eliminacion_detalle" required 
+                              placeholder="Proporciona más detalles sobre la eliminación..."
+                              minlength="10"></textarea>
+                    <small>Mínimo 10 caracteres</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="cerrarModalEliminar()">Cancelar</button>
+                <button type="submit" class="btn-danger">Eliminar Papeleta</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.tarjeta-tab');
+    const contents = document.querySelectorAll('.tarjeta-content');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tarjetaId = this.dataset.tarjeta;
+            
+            // Desactivar todos los tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            
+            // Activar el tab seleccionado
+            this.classList.add('active');
+            document.getElementById('content-' + tarjetaId).classList.add('active');
+        });
+    });
+});
+
+// === MODAL VER DETALLE ===
+function abrirModalVer(id) {
+    document.getElementById('modalVer').classList.add('active');
+    document.getElementById('modalVerContent').innerHTML = `
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Cargando...</p>
+        </div>
+    `;
+    
+    // Cargar detalle via AJAX
+    fetch(`/api/papeleta/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('modalVerContent').innerHTML = `
+                    <div class="error-message">❌ ${data.error}</div>
+                `;
+                return;
+            }
+            
+            let badgesHtml = '';
+            if (data.extemporanea) {
+                badgesHtml += '<span class="badge badge-warning">🕐 Extemporánea</span> ';
+            }
+            if (data.tiene_reembolso) {
+                const estatusClass = data.estatus_reembolso || 'pendiente';
+                badgesHtml += `<span class="badge badge-${estatusClass}">🔄 Reembolso ${data.estatus_reembolso}</span>`;
+            }
+            
+            document.getElementById('modalVerContent').innerHTML = `
+                <div class="papeleta-detail" id="papeletaDetailPrint">
+                    <div class="detail-header">
+                        <div class="folio-large">${data.folio}</div>
+                        <div class="badges">${badgesHtml}</div>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="detail-section">
+                            <h4>📅 Información General</h4>
+                            <div class="detail-row">
+                                <span class="label">Fecha de Venta:</span>
+                                <span class="value">${data.fecha_venta}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Tarjeta:</span>
+                                <span class="value">${data.tarjeta_nombre} (**** ${data.tarjeta})</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Clave Sabre/Reserva:</span>
+                                <span class="value">${data.clave_sabre}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Forma de Pago:</span>
+                                <span class="value">${data.forma_pago || 'No especificada'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <h4>👤 Cliente</h4>
+                            <div class="detail-row">
+                                <span class="label">Facturar a:</span>
+                                <span class="value">${data.facturar_a}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Solicitó:</span>
+                                <span class="value">${data.solicito}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Proveedor:</span>
+                                <span class="value">${data.proveedor || data.aerolinea || 'No especificado'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section montos-section">
+                        <h4>💰 Desglose de Montos</h4>
+                        <div class="montos-grid">
+                            <div class="monto-item">
+                                <span class="label">Total del Ticket</span>
+                                <span class="value">$${parseFloat(data.total_ticket).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="monto-item">
+                                <span class="label">10% Comisión</span>
+                                <span class="value">$${parseFloat(data.diez_porciento).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="monto-item">
+                                <span class="label">Cargo por Servicio</span>
+                                <span class="value">$${parseFloat(data.cargo).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="monto-item total">
+                                <span class="label">TOTAL A COBRAR</span>
+                                <span class="value">$${parseFloat(data.total).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${data.extemporanea ? `
+                    <div class="detail-section extemporanea-section">
+                        <h4>🕐 Información Extemporánea</h4>
+                        <div class="detail-row">
+                            <span class="label">Fecha cargo real:</span>
+                            <span class="value">${data.fecha_cargo_real || 'No especificada'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Motivo:</span>
+                            <span class="value">${data.motivo_extemporanea || 'No especificado'}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.tiene_reembolso ? `
+                    <div class="detail-section reembolso-section">
+                        <h4>🔄 Información de Reembolso</h4>
+                        <div class="detail-row">
+                            <span class="label">Estatus:</span>
+                            <span class="value badge-${data.estatus_reembolso}">${data.estatus_reembolso}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Motivo:</span>
+                            <span class="value">${data.motivo_reembolso || 'No especificado'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Monto a reembolsar:</span>
+                            <span class="value">$${data.monto_reembolso ? parseFloat(data.monto_reembolso).toLocaleString('es-MX', {minimumFractionDigits: 2}) : 'Total'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Referencia:</span>
+                            <span class="value">${data.referencia_reembolso || 'Sin referencia'}</span>
+                        </div>
+                        ${data.papeleta_relacionada ? `
+                        <div class="detail-row">
+                            <span class="label">Papeleta relacionada:</span>
+                            <span class="value">${data.papeleta_relacionada}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : ''}
+                    
+                    <div class="detail-footer">
+                        <span>Registrado por: ${data.usuario}</span>
+                        <span>Fecha registro: ${data.created_at}</span>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('modalVerContent').innerHTML = `
+                <div class="error-message">❌ Error al cargar: ${error.message}</div>
+            `;
+        });
+}
+
+function cerrarModalVer() {
+    document.getElementById('modalVer').classList.remove('active');
+}
+
+function imprimirPapeleta() {
+    const contenido = document.getElementById('papeletaDetailPrint').innerHTML;
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+        <html>
+        <head>
+            <title>Papeleta</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .papeleta-detail { max-width: 800px; margin: 0 auto; }
+                .detail-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .folio-large { font-size: 24px; font-weight: bold; }
+                .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+                .detail-section { margin-bottom: 15px; }
+                .detail-section h4 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+                .detail-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #eee; }
+                .label { font-weight: 500; color: #666; }
+                .value { font-weight: 600; }
+                .montos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                .monto-item { padding: 10px; background: #f5f5f5; border-radius: 5px; }
+                .monto-item.total { background: #e8f5e9; grid-column: span 2; }
+                .detail-footer { text-align: center; margin-top: 20px; font-size: 12px; color: #888; }
+                .badges { margin-top: 5px; }
+                .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; }
+                @media print { body { padding: 0; } }
+            </style>
+        </head>
+        <body>${contenido}</body>
+        </html>
+    `);
+    ventana.document.close();
+    ventana.print();
+}
+
+// Funciones de modales
+function abrirModalEditar(id, folio) {
+    document.getElementById('editar_papeleta_id').value = id;
+    document.getElementById('editar_folio').textContent = folio;
+    document.getElementById('formEditar').action = `/papeletas/editar/${id}`;
+    document.getElementById('modalEditar').classList.add('active');
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditar').classList.remove('active');
+    document.getElementById('motivo_edicion').value = '';
+}
+
+function abrirModalEliminar(id, folio) {
+    document.getElementById('eliminar_papeleta_id').value = id;
+    document.getElementById('eliminar_folio').textContent = folio;
+    document.getElementById('formEliminar').action = `/papeletas/eliminar/${id}`;
+    document.getElementById('modalEliminar').classList.add('active');
+}
+
+function cerrarModalEliminar() {
+    document.getElementById('modalEliminar').classList.remove('active');
+    document.getElementById('motivo_eliminacion_tipo').value = '';
+    document.getElementById('motivo_eliminacion_detalle').value = '';
+}
+
+// Cerrar modales con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarModalEditar();
+        cerrarModalEliminar();
+    }
+});
+
+// Cerrar modales al hacer clic fuera
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+</script>
 {% endblock %}
