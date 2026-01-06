@@ -1,0 +1,729 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ reporte.folio }} - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_reportes_ventas.css') }}">
+<style>
+/* Estilos adicionales para el modal de edición */
+#modalEditar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#modalEditar.active {
+    display: flex !important;
+}
+
+#modalEditar .modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.btn-edit {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-edit:hover {
+    background: #e0a800;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reportes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <span class="icon"><i class="fas fa-edit"></i></span>
+            <div>
+                <h1>{{ reporte.folio }}</h1>
+                <p>{{ reporte.fecha.strftime('%d de %B de %Y') }} - {{ reporte.usuario.nombre }}</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="badge badge-{{ reporte.estatus }} badge-lg">
+                {{ reporte.estatus|capitalize }}
+            </span>
+            <a href="{{ url_for('main.ver_reporte_venta', id=reporte.id) }}" class="btn-secondary">
+                <i class="fas fa-eye"></i> Vista Previa
+            </a>
+        </div>
+    </div>
+
+    <div class="editor-layout">
+        <!-- Panel Principal -->
+        <div class="main-panel">
+            <!-- Papeletas Disponibles -->
+            {% if papeletas_disponibles %}
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-file-alt"></i> Papeletas del Día ({{ papeletas_disponibles|length }})</h3>
+                    <button type="button" class="btn-sm btn-primary" id="btnAgregarTodas">
+                        <i class="fas fa-plus-circle"></i> Agregar Todas
+                    </button>
+                </div>
+                <div class="papeletas-grid">
+                    {% for papeleta in papeletas_disponibles %}
+                    <div class="papeleta-card" data-papeleta-id="{{ papeleta.id }}">
+                        <div class="papeleta-info">
+                            <span class="papeleta-folio">{{ papeleta.folio }}</span>
+                            <span class="papeleta-cliente">{{ papeleta.facturar_a }}</span>
+                        </div>
+                        <div class="papeleta-monto">${{ '{:,.2f}'.format(papeleta.total|float) }}</div>
+                        <button type="button" class="btn-add btn-agregar-papeleta" data-id="{{ papeleta.id }}">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tabla de Detalle -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h3><i class="fas fa-list"></i> Detalle del Reporte</h3>
+                    <button type="button" class="btn-sm btn-outline" id="btnAbrirModal">
+                        <i class="fas fa-plus"></i> Agregar Línea Manual
+                    </button>
+                </div>
+                
+                <div class="tabla-scroll">
+                    <table class="tabla-detalle" id="tablaDetalle">
+                        <thead>
+                            <tr>
+                                <th>Clave</th>
+                                <th>#</th>
+                                <th>Reserva</th>
+                                <th>Papeleta</th>
+                                <th>Volaris</th>
+                                <th>VivaAerobus</th>
+                                <th>Compra TC</th>
+                                <th>Cargo Exp</th>
+                                <th>Cargo 3.15%</th>
+                                <th>Voucher TC</th>
+                                <th>Efectivo</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detalleBody">
+                            {% for d in detalles %}
+                            <tr data-id="{{ d.id }}">
+                                <td>{{ d.clave_aerolinea }}</td>
+                                <td class="text-center">{{ d.num_boletos }}</td>
+                                <td>{{ d.reserva }}</td>
+                                <td>{{ d.num_papeleta }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.monto_volaris|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.monto_vivaerobus|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.monto_compra_tc|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.cargo_expedicion|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.cargo_315|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.voucher_tc|float) }}</td>
+                                <td class="text-right">${{ '{:,.2f}'.format(d.efectivo|float) }}</td>
+                                <td class="text-right total-col">${{ '{:,.2f}'.format(d.total_linea|float) }}</td>
+                                <td class="actions-cell">
+                                    <button type="button" class="btn-icon btn-edit btn-editar-linea" 
+                                            data-id="{{ d.id }}"
+                                            data-clave="{{ d.clave_aerolinea }}"
+                                            data-boletos="{{ d.num_boletos }}"
+                                            data-reserva="{{ d.reserva }}"
+                                            data-recibo="{{ d.num_recibo }}"
+                                            data-volaris="{{ d.monto_volaris }}"
+                                            data-vivaerobus="{{ d.monto_vivaerobus }}"
+                                            data-compra="{{ d.monto_compra_tc }}"
+                                            data-cargo-exp="{{ d.cargo_expedicion }}"
+                                            data-cargo-315="{{ d.cargo_315 }}"
+                                            data-voucher="{{ d.voucher_tc }}"
+                                            data-efectivo="{{ d.efectivo }}"
+                                            data-total="{{ d.total_linea }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn-icon btn-delete btn-eliminar-linea" data-id="{{ d.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="emptyRow">
+                                <td colspan="13" class="empty-table">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No hay líneas en el reporte</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="totales-row">
+                                <td colspan="4"><strong>TOTALES</strong></td>
+                                <td class="text-right" id="totalVolaris">${{ '{:,.2f}'.format(reporte.total_volaris|float) }}</td>
+                                <td class="text-right" id="totalVivaerobus">${{ '{:,.2f}'.format(reporte.total_vivaerobus|float) }}</td>
+                                <td class="text-right" id="totalCompraTc">${{ '{:,.2f}'.format(reporte.total_compra_tc|float) }}</td>
+                                <td class="text-right" id="totalCargoExp">${{ '{:,.2f}'.format(reporte.total_cargo_expedicion|float) }}</td>
+                                <td class="text-right" id="totalCargo315">${{ '{:,.2f}'.format(reporte.total_cargo_315|float) }}</td>
+                                <td class="text-right" id="totalVoucherTc">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</td>
+                                <td class="text-right" id="totalEfectivo">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</td>
+                                <td class="text-right total-col" id="totalGeneral">${{ '{:,.2f}'.format(reporte.total_general|float) }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="side-panel">
+            <!-- Resumen -->
+            <div class="section-card resumen-card">
+                <h3><i class="fas fa-calculator"></i> Resumen</h3>
+                <div class="resumen-item">
+                    <span>Total Boletos</span>
+                    <span id="resumenBoletos">{{ reporte.total_boletos }}</span>
+                </div>
+                <div class="resumen-item">
+                    <span>Total Recibos</span>
+                    <span id="resumenRecibos">{{ reporte.total_recibos }}</span>
+                </div>
+                <div class="resumen-divider"></div>
+                <div class="resumen-item total">
+                    <span>TOTAL EFECTIVO</span>
+                    <span id="resumenEfectivo">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</span>
+                </div>
+                <div class="resumen-item total">
+                    <span>VOUCHER TC</span>
+                    <span id="resumenVoucher">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</span>
+                </div>
+                <div class="resumen-item grand-total">
+                    <span>TOTAL GENERAL</span>
+                    <span id="resumenTotal">${{ '{:,.2f}'.format(reporte.total_general|float) }}</span>
+                </div>
+            </div>
+
+            <!-- Depósitos -->
+            <div class="section-card">
+                <h3><i class="fas fa-piggy-bank"></i> Depósitos</h3>
+                <form method="POST" id="formDepositos">
+                    <div class="form-group">
+                        <label>Depósito Pesos Efectivo</label>
+                        <input type="number" step="0.01" name="deposito_pesos_efectivo" 
+                               value="{{ reporte.deposito_pesos_efectivo or 0 }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Depósito Dólares</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" name="deposito_dolares_efectivo" 
+                                   value="{{ reporte.deposito_dolares_efectivo or 0 }}">
+                            <span class="input-addon">USD</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de Cambio</label>
+                        <input type="number" step="0.0001" name="tipo_cambio" 
+                               value="{{ reporte.tipo_cambio or 0 }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Depósito Cheques</label>
+                        <input type="number" step="0.01" name="deposito_pesos_cheques" 
+                               value="{{ reporte.deposito_pesos_cheques or 0 }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Cuenta Depósito</label>
+                        <input type="text" name="cuenta_deposito" 
+                               value="{{ reporte.cuenta_deposito or '' }}" 
+                               placeholder="Suc. 0002 cta 7568815">
+                    </div>
+                    <div class="form-group">
+                        <label>Notas</label>
+                        <textarea name="notas" rows="2">{{ reporte.notas or '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn-primary btn-block">
+                        <i class="fas fa-save"></i> Guardar Depósitos
+                    </button>
+                </form>
+            </div>
+
+            <!-- Acciones -->
+            <div class="section-card">
+                <h3><i class="fas fa-cogs"></i> Acciones</h3>
+                {% if reporte.estatus == 'borrador' %}
+                <form action="{{ url_for('main.enviar_reporte_venta', id=reporte.id) }}" method="POST">
+                    <button type="submit" class="btn-success btn-block" 
+                            {% if reporte.total_recibos == 0 %}disabled{% endif %}>
+                        <i class="fas fa-paper-plane"></i> Enviar Reporte
+                    </button>
+                </form>
+                <form action="{{ url_for('main.eliminar_reporte_venta', id=reporte.id) }}" method="POST" 
+                      onsubmit="return confirm('¿Eliminar este reporte?')">
+                    <button type="submit" class="btn-danger btn-block">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{{ url_for('main.reportes_ventas') }}" class="btn-secondary btn-block">
+                    <i class="fas fa-arrow-left"></i> Volver a Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AGREGAR LÍNEA -->
+<div id="modalLinea">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Agregar Línea Manual</h3>
+            <button type="button" class="modal-close" id="btnCerrarModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formLinea">
+                <h4>Datos Básicos</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Clave Aerolínea</label>
+                        <select name="clave_aerolinea">
+                            <option value="">Seleccionar...</option>
+                            <option value="Y4">Y4 - Volaris</option>
+                            <option value="VI">VI - VivaAerobus</option>
+                            <option value="AM">AM - Aeroméxico</option>
+                            <option value="INT">INT - Internacionales</option>
+                            <option value="HT">HT - Hotel</option>
+                            <option value="PK">PK - Paquete</option>
+                            <option value="SG">SG - Seguro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label># Boletos</label>
+                        <input type="number" name="num_boletos" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Reserva</label>
+                        <input type="text" name="reserva" placeholder="ABC123" style="text-transform:uppercase">
+                    </div>
+                    <div class="form-group">
+                        <label># Recibo</label>
+                        <input type="text" name="num_recibo" placeholder="R-001">
+                    </div>
+                </div>
+                
+                <h4>Montos por Tipo</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Volaris</label>
+                        <input type="number" step="0.01" name="monto_volaris" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>VivaAerobus</label>
+                        <input type="number" step="0.01" name="monto_vivaerobus" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Compra TC</label>
+                        <input type="number" step="0.01" name="monto_compra_tc" value="0">
+                    </div>
+                </div>
+                
+                <h4>Cargos</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cargo Expedición</label>
+                        <input type="number" step="0.01" name="cargo_expedicion" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo 3.15%</label>
+                        <input type="number" step="0.01" name="cargo_315" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Seguros</label>
+                        <input type="number" step="0.01" name="monto_seguros" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Hoteles/Paquetes</label>
+                        <input type="number" step="0.01" name="monto_hoteles_paquetes" value="0">
+                    </div>
+                </div>
+                
+                <h4>Forma de Pago</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Pago Directo TC</label>
+                        <input type="number" step="0.01" name="pago_directo_tc" value="0" class="pago-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Voucher TC</label>
+                        <input type="number" step="0.01" name="voucher_tc" value="0" class="pago-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Efectivo</label>
+                        <input type="number" step="0.01" name="efectivo" value="0" class="pago-input">
+                    </div>
+                    <div class="form-group">
+                        <label><strong>TOTAL</strong></label>
+                        <input type="number" step="0.01" name="total_linea" value="0" id="totalLineaModal" readonly 
+                               style="background:#fff3cd; font-weight:bold;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btnCancelarModal">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnGuardarLinea">
+                <i class="fas fa-plus"></i> Agregar Línea
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR LÍNEA -->
+<div id="modalEditar">
+    <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+            <h3><i class="fas fa-edit"></i> Editar Línea</h3>
+            <button type="button" class="modal-close" id="btnCerrarEditar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditar">
+                <input type="hidden" name="detalle_id" id="editDetalleId">
+                
+                <h4>Datos Básicos</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Clave Aerolínea</label>
+                        <select name="clave_aerolinea" id="editClave">
+                            <option value="">Seleccionar...</option>
+                            <option value="Y4">Y4 - Volaris</option>
+                            <option value="VI">VI - VivaAerobus</option>
+                            <option value="AM">AM - Aeroméxico</option>
+                            <option value="INT">INT - Internacionales</option>
+                            <option value="HT">HT - Hotel</option>
+                            <option value="PK">PK - Paquete</option>
+                            <option value="SG">SG - Seguro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label># Boletos</label>
+                        <input type="number" name="num_boletos" id="editBoletos" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Reserva</label>
+                        <input type="text" name="reserva" id="editReserva" style="text-transform:uppercase">
+                    </div>
+                    <div class="form-group">
+                        <label># Recibo</label>
+                        <input type="text" name="num_recibo" id="editRecibo">
+                    </div>
+                </div>
+                
+                <h4>Montos por Tipo</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Volaris</label>
+                        <input type="number" step="0.01" name="monto_volaris" id="editVolaris" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>VivaAerobus</label>
+                        <input type="number" step="0.01" name="monto_vivaerobus" id="editVivaerobus" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Compra TC</label>
+                        <input type="number" step="0.01" name="monto_compra_tc" id="editCompraTc" value="0">
+                    </div>
+                </div>
+                
+                <h4>Cargos</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cargo Expedición</label>
+                        <input type="number" step="0.01" name="cargo_expedicion" id="editCargoExp" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Cargo 3.15%</label>
+                        <input type="number" step="0.01" name="cargo_315" id="editCargo315" value="0">
+                    </div>
+                </div>
+                
+                <h4>Forma de Pago</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Voucher TC</label>
+                        <input type="number" step="0.01" name="voucher_tc" id="editVoucher" value="0" class="edit-pago">
+                    </div>
+                    <div class="form-group">
+                        <label>Efectivo</label>
+                        <input type="number" step="0.01" name="efectivo" id="editEfectivo" value="0" class="edit-pago">
+                    </div>
+                    <div class="form-group">
+                        <label><strong>TOTAL</strong></label>
+                        <input type="number" step="0.01" name="total_linea" id="editTotal" value="0" readonly 
+                               style="background:#fff3cd; font-weight:bold;">
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" id="btnCancelarEditar">Cancelar</button>
+            <button type="button" class="btn-success" id="btnGuardarEditar">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+(function() {
+    'use strict';
+    
+    var reporteId = {{ reporte.id }};
+    var modal = document.getElementById('modalLinea');
+    var modalEditar = document.getElementById('modalEditar');
+    var form = document.getElementById('formLinea');
+
+    // ============================================
+    // MODAL AGREGAR
+    // ============================================
+    function abrirModal() {
+        modal.classList.add('active');
+        form.reset();
+        document.getElementById('totalLineaModal').value = '0';
+    }
+
+    function cerrarModal() {
+        modal.classList.remove('active');
+    }
+
+    function calcularTotal() {
+        var pago = parseFloat(form.pago_directo_tc.value) || 0;
+        var voucher = parseFloat(form.voucher_tc.value) || 0;
+        var efectivo = parseFloat(form.efectivo.value) || 0;
+        document.getElementById('totalLineaModal').value = (pago + voucher + efectivo).toFixed(2);
+    }
+
+    function guardarLinea() {
+        var data = {
+            clave_aerolinea: form.clave_aerolinea.value,
+            num_boletos: parseInt(form.num_boletos.value) || 1,
+            reserva: form.reserva.value.toUpperCase(),
+            num_recibo: form.num_recibo.value,
+            num_papeleta: '',
+            monto_volaris: parseFloat(form.monto_volaris.value) || 0,
+            monto_vivaerobus: parseFloat(form.monto_vivaerobus.value) || 0,
+            monto_compra_tc: parseFloat(form.monto_compra_tc.value) || 0,
+            cargo_expedicion: parseFloat(form.cargo_expedicion.value) || 0,
+            cargo_315: parseFloat(form.cargo_315.value) || 0,
+            monto_seguros: parseFloat(form.monto_seguros.value) || 0,
+            monto_hoteles_paquetes: parseFloat(form.monto_hoteles_paquetes.value) || 0,
+            pago_directo_tc: parseFloat(form.pago_directo_tc.value) || 0,
+            voucher_tc: parseFloat(form.voucher_tc.value) || 0,
+            efectivo: parseFloat(form.efectivo.value) || 0,
+            total_linea: parseFloat(document.getElementById('totalLineaModal').value) || 0
+        };
+        
+        fetch('/api/reporte-venta/' + reporteId + '/agregar-linea', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp.success) {
+                cerrarModal();
+                location.reload();
+            } else {
+                alert('Error: ' + resp.error);
+            }
+        })
+        .catch(function(e) { alert('Error: ' + e); });
+    }
+
+    // ============================================
+    // MODAL EDITAR
+    // ============================================
+    function abrirModalEditar(btn) {
+        document.getElementById('editDetalleId').value = btn.getAttribute('data-id');
+        document.getElementById('editClave').value = btn.getAttribute('data-clave') || '';
+        document.getElementById('editBoletos').value = btn.getAttribute('data-boletos') || 1;
+        document.getElementById('editReserva').value = btn.getAttribute('data-reserva') || '';
+        document.getElementById('editRecibo').value = btn.getAttribute('data-recibo') || '';
+        document.getElementById('editVolaris').value = btn.getAttribute('data-volaris') || 0;
+        document.getElementById('editVivaerobus').value = btn.getAttribute('data-vivaerobus') || 0;
+        document.getElementById('editCompraTc').value = btn.getAttribute('data-compra') || 0;
+        document.getElementById('editCargoExp').value = btn.getAttribute('data-cargo-exp') || 0;
+        document.getElementById('editCargo315').value = btn.getAttribute('data-cargo-315') || 0;
+        document.getElementById('editVoucher').value = btn.getAttribute('data-voucher') || 0;
+        document.getElementById('editEfectivo').value = btn.getAttribute('data-efectivo') || 0;
+        document.getElementById('editTotal').value = btn.getAttribute('data-total') || 0;
+        
+        modalEditar.classList.add('active');
+    }
+
+    function cerrarModalEditar() {
+        modalEditar.classList.remove('active');
+    }
+
+    function calcularTotalEditar() {
+        var voucher = parseFloat(document.getElementById('editVoucher').value) || 0;
+        var efectivo = parseFloat(document.getElementById('editEfectivo').value) || 0;
+        document.getElementById('editTotal').value = (voucher + efectivo).toFixed(2);
+    }
+
+    function guardarEdicion() {
+        var detalleId = document.getElementById('editDetalleId').value;
+        
+        var data = {
+            clave_aerolinea: document.getElementById('editClave').value,
+            num_boletos: parseInt(document.getElementById('editBoletos').value) || 1,
+            reserva: document.getElementById('editReserva').value.toUpperCase(),
+            num_recibo: document.getElementById('editRecibo').value,
+            monto_volaris: parseFloat(document.getElementById('editVolaris').value) || 0,
+            monto_vivaerobus: parseFloat(document.getElementById('editVivaerobus').value) || 0,
+            monto_compra_tc: parseFloat(document.getElementById('editCompraTc').value) || 0,
+            cargo_expedicion: parseFloat(document.getElementById('editCargoExp').value) || 0,
+            cargo_315: parseFloat(document.getElementById('editCargo315').value) || 0,
+            voucher_tc: parseFloat(document.getElementById('editVoucher').value) || 0,
+            efectivo: parseFloat(document.getElementById('editEfectivo').value) || 0,
+            total_linea: parseFloat(document.getElementById('editTotal').value) || 0
+        };
+        
+        fetch('/api/reporte-venta/detalle/' + detalleId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp.success) {
+                cerrarModalEditar();
+                location.reload();
+            } else {
+                alert('Error: ' + resp.error);
+            }
+        })
+        .catch(function(e) { alert('Error: ' + e); });
+    }
+
+    // ============================================
+    // PAPELETAS
+    // ============================================
+    function agregarPapeleta(id) {
+        fetch('/api/reporte-venta/' + reporteId + '/agregar-papeleta', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({papeleta_id: id})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + resp.error);
+            }
+        })
+        .catch(function(e) { alert('Error: ' + e); });
+    }
+
+    function agregarTodasPapeletas() {
+        if (!confirm('¿Agregar todas las papeletas?')) return;
+        var cards = document.querySelectorAll('.papeleta-card');
+        cards.forEach(function(card) {
+            var id = parseInt(card.getAttribute('data-papeleta-id'));
+            if (id) agregarPapeleta(id);
+        });
+    }
+
+    function eliminarLinea(id) {
+        if (!confirm('¿Eliminar esta línea?')) return;
+        
+        fetch('/api/reporte-venta/detalle/' + id, {method: 'DELETE'})
+        .then(function(r) { return r.json(); })
+        .then(function(resp) {
+            if (resp.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + resp.error);
+            }
+        })
+        .catch(function(e) { alert('Error: ' + e); });
+    }
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    // Modal Agregar
+    document.getElementById('btnAbrirModal').addEventListener('click', abrirModal);
+    document.getElementById('btnCerrarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnCancelarModal').addEventListener('click', cerrarModal);
+    document.getElementById('btnGuardarLinea').addEventListener('click', guardarLinea);
+    
+    // Modal Editar
+    document.getElementById('btnCerrarEditar').addEventListener('click', cerrarModalEditar);
+    document.getElementById('btnCancelarEditar').addEventListener('click', cerrarModalEditar);
+    document.getElementById('btnGuardarEditar').addEventListener('click', guardarEdicion);
+    
+    // Botones editar
+    document.querySelectorAll('.btn-editar-linea').forEach(function(btn) {
+        btn.addEventListener('click', function() { abrirModalEditar(this); });
+    });
+    
+    // Botones eliminar
+    document.querySelectorAll('.btn-eliminar-linea').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            eliminarLinea(parseInt(this.getAttribute('data-id')));
+        });
+    });
+    
+    // Papeletas
+    var btnTodas = document.getElementById('btnAgregarTodas');
+    if (btnTodas) btnTodas.addEventListener('click', agregarTodasPapeletas);
+    
+    document.querySelectorAll('.btn-agregar-papeleta').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            agregarPapeleta(parseInt(this.getAttribute('data-id')));
+        });
+    });
+    
+    // Calcular totales
+    document.querySelectorAll('.pago-input').forEach(function(input) {
+        input.addEventListener('input', calcularTotal);
+    });
+    
+    document.querySelectorAll('.edit-pago').forEach(function(input) {
+        input.addEventListener('input', calcularTotalEditar);
+    });
+    
+    // Cerrar con clic fuera
+    modal.addEventListener('click', function(e) { if (e.target === modal) cerrarModal(); });
+    modalEditar.addEventListener('click', function(e) { if (e.target === modalEditar) cerrarModalEditar(); });
+    
+    // Cerrar con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { cerrarModal(); cerrarModalEditar(); }
+    });
+    
+    console.log('Reportes Ventas JS cargado');
+})();
+</script>
+{% endblock %}

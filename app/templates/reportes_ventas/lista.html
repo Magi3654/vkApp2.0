@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes de Ventas - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_reportes_ventas.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="reportes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <span class="icon"><i class="fas fa-chart-bar"></i></span>
+            <div>
+                <h1>Reportes de Ventas</h1>
+                <p>Gestión de reportes diarios de ventas</p>
+            </div>
+        </div>
+        <a href="{{ url_for('main.nuevo_reporte_venta') }}" class="btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Reporte
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section">
+        <form method="GET" class="filtros-form">
+            <div class="filtro-group">
+                <label><i class="fas fa-calendar"></i> Desde:</label>
+                <input type="date" name="desde" value="{{ request.args.get('desde', '') }}">
+            </div>
+            <div class="filtro-group">
+                <label><i class="fas fa-calendar"></i> Hasta:</label>
+                <input type="date" name="hasta" value="{{ request.args.get('hasta', '') }}">
+            </div>
+            <div class="filtro-group">
+                <label><i class="fas fa-filter"></i> Estatus:</label>
+                <select name="estatus">
+                    <option value="">Todos</option>
+                    <option value="borrador" {% if request.args.get('estatus') == 'borrador' %}selected{% endif %}>Borrador</option>
+                    <option value="enviado" {% if request.args.get('estatus') == 'enviado' %}selected{% endif %}>Enviado</option>
+                    <option value="aprobado" {% if request.args.get('estatus') == 'aprobado' %}selected{% endif %}>Aprobado</option>
+                    <option value="rechazado" {% if request.args.get('estatus') == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                </select>
+            </div>
+            <div class="filtro-actions">
+                <button type="submit" class="btn-secondary"><i class="fas fa-search"></i> Filtrar</button>
+                <a href="{{ url_for('main.reportes_ventas') }}" class="btn-outline"><i class="fas fa-sync"></i> Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Reportes -->
+    <div class="tabla-container">
+        <table class="tabla-reportes">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Fecha</th>
+                    <th>Agente</th>
+                    <th>Boletos</th>
+                    <th>Total</th>
+                    <th>Estatus</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reporte in reportes %}
+                <tr>
+                    <td><strong>{{ reporte.folio }}</strong></td>
+                    <td>{{ reporte.fecha.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ reporte.usuario.nombre if reporte.usuario else '---' }}</td>
+                    <td class="text-center">{{ reporte.total_boletos }}</td>
+                    <td class="text-right">${{ '{:,.2f}'.format(reporte.total_general|float) }}</td>
+                    <td>
+                        <span class="badge badge-{{ reporte.estatus }}">
+                            {% if reporte.estatus == 'borrador' %}<i class="fas fa-edit"></i>
+                            {% elif reporte.estatus == 'enviado' %}<i class="fas fa-paper-plane"></i>
+                            {% elif reporte.estatus == 'aprobado' %}<i class="fas fa-check-circle"></i>
+                            {% elif reporte.estatus == 'rechazado' %}<i class="fas fa-times-circle"></i>
+                            {% endif %}
+                            {{ reporte.estatus|capitalize }}
+                        </span>
+                    </td>
+                    <td class="actions-cell">
+                        <a href="{{ url_for('main.ver_reporte_venta', id=reporte.id) }}" class="btn-icon" title="Ver">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if reporte.puede_editar %}
+                        <a href="{{ url_for('main.editar_reporte_venta', id=reporte.id) }}" class="btn-icon btn-edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+                        <form action="{{ url_for('main.aprobar_reporte_venta', id=reporte.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn-icon btn-approve" title="Aprobar">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No hay reportes registrados</p>
+                        <a href="{{ url_for('main.nuevo_reporte_venta') }}" class="btn-primary">
+                            <i class="fas fa-plus"></i> Crear primer reporte
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -465,6 +465,61 @@ function verPapeleta(id) {
                 return;
             }
             
+            // Construir secciones opcionales
+            let seccionExtemporanea = '';
+            if (data.extemporanea) {
+                seccionExtemporanea = `
+                    <div class="detail-section extemporanea-section">
+                        <h4><i class="fas fa-clock"></i> Papeleta Extemporánea</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-calendar-alt"></i> Fecha Cargo Real</span>
+                                <span class="value">${data.fecha_cargo_real || '---'}</span>
+                            </div>
+                            <div class="detail-item full-width">
+                                <span class="label"><i class="fas fa-comment"></i> Motivo Tardío</span>
+                                <span class="value">${data.motivo_extemporanea || '---'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let seccionReembolso = '';
+            if (data.tiene_reembolso) {
+                seccionReembolso = `
+                    <div class="detail-section reembolso-section">
+                        <h4><i class="fas fa-undo"></i> Información de Reembolso</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-tag"></i> Motivo</span>
+                                <span class="value">${data.motivo_reembolso || '---'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-dollar-sign"></i> Monto</span>
+                                <span class="value">${data.monto_reembolso ? '$' + Number(data.monto_reembolso).toLocaleString('en-US', {minimumFractionDigits: 2}) : '---'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-info-circle"></i> Estatus</span>
+                                <span class="value badge-estatus-${data.estatus_reembolso || 'pendiente'}">${data.estatus_reembolso || 'pendiente'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-calendar"></i> Fecha Solicitud</span>
+                                <span class="value">${data.fecha_solicitud_reembolso || '---'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-file-alt"></i> Referencia/Caso</span>
+                                <span class="value">${data.referencia_reembolso || '---'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-link"></i> Papeleta Relacionada</span>
+                                <span class="value">${data.papeleta_relacionada || '---'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             document.getElementById('modalVerContent').innerHTML = `
                 <div class="papeleta-detail">
                     <div class="detail-grid">
@@ -492,7 +547,18 @@ function verPapeleta(id) {
                             <span class="label"><i class="fas fa-plane"></i> Aerolínea/Proveedor</span>
                             <span class="value">${data.aerolinea || data.proveedor || '---'}</span>
                         </div>
+                        <div class="detail-item">
+                            <span class="label"><i class="fas fa-map-marker-alt"></i> Sucursal</span>
+                            <span class="value">${data.sucursal || '---'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label"><i class="fas fa-key"></i> Clave Sabre</span>
+                            <span class="value">${data.clave_sabre || '---'}</span>
+                        </div>
                     </div>
+                    
+                    ${data.extemporanea ? '<span class="badge-extemporanea"><i class="fas fa-clock"></i> Extemporánea</span>' : ''}
+                    ${data.tiene_reembolso ? '<span class="badge-reembolso"><i class="fas fa-undo"></i> Con Reembolso</span>' : ''}
                     
                     <div class="detail-section montos">
                         <h4><i class="fas fa-dollar-sign"></i> Desglose de Montos</h4>
@@ -506,15 +572,24 @@ function verPapeleta(id) {
                                 <span class="value">$${Number(data.diez_porciento).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div class="monto-item">
-                                <span class="label">Cargo</span>
+                                <span class="label">Cargo Visible</span>
                                 <span class="value">$${Number(data.cargo).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
                             </div>
+                            ${data.cargo_oculto > 0 ? `
+                            <div class="monto-item oculto">
+                                <span class="label"><i class="fas fa-eye-slash"></i> Cargo Oculto</span>
+                                <span class="value">$${Number(data.cargo_oculto).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            ` : ''}
                             <div class="monto-item total">
                                 <span class="label">TOTAL</span>
                                 <span class="value">$${Number(data.total).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
                             </div>
                         </div>
                     </div>
+                    
+                    ${seccionExtemporanea}
+                    ${seccionReembolso}
                     
                     <div class="detail-footer">
                         <small>Creado por: ${data.usuario} | ${data.created_at}</small>

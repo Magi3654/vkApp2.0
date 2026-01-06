@@ -6,11 +6,12 @@ from flask_login import login_required, current_user
 from .models import (
     db, Usuario, Rol, Papeleta, Desglose, Empresa, Aerolinea, EmpresaBooking, 
     CargoServicio, Descuento, TarifaFija, Sucursal, TarjetaCorporativa, Autorizacion,
-    TarjetaUsuario, AuditLog
+    TarjetaUsuario, AuditLog,ReporteVenta, DetalleReporteVenta
 )
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from collections import OrderedDict
+
 
 main = Blueprint('main', __name__)
 
@@ -83,17 +84,65 @@ def siguiente_folio_papeleta():
 @main.route('/api/cargos-empresa/<int:empresa_id>')
 @login_required
 def cargos_empresa(empresa_id):
+    """
+    Obtiene los cargos por servicio de una empresa.
+    Parámetro opcional: tipo_servicio (nacional, internacional, hotel, auto, otro)
+    """
     empresa = Empresa.query.get_or_404(empresa_id)
-    cargo_visible = None
-    cargo_oculto = None
-
-    for cargo in empresa.cargos_servicio:
-        if cargo.tipo == 'visible':
-            cargo_visible = float(cargo.monto)
-        elif cargo.tipo == 'oculto':
-            cargo_oculto = float(cargo.monto)
-
-    return jsonify({'cargo_visible': cargo_visible, 'cargo_oculto': cargo_oculto})
+    
+    # Obtener tipo de servicio del query string (default: nacional)
+    tipo_servicio = request.args.get('tipo_servicio', 'nacional')
+    
+    # Mapear tipos de cargo del formulario a tipos de servicio de la BD
+    tipo_map = {
+        'aerolinea': 'nacional',  # Por defecto nacional, puede ser internacional
+        'hotel': 'hotel',
+        'auto': 'auto',
+        'otro': 'otro',
+        'nacional': 'nacional',
+        'internacional': 'internacional'
+    }
+    
+    tipo_servicio_bd = tipo_map.get(tipo_servicio, 'nacional')
+    
+    # Buscar cargos para este tipo de servicio
+    cargo_visible = CargoServicio.query.filter_by(
+        empresa_id=empresa_id,
+        tipo='visible',
+        tipo_servicio=tipo_servicio_bd,
+        activo=True
+    ).first()
+    
+    cargo_oculto = CargoServicio.query.filter_by(
+        empresa_id=empresa_id,
+        tipo='oculto',
+        tipo_servicio=tipo_servicio_bd,
+        activo=True
+    ).first()
+    
+    # Si no hay cargos para el tipo específico, buscar nacional como fallback
+    if not cargo_visible and not cargo_oculto and tipo_servicio_bd != 'nacional':
+        cargo_visible = CargoServicio.query.filter_by(
+            empresa_id=empresa_id,
+            tipo='visible',
+            tipo_servicio='nacional',
+            activo=True
+        ).first()
+        
+        cargo_oculto = CargoServicio.query.filter_by(
+            empresa_id=empresa_id,
+            tipo='oculto',
+            tipo_servicio='nacional',
+            activo=True
+        ).first()
+    
+    return jsonify({
+        'empresa_id': empresa_id,
+        'empresa_nombre': empresa.nombre_empresa,
+        'tipo_servicio': tipo_servicio_bd,
+        'cargo_visible': float(cargo_visible.monto) if cargo_visible else 0,
+        'cargo_oculto': float(cargo_oculto.monto) if cargo_oculto else 0
+    })
 
 
 @main.route('/api/papeleta/<int:id>')
@@ -1311,3 +1360,562 @@ def actualizar_factura_papeleta(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# =============================================================================
+# RUTAS DE REPORTES DE VENTAS
+# Agregar a routes.py
+# =============================================================================
+
+# Agregar estos imports al inicio de routes.py:
+# 
+
+# =============================================================================
+# CONSULTA DE REPORTES DE VENTAS
+# =============================================================================
+
+@main.route('/reportes-ventas')
+@login_required
+def reportes_ventas():
+    """Lista de reportes de ventas"""
+    # Filtros
+    fecha_desde = request.args.get('desde')
+    fecha_hasta = request.args.get('hasta')
+    estatus = request.args.get('estatus')
+    
+    query = ReporteVenta.query
+    
+    # Si no es admin, solo ver sus reportes
+    if not current_user.es_admin():
+        query = query.filter_by(usuario_id=current_user.id)
+    
+    if fecha_desde:
+        query = query.filter(ReporteVenta.fecha >= fecha_desde)
+    if fecha_hasta:
+        query = query.filter(ReporteVenta.fecha <= fecha_hasta)
+    if estatus:
+        query = query.filter_by(estatus=estatus)
+    
+    reportes = query.order_by(ReporteVenta.fecha.desc(), ReporteVenta.id.desc()).all()
+    
+    return render_template('reportes_ventas/lista.html', reportes=reportes)
+
+
+@main.route('/reportes-ventas/nuevo', methods=['GET', 'POST'])
+@login_required
+def nuevo_reporte_venta():
+    """Crear nuevo reporte de ventas"""
+    from datetime import date
+    
+    if request.method == 'POST':
+        try:
+            fecha = request.form.get('fecha')
+            if not fecha:
+                fecha = date.today()
+            else:
+                fecha = datetime.strptime(fecha, '%Y-%m-%d').date()
+            
+            # Verificar si ya existe reporte para esta fecha y usuario
+            existente = ReporteVenta.query.filter_by(
+                fecha=fecha,
+                usuario_id=current_user.id
+            ).first()
+            
+            if existente:
+                flash(f'Ya existe un reporte para el {fecha.strftime("%d/%m/%Y")}. Folio: {existente.folio}', 'warning')
+                return redirect(url_for('main.editar_reporte_venta', id=existente.id))
+            
+            reporte = ReporteVenta(
+                fecha=fecha,
+                usuario_id=current_user.id,
+                sucursal_id=current_user.sucursal_id,
+                notas=request.form.get('notas', '')
+            )
+            db.session.add(reporte)
+            db.session.commit()
+            
+            flash(f'Reporte {reporte.folio} creado exitosamente.', 'success')
+            return redirect(url_for('main.editar_reporte_venta', id=reporte.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear reporte: {str(e)}', 'danger')
+    
+    return render_template('reportes_ventas/nuevo.html', fecha_hoy=date.today())
+
+
+@main.route('/reportes-ventas/<int:id>')
+@login_required
+def ver_reporte_venta(id):
+    """Ver detalle de reporte de ventas"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    # Verificar acceso
+    if not current_user.es_admin() and reporte.usuario_id != current_user.id:
+        flash('No tienes acceso a este reporte.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    detalles = reporte.detalles.order_by(DetalleReporteVenta.orden).all()
+    
+    # Contar boletos por aerolínea
+    boletos_aerolinea = db.session.query(
+        DetalleReporteVenta.clave_aerolinea,
+        func.sum(DetalleReporteVenta.num_boletos)
+    ).filter_by(reporte_id=id).group_by(DetalleReporteVenta.clave_aerolinea).all()
+    
+    return render_template('reportes_ventas/ver.html', 
+                          reporte=reporte, 
+                          detalles=detalles,
+                          boletos_aerolinea=dict(boletos_aerolinea))
+
+
+@main.route('/reportes-ventas/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_reporte_venta(id):
+    """Editar reporte de ventas"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    # Verificar acceso y estado
+    if not current_user.es_admin() and reporte.usuario_id != current_user.id:
+        flash('No tienes acceso a este reporte.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    if not reporte.puede_editar and not current_user.es_admin():
+        flash('Este reporte ya no puede ser editado.', 'warning')
+        return redirect(url_for('main.ver_reporte_venta', id=id))
+    
+    if request.method == 'POST':
+        try:
+            # Actualizar datos de depósitos
+            reporte.deposito_pesos_efectivo = float(request.form.get('deposito_pesos_efectivo') or 0)
+            reporte.deposito_dolares_efectivo = float(request.form.get('deposito_dolares_efectivo') or 0)
+            reporte.deposito_pesos_cheques = float(request.form.get('deposito_pesos_cheques') or 0)
+            reporte.tipo_cambio = float(request.form.get('tipo_cambio') or 0)
+            reporte.cuenta_deposito = request.form.get('cuenta_deposito', '')
+            reporte.notas = request.form.get('notas', '')
+            
+            db.session.commit()
+            flash('Reporte actualizado.', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar: {str(e)}', 'danger')
+    
+    # Obtener papeletas del día que no están en ningún reporte
+    papeletas_disponibles = Papeleta.query.filter(
+        Papeleta.fecha_venta == reporte.fecha,
+        Papeleta.usuario_id == reporte.usuario_id,
+        Papeleta.reporte_venta_id.is_(None)
+    ).order_by(Papeleta.id).all()
+    
+    # Papeletas ya agregadas
+    detalles = reporte.detalles.order_by(DetalleReporteVenta.orden).all()
+    
+    aerolineas = Aerolinea.query.filter_by(activa=True).order_by(Aerolinea.nombre).all()
+    
+    return render_template('reportes_ventas/editar.html',
+                          reporte=reporte,
+                          detalles=detalles,
+                          papeletas_disponibles=papeletas_disponibles,
+                          aerolineas=aerolineas)
+
+
+@main.route('/reportes-ventas/<int:id>/enviar', methods=['POST'])
+@login_required
+def enviar_reporte_venta(id):
+    """Enviar reporte para aprobación"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if reporte.usuario_id != current_user.id and not current_user.es_admin():
+        flash('No tienes permiso para enviar este reporte.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    if reporte.estatus != 'borrador':
+        flash('Este reporte ya fue enviado.', 'warning')
+        return redirect(url_for('main.ver_reporte_venta', id=id))
+    
+    if reporte.total_recibos == 0:
+        flash('No puedes enviar un reporte vacío.', 'warning')
+        return redirect(url_for('main.editar_reporte_venta', id=id))
+    
+    reporte.estatus = 'enviado'
+    reporte.fecha_envio = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Reporte {reporte.folio} enviado para revisión.', 'success')
+    return redirect(url_for('main.ver_reporte_venta', id=id))
+
+
+@main.route('/reportes-ventas/<int:id>/aprobar', methods=['POST'])
+@login_required
+def aprobar_reporte_venta(id):
+    """Aprobar reporte de ventas (solo admin)"""
+    if not current_user.es_admin():
+        flash('No tienes permiso para aprobar reportes.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if reporte.estatus != 'enviado':
+        flash('Solo se pueden aprobar reportes enviados.', 'warning')
+        return redirect(url_for('main.ver_reporte_venta', id=id))
+    
+    reporte.estatus = 'aprobado'
+    reporte.fecha_aprobacion = datetime.utcnow()
+    reporte.aprobado_por = current_user.id
+    db.session.commit()
+    
+    flash(f'Reporte {reporte.folio} aprobado.', 'success')
+    return redirect(url_for('main.ver_reporte_venta', id=id))
+
+
+@main.route('/reportes-ventas/<int:id>/rechazar', methods=['POST'])
+@login_required
+def rechazar_reporte_venta(id):
+    """Rechazar reporte de ventas (solo admin)"""
+    if not current_user.es_admin():
+        flash('No tienes permiso para rechazar reportes.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    reporte = ReporteVenta.query.get_or_404(id)
+    motivo = request.form.get('motivo', '')
+    
+    reporte.estatus = 'rechazado'
+    reporte.notas = f"RECHAZADO: {motivo}\n\n{reporte.notas or ''}"
+    db.session.commit()
+    
+    flash(f'Reporte {reporte.folio} rechazado.', 'info')
+    return redirect(url_for('main.ver_reporte_venta', id=id))
+
+
+@main.route('/reportes-ventas/<int:id>/reabrir', methods=['POST'])
+@login_required
+def reabrir_reporte_venta(id):
+    """Reabrir reporte rechazado"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if reporte.usuario_id != current_user.id and not current_user.es_admin():
+        flash('No tienes permiso.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    if reporte.estatus not in ['rechazado', 'enviado']:
+        flash('No se puede reabrir este reporte.', 'warning')
+        return redirect(url_for('main.ver_reporte_venta', id=id))
+    
+    reporte.estatus = 'borrador'
+    db.session.commit()
+    
+    flash(f'Reporte {reporte.folio} reabierto para edición.', 'success')
+    return redirect(url_for('main.editar_reporte_venta', id=id))
+
+
+@main.route('/reportes-ventas/<int:id>/eliminar', methods=['POST'])
+@login_required
+def eliminar_reporte_venta(id):
+    """Eliminar reporte de ventas"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if reporte.usuario_id != current_user.id and not current_user.es_admin():
+        flash('No tienes permiso.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    if reporte.estatus == 'aprobado':
+        flash('No se puede eliminar un reporte aprobado.', 'danger')
+        return redirect(url_for('main.reportes_ventas'))
+    
+    # Liberar papeletas asociadas
+    Papeleta.query.filter_by(reporte_venta_id=id).update({'reporte_venta_id': None})
+    
+    folio = reporte.folio
+    db.session.delete(reporte)
+    db.session.commit()
+    
+    flash(f'Reporte {folio} eliminado.', 'info')
+    return redirect(url_for('main.reportes_ventas'))
+
+
+# =============================================================================
+# API - DETALLE DE REPORTE
+# =============================================================================
+
+@main.route('/api/reporte-venta/<int:id>/agregar-linea', methods=['POST'])
+@login_required
+def agregar_linea_reporte(id):
+    """Agregar línea al reporte de ventas"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if not reporte.puede_editar:
+        return jsonify({'success': False, 'error': 'Reporte no editable'}), 400
+    
+    data = request.get_json()
+    
+    try:
+        # Obtener siguiente orden
+        max_orden = db.session.query(func.max(DetalleReporteVenta.orden)).filter_by(reporte_id=id).scalar() or 0
+        
+        detalle = DetalleReporteVenta(
+            reporte_id=id,
+            papeleta_id=data.get('papeleta_id'),
+            clave_aerolinea=data.get('clave_aerolinea', ''),
+            num_boletos=int(data.get('num_boletos', 1)),
+            reserva=data.get('reserva', ''),
+            num_recibo=data.get('num_recibo', ''),
+            num_papeleta=data.get('num_papeleta', ''),
+            monto_bsp=float(data.get('monto_bsp', 0)),
+            monto_volaris=float(data.get('monto_volaris', 0)),
+            monto_vivaerobus=float(data.get('monto_vivaerobus', 0)),
+            monto_compra_tc=float(data.get('monto_compra_tc', 0)),
+            cargo_expedicion=float(data.get('cargo_expedicion', 0)),
+            cargo_315=float(data.get('cargo_315', 0)),
+            monto_seguros=float(data.get('monto_seguros', 0)),
+            monto_hoteles_paquetes=float(data.get('monto_hoteles_paquetes', 0)),
+            monto_transporte_terrestre=float(data.get('monto_transporte_terrestre', 0)),
+            pago_directo_tc=float(data.get('pago_directo_tc', 0)),
+            voucher_tc=float(data.get('voucher_tc', 0)),
+            efectivo=float(data.get('efectivo', 0)),
+            total_linea=float(data.get('total_linea', 0)),
+            orden=max_orden + 1
+        )
+        
+        db.session.add(detalle)
+        
+        # Si viene de una papeleta, asociarla
+        if data.get('papeleta_id'):
+            papeleta = Papeleta.query.get(data['papeleta_id'])
+            if papeleta:
+                papeleta.reporte_venta_id = id
+        
+        db.session.commit()
+        
+        # Recargar reporte para obtener totales actualizados
+        db.session.refresh(reporte)
+        
+        return jsonify({
+            'success': True,
+            'detalle_id': detalle.id,
+            'totales': {
+                'total_general': float(reporte.total_general or 0),
+                'total_efectivo': float(reporte.total_efectivo or 0),
+                'total_voucher_tc': float(reporte.total_voucher_tc or 0),
+                'total_boletos': reporte.total_boletos,
+                'total_recibos': reporte.total_recibos
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/reporte-venta/<int:id>/agregar-papeleta', methods=['POST'])
+@login_required
+def agregar_papeleta_reporte(id):
+    """Agregar papeleta existente al reporte"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    if not reporte.puede_editar:
+        return jsonify({'success': False, 'error': 'Reporte no editable'}), 400
+    
+    data = request.get_json()
+    papeleta_id = data.get('papeleta_id')
+    
+    if not papeleta_id:
+        return jsonify({'success': False, 'error': 'Papeleta no especificada'}), 400
+    
+    papeleta = Papeleta.query.get_or_404(papeleta_id)
+    
+    # Verificar que no esté ya en otro reporte
+    if papeleta.reporte_venta_id and papeleta.reporte_venta_id != id:
+        return jsonify({'success': False, 'error': 'Papeleta ya está en otro reporte'}), 400
+    
+    try:
+        # Determinar clave de aerolínea
+        clave_aerolinea = ''
+        if papeleta.aerolinea:
+            clave_aerolinea = papeleta.aerolinea.codigo_iata or papeleta.aerolinea.nombre[:2].upper()
+        
+        # Determinar forma de pago
+        forma_pago = (papeleta.forma_pago or '').lower()
+        total_ticket = float(papeleta.total_ticket or 0)
+        total = float(papeleta.total or 0)
+        
+        # Inicializar montos
+        monto_volaris = 0
+        monto_vivaerobus = 0
+        monto_compra_tc = 0
+        voucher_tc = 0
+        efectivo = 0
+        pago_directo_tc = 0
+        
+        # Determinar si es pago con tarjeta o efectivo
+        es_tarjeta = 'tarjeta' in forma_pago or 'tc' in forma_pago or 'crédito' in forma_pago or 'credito' in forma_pago
+        es_efectivo = 'efectivo' in forma_pago or 'contado' in forma_pago or 'transferencia' in forma_pago or 'depósito' in forma_pago or 'deposito' in forma_pago
+        
+        if es_tarjeta:
+            # Si es tarjeta, TODO va a compra TC (sin importar aerolínea)
+            monto_compra_tc = total_ticket
+            voucher_tc = total
+        else:
+            # Si es efectivo/cash, clasificar por aerolínea
+            if clave_aerolinea in ['Y4', 'VOI', 'VLR']:
+                monto_volaris = total_ticket
+            elif clave_aerolinea in ['VB', 'VI', 'VIV', '4O']:
+                monto_vivaerobus = total_ticket
+            else:
+                # Otras aerolíneas van a compra TC también
+                monto_compra_tc = total_ticket
+            
+            efectivo = total
+        
+        max_orden = db.session.query(func.max(DetalleReporteVenta.orden)).filter_by(reporte_id=id).scalar() or 0
+        
+        detalle = DetalleReporteVenta(
+            reporte_id=id,
+            papeleta_id=papeleta_id,
+            clave_aerolinea=clave_aerolinea,
+            num_boletos=1,
+            reserva=papeleta.clave_sabre or '',
+            num_recibo='',
+            num_papeleta=papeleta.folio,
+            monto_volaris=monto_volaris,
+            monto_vivaerobus=monto_vivaerobus,
+            monto_compra_tc=monto_compra_tc,
+            cargo_expedicion=float(papeleta.cargo or 0),
+            cargo_315=float(papeleta.diez_porciento or 0),
+            voucher_tc=voucher_tc,
+            efectivo=efectivo,
+            pago_directo_tc=pago_directo_tc,
+            total_linea=total,
+            orden=max_orden + 1
+        )
+        
+        db.session.add(detalle)
+        papeleta.reporte_venta_id = id
+        db.session.commit()
+        
+        db.session.refresh(reporte)
+        
+        return jsonify({
+            'success': True,
+            'detalle_id': detalle.id,
+            'totales': {
+                'total_general': float(reporte.total_general or 0),
+                'total_efectivo': float(reporte.total_efectivo or 0),
+                'total_voucher_tc': float(reporte.total_voucher_tc or 0),
+                'total_boletos': reporte.total_boletos,
+                'total_recibos': reporte.total_recibos
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@main.route('/api/reporte-venta/detalle/<int:detalle_id>', methods=['PUT', 'DELETE'])
+@login_required
+def modificar_detalle_reporte(detalle_id):
+    """Modificar o eliminar línea del reporte"""
+    detalle = DetalleReporteVenta.query.get_or_404(detalle_id)
+    reporte = detalle.reporte
+    
+    if not reporte.puede_editar:
+        return jsonify({'success': False, 'error': 'Reporte no editable'}), 400
+    
+    if request.method == 'DELETE':
+        try:
+            # Liberar papeleta si estaba asociada
+            if detalle.papeleta_id:
+                papeleta = Papeleta.query.get(detalle.papeleta_id)
+                if papeleta:
+                    papeleta.reporte_venta_id = None
+            
+            db.session.delete(detalle)
+            db.session.commit()
+            
+            db.session.refresh(reporte)
+            
+            return jsonify({
+                'success': True,
+                'totales': {
+                    'total_general': float(reporte.total_general or 0),
+                    'total_efectivo': float(reporte.total_efectivo or 0),
+                    'total_voucher_tc': float(reporte.total_voucher_tc or 0),
+                    'total_boletos': reporte.total_boletos,
+                    'total_recibos': reporte.total_recibos
+                }
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    elif request.method == 'PUT':
+        data = request.get_json()
+        try:
+            detalle.clave_aerolinea = data.get('clave_aerolinea', detalle.clave_aerolinea)
+            detalle.num_boletos = int(data.get('num_boletos', detalle.num_boletos))
+            detalle.reserva = data.get('reserva', detalle.reserva)
+            detalle.num_recibo = data.get('num_recibo', detalle.num_recibo)
+            detalle.monto_bsp = float(data.get('monto_bsp', detalle.monto_bsp))
+            detalle.monto_volaris = float(data.get('monto_volaris', detalle.monto_volaris))
+            detalle.monto_vivaerobus = float(data.get('monto_vivaerobus', detalle.monto_vivaerobus))
+            detalle.monto_compra_tc = float(data.get('monto_compra_tc', detalle.monto_compra_tc))
+            detalle.cargo_expedicion = float(data.get('cargo_expedicion', detalle.cargo_expedicion))
+            detalle.cargo_315 = float(data.get('cargo_315', detalle.cargo_315))
+            detalle.monto_seguros = float(data.get('monto_seguros', detalle.monto_seguros))
+            detalle.monto_hoteles_paquetes = float(data.get('monto_hoteles_paquetes', detalle.monto_hoteles_paquetes))
+            detalle.monto_transporte_terrestre = float(data.get('monto_transporte_terrestre', detalle.monto_transporte_terrestre))
+            detalle.pago_directo_tc = float(data.get('pago_directo_tc', detalle.pago_directo_tc))
+            detalle.voucher_tc = float(data.get('voucher_tc', detalle.voucher_tc))
+            detalle.efectivo = float(data.get('efectivo', detalle.efectivo))
+            detalle.total_linea = float(data.get('total_linea', detalle.total_linea))
+            
+            db.session.commit()
+            db.session.refresh(reporte)
+            
+            return jsonify({
+                'success': True,
+                'totales': {
+                    'total_general': float(reporte.total_general or 0),
+                    'total_efectivo': float(reporte.total_efectivo or 0),
+                    'total_voucher_tc': float(reporte.total_voucher_tc or 0),
+                    'total_boletos': reporte.total_boletos,
+                    'total_recibos': reporte.total_recibos
+                }
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/reporte-venta/<int:id>/totales')
+@login_required
+def obtener_totales_reporte(id):
+    """Obtener totales actualizados del reporte"""
+    reporte = ReporteVenta.query.get_or_404(id)
+    
+    # Contar boletos por aerolínea
+    boletos_aerolinea = db.session.query(
+        DetalleReporteVenta.clave_aerolinea,
+        func.sum(DetalleReporteVenta.num_boletos)
+    ).filter_by(reporte_id=id).group_by(DetalleReporteVenta.clave_aerolinea).all()
+    
+    return jsonify({
+        'success': True,
+        'totales': {
+            'total_bsp': float(reporte.total_bsp or 0),
+            'total_volaris': float(reporte.total_volaris or 0),
+            'total_vivaerobus': float(reporte.total_vivaerobus or 0),
+            'total_compra_tc': float(reporte.total_compra_tc or 0),
+            'total_cargo_expedicion': float(reporte.total_cargo_expedicion or 0),
+            'total_cargo_315': float(reporte.total_cargo_315 or 0),
+            'total_seguros': float(reporte.total_seguros or 0),
+            'total_hoteles_paquetes': float(reporte.total_hoteles_paquetes or 0),
+            'total_transporte_terrestre': float(reporte.total_transporte_terrestre or 0),
+            'total_pago_directo_tc': float(reporte.total_pago_directo_tc or 0),
+            'total_voucher_tc': float(reporte.total_voucher_tc or 0),
+            'total_efectivo': float(reporte.total_efectivo or 0),
+            'total_general': float(reporte.total_general or 0),
+            'total_boletos': reporte.total_boletos,
+            'total_recibos': reporte.total_recibos
+        },
+        'boletos_aerolinea': {k: int(v) for k, v in boletos_aerolinea if k}
+    })

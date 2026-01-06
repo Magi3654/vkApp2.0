@@ -213,14 +213,14 @@
                     
                     <div class="form-group">
                         <label for="solicito">Solicitó *</label>
-                        <input type="text" id="solicito" name="solicito" required placeholder="Nombre del solicitante">
+                        <input type="text" id="solicito" name="solicito" required placeholder="Nombre del solicitante" style="text-transform: uppercase;">
                     </div>
                 </div>
                 
                 <div class="form-column">
                     <div class="form-group">
                         <label for="clave_sabre">Clave Sabre / Reserva *</label>
-                        <input type="text" id="clave_sabre" name="clave_sabre" required placeholder="Ej: ABC123">
+                        <input type="text" id="clave_sabre" name="clave_sabre" required placeholder="Ej: ABC123" style="text-transform: uppercase;">
                     </div>
                     
                     <div class="form-group">
@@ -252,8 +252,15 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="cargo">Cargo por Servicio</label>
+                            <label for="cargo">Cargo Visible <small>(facturado)</small></label>
                             <input type="number" step="0.01" min="0" id="cargo" name="cargo" placeholder="0.00" class="monto-input" value="0">
+                            <small id="cargoEmpresaInfo"></small>
+                        </div>
+                        
+                        <div class="form-group" id="cargoOcultoGroup" style="display: none;">
+                            <label for="cargo_oculto"><i class="fas fa-eye-slash"></i> Cargo Oculto <small>(incluido en tarifa)</small></label>
+                            <input type="number" step="0.01" min="0" id="cargo_oculto" name="cargo_oculto" placeholder="0.00" class="monto-input monto-oculto" value="0" readonly>
+                            <small>Este cargo se agrega al total pero no se factura por separado</small>
                         </div>
                         
                         <div class="form-group total-group">
@@ -410,7 +417,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const ticket = parseFloat(totalTicket.value) || 0;
         const comision = parseFloat(diezPorciento.value) || 0;
         const cargoServicio = parseFloat(cargo.value) || 0;
-        totalFinal.value = (ticket + comision + cargoServicio).toFixed(2);
+        const cargoOcultoVal = parseFloat(document.getElementById('cargo_oculto').value) || 0;
+        totalFinal.value = (ticket + comision + cargoServicio + cargoOcultoVal).toFixed(2);
     }
     
     btnCalcular10.addEventListener('click', function() {
@@ -425,33 +433,59 @@ document.addEventListener('DOMContentLoaded', function() {
     
     empresaSelect.addEventListener('change', function() {
         const empresaId = this.value;
+        const cargoOcultoInput = document.getElementById('cargo_oculto');
+        const cargoOcultoGroup = document.getElementById('cargoOcultoGroup');
+        const tipoCargoSelect = document.getElementById('tipo_cargo');
+        const tipoServicio = tipoCargoSelect.value === 'aerolinea' ? 'nacional' : (tipoCargoSelect.value || 'nacional');
+        
         if (!empresaId) {
             cargoEmpresaInfo.innerHTML = '';
             cargo.value = '0';
+            cargoOcultoInput.value = '0';
+            cargoOcultoGroup.style.display = 'none';
             calcularTotal();
             return;
         }
         
-        fetch(`/api/cargos-empresa/${empresaId}`)
+        fetch(`/api/cargos-empresa/${empresaId}?tipo_servicio=${tipoServicio}`)
             .then(response => response.json())
             .then(data => {
-                if (data.cargo_visible !== null || data.cargo_oculto !== null) {
-                    const cargoVisible = data.cargo_visible || 0;
-                    const cargoOculto = data.cargo_oculto || 0;
-                    cargo.value = cargoVisible.toFixed(2);
-                    let info = '';
-                    if (cargoVisible > 0) info += `<i class="fas fa-dollar-sign"></i> Cargo visible: $${cargoVisible.toFixed(2)}`;
-                    if (cargoOculto > 0) info += (info ? ' | ' : '') + `<i class="fas fa-lock"></i> Cargo oculto: $${cargoOculto.toFixed(2)}`;
-                    cargoEmpresaInfo.innerHTML = info;
-                    cargoEmpresaInfo.style.color = '#28a745';
+                const cargoVisible = data.cargo_visible || 0;
+                const cargoOculto = data.cargo_oculto || 0;
+                
+                cargo.value = cargoVisible.toFixed(2);
+                cargoOcultoInput.value = cargoOculto.toFixed(2);
+                
+                // Mostrar/ocultar campo de cargo oculto
+                if (cargoOculto > 0) {
+                    cargoOcultoGroup.style.display = 'block';
                 } else {
-                    cargoEmpresaInfo.innerHTML = '<i class="fas fa-info-circle"></i> Sin cargos configurados';
-                    cargoEmpresaInfo.style.color = '#6c757d';
-                    cargo.value = '0';
+                    cargoOcultoGroup.style.display = 'none';
                 }
+                
+                // Info de cargos
+                let info = '';
+                if (cargoVisible > 0) info += `<i class="fas fa-eye"></i> $${cargoVisible.toFixed(2)}`;
+                if (cargoOculto > 0) info += (info ? ' + ' : '') + `<i class="fas fa-eye-slash"></i> $${cargoOculto.toFixed(2)} oculto`;
+                if (!info) info = '<i class="fas fa-info-circle"></i> Sin cargos configurados';
+                
+                cargoEmpresaInfo.innerHTML = info;
+                cargoEmpresaInfo.style.color = (cargoVisible > 0 || cargoOculto > 0) ? '#28a745' : '#6c757d';
+                
                 calcularTotal();
             })
-            .catch(error => { console.error('Error:', error); cargoEmpresaInfo.innerHTML = ''; });
+            .catch(error => { 
+                console.error('Error:', error); 
+                cargoEmpresaInfo.innerHTML = ''; 
+                cargoOcultoGroup.style.display = 'none';
+            });
+    });
+    
+    // Recargar cargos cuando cambie el tipo de cargo
+    document.getElementById('tipo_cargo').addEventListener('change', function() {
+        if (empresaSelect.value) {
+            empresaSelect.dispatchEvent(new Event('change'));
+        }
     });
     
     function actualizarBoton() {

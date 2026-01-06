@@ -1,0 +1,747 @@
+{% extends "base.html" %}
+
+{% block title %}{{ reporte.folio }} - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_reportes_ventas.css') }}">
+<style>
+/* Estilos específicos para vista de reporte */
+.reporte-pdf {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.reporte-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid #dc3545;
+    margin-bottom: 1.5rem;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-section img {
+    height: 60px;
+}
+
+.logo-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+.titulo-section {
+    text-align: right;
+}
+
+.titulo-section h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.info-header {
+    margin-top: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.info-item .label {
+    font-weight: 600;
+    color: #666;
+}
+
+.info-item .value {
+    font-weight: 500;
+    color: #333;
+}
+
+/* Tabla del Reporte */
+.tabla-reporte-container {
+    overflow-x: auto;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.tabla-reporte {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.tabla-reporte th,
+.tabla-reporte td {
+    padding: 0.5rem 0.4rem;
+    border: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.tabla-reporte .header-group th {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    padding: 0.6rem 0.4rem;
+}
+
+.tabla-reporte .header-group .grupo-concepto { background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); }
+.tabla-reporte .header-group .grupo-costo { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+.tabla-reporte .header-group .grupo-otros { background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%); }
+.tabla-reporte .header-group .grupo-pago { background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%); color: #333; }
+.tabla-reporte .header-group .total-header { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+
+.tabla-reporte .header-cols th {
+    background: #f8f9fa;
+    font-weight: 600;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #555;
+}
+
+.tabla-reporte tbody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.tabla-reporte tbody tr:hover {
+    background: #f0f4ff;
+}
+
+.tabla-reporte .monto {
+    text-align: right;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.7rem;
+}
+
+.tabla-reporte .total-col {
+    background: #fff3cd !important;
+    font-weight: 600;
+}
+
+.tabla-reporte .totales-row {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%) !important;
+}
+
+.tabla-reporte .totales-row td {
+    font-weight: 600;
+    border-top: 3px solid #333;
+    padding: 0.6rem 0.4rem;
+}
+
+.tabla-reporte .empty-row td {
+    height: 24px;
+    background: #fff;
+}
+
+/* Sección Footer del Reporte */
+.reporte-footer-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.5fr;
+    gap: 2rem;
+    padding-top: 1.5rem;
+    border-top: 3px solid #dc3545;
+}
+
+@media (max-width: 1100px) {
+    .reporte-footer-section {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* Caja de Totales */
+.totales-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #dc3545;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 0.9rem;
+}
+
+.total-row:last-child {
+    border-bottom: none;
+}
+
+.total-row.sub {
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.total-row.highlight {
+    background: #fff3cd;
+    margin: 0.5rem -1rem;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.total-row.grand-total {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    margin: 0.75rem -1rem -1rem;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 0 0 4px 4px;
+}
+
+/* Caja de Dólares */
+.dolares-box {
+    background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border-left: 4px solid #007bff;
+}
+
+.dolares-box .label {
+    font-weight: 700;
+    color: #004085;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.dolar-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+}
+
+.dolar-row.equivalente {
+    background: #fff;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* Caja de Aerolíneas */
+.aerolineas-box {
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.aerolineas-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 0.6rem;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.aerolinea-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.aerolinea-row:last-child {
+    border-bottom: none;
+}
+
+.aerolinea-row span:first-child {
+    text-align: left;
+}
+
+.aerolinea-row.total {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    border-top: 2px solid #333;
+}
+
+/* Caja de Depósito */
+.deposito-box {
+    border: 2px dashed #666;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.deposito-box h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.85rem;
+    color: #333;
+    text-transform: uppercase;
+    border-bottom: 2px solid #dc3545;
+    padding-bottom: 0.5rem;
+}
+
+.deposito-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.35rem 0;
+    font-size: 0.8rem;
+    border-bottom: 1px dotted #ddd;
+}
+
+.deposito-row:last-child {
+    border-bottom: none;
+}
+
+.deposito-row span:first-child {
+    font-weight: 600;
+    color: #666;
+}
+
+/* Notas y Aprobación */
+.notas-section {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #fff3cd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border-left: 4px solid #ffc107;
+}
+
+.aprobacion-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-radius: 8px;
+    color: #155724;
+    text-align: center;
+    font-size: 0.95rem;
+    border-left: 4px solid #28a745;
+}
+
+.aprobacion-section i {
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+/* Admin Actions */
+.admin-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.admin-actions h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.actions-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Print */
+@media print {
+    .no-print { display: none !important; }
+    .reportes-container { padding: 0; }
+    .reporte-pdf { 
+        box-shadow: none; 
+        padding: 0;
+        border-radius: 0;
+    }
+    .tabla-reporte { font-size: 8pt; }
+    .reporte-footer-section { page-break-inside: avoid; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{# Calcular equivalente en pesos de dólares #}
+{% set dolares = reporte.deposito_dolares_efectivo|float or 0 %}
+{% set tipo_cambio = reporte.tipo_cambio|float or 0 %}
+{% set equivalente_pesos = dolares * tipo_cambio %}
+{% set efectivo_menos_dolares = (reporte.total_efectivo|float) - equivalente_pesos %}
+
+<div class="reportes-container">
+    <!-- Header -->
+    <div class="page-header no-print">
+        <div class="page-title">
+            <span class="icon"><i class="fas fa-file-alt"></i></span>
+            <div>
+                <h1>{{ reporte.folio }}</h1>
+                <p>Reporte de Ventas - {{ reporte.fecha.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="badge badge-{{ reporte.estatus }} badge-lg">
+                {{ reporte.estatus|capitalize }}
+            </span>
+            {% if reporte.puede_editar %}
+            <a href="{{ url_for('main.editar_reporte_venta', id=reporte.id) }}" class="btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% endif %}
+            <button onclick="window.print()" class="btn-secondary">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <a href="{{ url_for('main.reportes_ventas') }}" class="btn-outline">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Reporte Estilo PDF -->
+    <div class="reporte-pdf">
+        <!-- Encabezado del Reporte -->
+        <div class="reporte-header">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" onerror="this.style.display='none'">
+                <span class="logo-text">VIAJES KINESSIA</span>
+            </div>
+            <div class="titulo-section">
+                <h2>REPORTE DE VENTAS UNIFICADO</h2>
+                <div class="info-header">
+                    <div class="info-item">
+                        <span class="label">FECHA:</span>
+                        <span class="value">{{ reporte.fecha.strftime('%d-%b-%y')|upper }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">AGENTE:</span>
+                        <span class="value">{{ reporte.usuario.nombre|upper if reporte.usuario else '---' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Principal -->
+        <div class="tabla-reporte-container">
+            <table class="tabla-reporte">
+                <thead>
+                    <tr class="header-group">
+                        <th colspan="5" class="grupo-concepto">CONCEPTO</th>
+                        <th colspan="4" class="grupo-costo">COSTO BOLETO</th>
+                        <th colspan="5" class="grupo-otros">OTROS</th>
+                        <th colspan="3" class="grupo-pago">FORMA DE PAGO</th>
+                        <th rowspan="2" class="total-header">TOTAL</th>
+                    </tr>
+                    <tr class="header-cols">
+                        <th>CLAVE</th>
+                        <th>#</th>
+                        <th>RESERVA</th>
+                        <th>No. RECIBO</th>
+                        <th>PAPELETA</th>
+                        <th>BSP</th>
+                        <th>VOLARIS</th>
+                        <th>VIVAEROBUS</th>
+                        <th>COMPRA TC</th>
+                        <th>CARGO EXP</th>
+                        <th>CARGO 3.15%</th>
+                        <th>SEGUROS</th>
+                        <th>HOTELES</th>
+                        <th>TERRESTRE</th>
+                        <th>PAGO TC</th>
+                        <th>VOUCHER TC</th>
+                        <th>EFECTIVO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in detalles %}
+                    <tr>
+                        <td><strong>{{ d.clave_aerolinea }}</strong></td>
+                        <td>{{ d.num_boletos }}</td>
+                        <td>{{ d.reserva }}</td>
+                        <td>{{ d.num_recibo }}</td>
+                        <td>{{ d.num_papeleta }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_bsp|float) if d.monto_bsp else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_volaris|float) if d.monto_volaris else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_vivaerobus|float) if d.monto_vivaerobus else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_compra_tc|float) if d.monto_compra_tc else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.cargo_expedicion|float) if d.cargo_expedicion else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.cargo_315|float) if d.cargo_315 else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_seguros|float) if d.monto_seguros else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_hoteles_paquetes|float) if d.monto_hoteles_paquetes else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.monto_transporte_terrestre|float) if d.monto_transporte_terrestre else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.pago_directo_tc|float) if d.pago_directo_tc else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.voucher_tc|float) if d.voucher_tc else '' }}</td>
+                        <td class="monto">{{ '${:,.2f}'.format(d.efectivo|float) if d.efectivo else '' }}</td>
+                        <td class="monto total-col">${{ '{:,.2f}'.format(d.total_linea|float) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for i in range(10 - detalles|length) %}
+                    {% if i >= 0 %}
+                    <tr class="empty-row">
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="totales-row">
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>{{ reporte.total_boletos }}</strong></td>
+                        <td colspan="3"></td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_bsp|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_volaris|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_vivaerobus|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_compra_tc|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_cargo_expedicion|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_cargo_315|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_seguros|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_hoteles_paquetes|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_transporte_terrestre|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_pago_directo_tc|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</td>
+                        <td class="monto total-col"><strong>${{ '{:,.2f}'.format(reporte.total_general|float) }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Sección Inferior -->
+        <div class="reporte-footer-section">
+            <div class="footer-left">
+                <!-- Totales con lógica de dólares -->
+                <div class="totales-box">
+                    <div class="total-row">
+                        <span class="label">TOTAL EFECTIVO</span>
+                        <span class="value">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</span>
+                    </div>
+                    
+                    {% if dolares > 0 and tipo_cambio > 0 %}
+                    <div class="total-row sub" style="color: #dc3545;">
+                        <span class="label">(-) DÓLARES EN PESOS</span>
+                        <span class="value">-${{ '{:,.2f}'.format(equivalente_pesos) }}</span>
+                    </div>
+                    <div class="total-row highlight">
+                        <span class="label">EFECTIVO PESOS NETO</span>
+                        <span class="value">${{ '{:,.2f}'.format(efectivo_menos_dolares) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="total-row sub">
+                        <span class="label">DEPOSITO EFECTIVO PESOS</span>
+                        <span class="value">${{ '{:,.2f}'.format(reporte.deposito_pesos_efectivo|float) }}</span>
+                    </div>
+                    <div class="total-row sub">
+                        <span class="label">DEPOSITO CHEQUES</span>
+                        <span class="value">${{ '{:,.2f}'.format(reporte.deposito_pesos_cheques|float) }}</span>
+                    </div>
+                    <div class="total-row sub">
+                        <span class="label">VOUCHER T.C.</span>
+                        <span class="value">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</span>
+                    </div>
+                    
+                    <div class="total-row grand-total">
+                        <span class="label">TOTAL GENERAL</span>
+                        <span class="value">${{ '{:,.2f}'.format(reporte.total_general|float) }}</span>
+                    </div>
+                </div>
+
+                <!-- Dólares -->
+                {% if dolares > 0 %}
+                <div class="dolares-box">
+                    <span class="label">💵 DÓLARES</span>
+                    <div class="dolar-row">
+                        <span>CANTIDAD USD</span>
+                        <span><strong>${{ '{:,.2f}'.format(dolares) }}</strong></span>
+                    </div>
+                    <div class="dolar-row">
+                        <span>TIPO DE CAMBIO</span>
+                        <span>${{ '{:,.4f}'.format(tipo_cambio) }}</span>
+                    </div>
+                    <div class="dolar-row equivalente">
+                        <span>EQUIVALENTE MXN</span>
+                        <span>${{ '{:,.2f}'.format(equivalente_pesos) }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="footer-center">
+                <!-- Boletos por aerolínea -->
+                <div class="aerolineas-box">
+                    <div class="aerolineas-header">
+                        <span>CONCEPTO</span>
+                        <span>CLAVE</span>
+                        <span>BOLETOS</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Volaris</span>
+                        <span>Y4</span>
+                        <span>{{ boletos_aerolinea.get('Y4', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Viva Aerobus</span>
+                        <span>VI</span>
+                        <span>{{ boletos_aerolinea.get('VI', 0) + boletos_aerolinea.get('VB', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Aeroméxico</span>
+                        <span>AM</span>
+                        <span>{{ boletos_aerolinea.get('AM', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Internacionales</span>
+                        <span>INT</span>
+                        <span>{{ boletos_aerolinea.get('INT', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Hotel</span>
+                        <span>HT</span>
+                        <span>{{ boletos_aerolinea.get('HT', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Paquete</span>
+                        <span>PK</span>
+                        <span>{{ boletos_aerolinea.get('PK', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row">
+                        <span>Seguro</span>
+                        <span>SG</span>
+                        <span>{{ boletos_aerolinea.get('SG', 0) }}</span>
+                    </div>
+                    <div class="aerolinea-row total">
+                        <span><strong>TOTAL BOLETOS</strong></span>
+                        <span></span>
+                        <span><strong>{{ reporte.total_boletos }}</strong></span>
+                    </div>
+                    <div class="aerolinea-row total">
+                        <span><strong>TOTAL RECIBOS</strong></span>
+                        <span></span>
+                        <span><strong>{{ reporte.total_recibos }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-right">
+                <!-- Datos de depósito -->
+                <div class="deposito-box">
+                    <h4>DEPÓSITOS</h4>
+                    
+                    <div class="deposito-row">
+                        <span>BANCO</span>
+                        <span>SANTANDER</span>
+                    </div>
+                    <div class="deposito-row">
+                        <span>CUENTA</span>
+                        <span>{{ reporte.cuenta_deposito or 'Suc. 0002 cta 7568815' }}</span>
+                    </div>
+                    <div class="deposito-row">
+                        <span>NOMBRE</span>
+                        <span style="font-size: 0.7rem;">VIAJES INTERNACIONALES MONARCA, S.A. DE C.V.</span>
+                    </div>
+                    
+                    <hr style="margin: 0.75rem 0; border: none; border-top: 1px dashed #ccc;">
+                    
+                    <div class="deposito-row">
+                        <span>PESOS EFECTIVO</span>
+                        <span><strong>${{ '{:,.2f}'.format(reporte.deposito_pesos_efectivo|float) }}</strong></span>
+                    </div>
+                    {% if dolares > 0 %}
+                    <div class="deposito-row">
+                        <span>DÓLARES</span>
+                        <span><strong>${{ '{:,.2f}'.format(dolares) }} USD</strong></span>
+                    </div>
+                    {% endif %}
+                    <div class="deposito-row">
+                        <span>CHEQUES</span>
+                        <span><strong>${{ '{:,.2f}'.format(reporte.deposito_pesos_cheques|float) }}</strong></span>
+                    </div>
+                    
+                    <hr style="margin: 0.75rem 0; border: none; border-top: 1px dashed #ccc;">
+                    
+                    <div class="deposito-row">
+                        <span>FECHA</span>
+                        <span>{{ reporte.fecha.strftime('%d-%b-%Y')|upper }}</span>
+                    </div>
+                    <div class="deposito-row">
+                        <span>AGENTE</span>
+                        <span>{{ reporte.usuario.nombre|upper if reporte.usuario else '---' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas -->
+        {% if reporte.notas %}
+        <div class="notas-section">
+            <strong><i class="fas fa-sticky-note"></i> Notas:</strong> {{ reporte.notas }}
+        </div>
+        {% endif %}
+
+        <!-- Aprobación -->
+        {% if reporte.estatus == 'aprobado' %}
+        <div class="aprobacion-section">
+            <i class="fas fa-check-circle"></i>
+            <strong>APROBADO</strong> por {{ reporte.aprobador.nombre if reporte.aprobador else '---' }} 
+            el {{ reporte.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') if reporte.fecha_aprobacion else '' }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones Admin -->
+    {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+    <div class="admin-actions no-print">
+        <h3><i class="fas fa-user-shield"></i> Acciones de Administrador</h3>
+        <div class="actions-row">
+            <form action="{{ url_for('main.aprobar_reporte_venta', id=reporte.id) }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn-success">
+                    <i class="fas fa-check"></i> Aprobar Reporte
+                </button>
+            </form>
+            <form action="{{ url_for('main.rechazar_reporte_venta', id=reporte.id) }}" method="POST" 
+                  style="display:inline;" onsubmit="return confirmarRechazo(this)">
+                <input type="hidden" name="motivo" id="motivoRechazo">
+                <button type="submit" class="btn-danger">
+                    <i class="fas fa-times"></i> Rechazar
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+function confirmarRechazo(form) {
+    var motivo = prompt('Ingresa el motivo del rechazo:');
+    if (motivo && motivo.trim().length > 0) {
+        document.getElementById('motivoRechazo').value = motivo;
+        return true;
+    }
+    return false;
+}
+</script>
+{% endblock %}

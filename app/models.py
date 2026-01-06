@@ -484,6 +484,7 @@ class Papeleta(db.Model):
     conciliada = db.Column(db.Boolean, default=False)
     fecha_conciliacion = db.Column(db.Date)
     sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'))
+    reporte_venta_id = db.Column(db.BigInteger, db.ForeignKey('reportes_ventas.id'))
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
     
@@ -610,3 +611,127 @@ class Notificacion(db.Model):
     
     def __repr__(self):
         return f'<Notificacion {self.id} - {self.tipo}>'
+    # =============================================================================
+# MODELOS DE REPORTES DE VENTAS
+# Agregar al final de models.py
+# =============================================================================
+
+class ReporteVenta(db.Model):
+    """Reporte de ventas diario por agente"""
+    __tablename__ = 'reportes_ventas'
+    
+    id = db.Column(db.BigInteger, primary_key=True)
+    folio = db.Column(db.String(20), unique=True)
+    fecha = db.Column(db.Date, nullable=False)
+    usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)
+    sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'))
+    
+    # Totales por tipo de boleto
+    total_bsp = db.Column(db.Numeric(12, 2), default=0)
+    total_volaris = db.Column(db.Numeric(12, 2), default=0)
+    total_vivaerobus = db.Column(db.Numeric(12, 2), default=0)
+    total_compra_tc = db.Column(db.Numeric(12, 2), default=0)
+    
+    # Otros cargos
+    total_cargo_expedicion = db.Column(db.Numeric(12, 2), default=0)
+    total_cargo_315 = db.Column(db.Numeric(12, 2), default=0)
+    total_seguros = db.Column(db.Numeric(12, 2), default=0)
+    total_hoteles_paquetes = db.Column(db.Numeric(12, 2), default=0)
+    total_transporte_terrestre = db.Column(db.Numeric(12, 2), default=0)
+    
+    # Formas de pago
+    total_pago_directo_tc = db.Column(db.Numeric(12, 2), default=0)
+    total_voucher_tc = db.Column(db.Numeric(12, 2), default=0)
+    total_efectivo = db.Column(db.Numeric(12, 2), default=0)
+    total_general = db.Column(db.Numeric(12, 2), default=0)
+    
+    # Depósitos
+    deposito_pesos_efectivo = db.Column(db.Numeric(12, 2), default=0)
+    deposito_dolares_efectivo = db.Column(db.Numeric(12, 2), default=0)
+    deposito_pesos_cheques = db.Column(db.Numeric(12, 2), default=0)
+    tipo_cambio = db.Column(db.Numeric(8, 4), default=0)
+    cuenta_deposito = db.Column(db.String(50))
+    
+    # Contadores
+    total_boletos = db.Column(db.Integer, default=0)
+    total_recibos = db.Column(db.Integer, default=0)
+    
+    # Control
+    estatus = db.Column(db.String(20), default='borrador')
+    fecha_envio = db.Column(db.DateTime(timezone=True))
+    fecha_aprobacion = db.Column(db.DateTime(timezone=True))
+    aprobado_por = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
+    notas = db.Column(db.Text)
+    
+    # Auditoría
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now())
+    updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
+    
+    # Relaciones
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id], backref='reportes_ventas')
+    sucursal = db.relationship('Sucursal', backref='reportes_ventas')
+    aprobador = db.relationship('Usuario', foreign_keys=[aprobado_por])
+    detalles = db.relationship('DetalleReporteVenta', back_populates='reporte', cascade='all, delete-orphan', lazy='dynamic')
+    
+    def __repr__(self):
+        return f'<ReporteVenta {self.folio}>'
+    
+    @property
+    def puede_editar(self):
+        return self.estatus == 'borrador'
+    
+    @property
+    def puede_enviar(self):
+        return self.estatus == 'borrador' and self.total_recibos > 0
+
+
+class DetalleReporteVenta(db.Model):
+    """Líneas de detalle del reporte de ventas"""
+    __tablename__ = 'detalle_reporte_ventas'
+    
+    id = db.Column(db.BigInteger, primary_key=True)
+    reporte_id = db.Column(db.BigInteger, db.ForeignKey('reportes_ventas.id', ondelete='CASCADE'), nullable=False)
+    papeleta_id = db.Column(db.BigInteger, db.ForeignKey('papeletas.id'))
+    
+    # Datos de la línea
+    clave_aerolinea = db.Column(db.String(10))
+    num_boletos = db.Column(db.Integer, default=1)
+    reserva = db.Column(db.String(20))
+    num_recibo = db.Column(db.String(20))
+    num_papeleta = db.Column(db.String(20))
+    
+    # Costos por tipo
+    monto_bsp = db.Column(db.Numeric(12, 2), default=0)
+    monto_volaris = db.Column(db.Numeric(12, 2), default=0)
+    monto_vivaerobus = db.Column(db.Numeric(12, 2), default=0)
+    monto_compra_tc = db.Column(db.Numeric(12, 2), default=0)
+    
+    # Otros cargos
+    cargo_expedicion = db.Column(db.Numeric(12, 2), default=0)
+    cargo_315 = db.Column(db.Numeric(12, 2), default=0)
+    monto_seguros = db.Column(db.Numeric(12, 2), default=0)
+    monto_hoteles_paquetes = db.Column(db.Numeric(12, 2), default=0)
+    monto_transporte_terrestre = db.Column(db.Numeric(12, 2), default=0)
+    
+    # Forma de pago
+    pago_directo_tc = db.Column(db.Numeric(12, 2), default=0)
+    voucher_tc = db.Column(db.Numeric(12, 2), default=0)
+    efectivo = db.Column(db.Numeric(12, 2), default=0)
+    total_linea = db.Column(db.Numeric(12, 2), default=0)
+    
+    orden = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now())
+    
+    # Relaciones
+    reporte = db.relationship('ReporteVenta', back_populates='detalles')
+    papeleta = db.relationship('Papeleta', backref='detalle_reporte')
+    
+    def __repr__(self):
+        return f'<DetalleReporte {self.id} - {self.num_papeleta}>'
+
+
+# =============================================================================
+# AGREGAR RELACIÓN EN MODELO PAPELETA (si no existe)
+# =============================================================================
+# En la clase Papeleta agregar:
+# 
