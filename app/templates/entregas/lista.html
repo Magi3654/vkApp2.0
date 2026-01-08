@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Entregas de Corte - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+.entregas-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Dashboard Cards */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 4px solid #667eea;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.stat-card.warning { border-left-color: #f59e0b; }
+.stat-card.info { border-left-color: #3b82f6; }
+.stat-card.success { border-left-color: #10b981; }
+.stat-card.purple { border-left-color: #8b5cf6; }
+
+.stat-card .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.stat-card.warning .stat-icon { background: #fef3c7; color: #d97706; }
+.stat-card.info .stat-icon { background: #dbeafe; color: #2563eb; }
+.stat-card.success .stat-icon { background: #d1fae5; color: #059669; }
+.stat-card.purple .stat-icon { background: #ede9fe; color: #7c3aed; }
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Filtros */
+.filtros-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.filtros-bar .filtro-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filtros-bar label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.filtros-bar select,
+.filtros-bar input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.filtros-bar .btn-filtrar {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Tabla */
+.tabla-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.tabla-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tabla-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.tabla-entregas {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tabla-entregas th {
+    background: #f9fafb;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tabla-entregas td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.9rem;
+}
+
+.tabla-entregas tbody tr:hover {
+    background: #f9fafb;
+}
+
+.tabla-entregas .folio {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.tabla-entregas .monto {
+    font-family: 'Monaco', 'Consolas', monospace;
+    text-align: right;
+    font-weight: 600;
+}
+
+.tabla-entregas .monto.dolares {
+    color: #059669;
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-pendiente, .badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-entregado, .badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-en_custodia, .badge-primary {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.badge-retirado, .badge-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.badge-depositado, .badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-revisado, .badge-dark {
+    background: #1f2937;
+    color: white;
+}
+
+/* Acciones */
+.acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-accion {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.2s;
+}
+
+.btn-ver {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-ver:hover {
+    background: #e5e7eb;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #9ca3af;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .filtros-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .tabla-container {
+        overflow-x: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="entregas-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-title">
+            <span class="icon"><i class="fas fa-hand-holding-usd"></i></span>
+            <div>
+                <h1>Entregas de Corte</h1>
+                <p>Gestión de vales y entregas de efectivo</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('entregas.nueva_entrega') }}" class="btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Vale
+            </a>
+        </div>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="dashboard-cards">
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-value">{{ pendientes }}</div>
+            <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-lock"></i></div>
+            <div class="stat-value">{{ en_custodia }}</div>
+            <div class="stat-label">En Custodia</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-university"></i></div>
+            <div class="stat-value">{{ por_depositar }}</div>
+            <div class="stat-label">Por Depositar</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+            <div class="stat-value">{{ por_revisar }}</div>
+            <div class="stat-label">Por Revisar</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <form class="filtros-bar" method="GET">
+        <div class="filtro-group">
+            <label>Estatus:</label>
+            <select name="estatus">
+                <option value="">Todos</option>
+                <option value="pendiente" {{ 'selected' if filtro_estatus == 'pendiente' }}>Pendiente</option>
+                <option value="entregado" {{ 'selected' if filtro_estatus == 'entregado' }}>Entregado</option>
+                <option value="en_custodia" {{ 'selected' if filtro_estatus == 'en_custodia' }}>En Custodia</option>
+                <option value="retirado" {{ 'selected' if filtro_estatus == 'retirado' }}>Retirado</option>
+                <option value="depositado" {{ 'selected' if filtro_estatus == 'depositado' }}>Depositado</option>
+                <option value="revisado" {{ 'selected' if filtro_estatus == 'revisado' }}>Revisado</option>
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label>Fecha:</label>
+            <input type="date" name="fecha" value="{{ filtro_fecha }}">
+        </div>
+        <button type="submit" class="btn-filtrar">
+            <i class="fas fa-filter"></i> Filtrar
+        </button>
+        {% if filtro_estatus or filtro_fecha %}
+        <a href="{{ url_for('entregas.lista_entregas') }}" class="btn-accion btn-ver">
+            <i class="fas fa-times"></i> Limpiar
+        </a>
+        {% endif %}
+    </form>
+
+    <!-- Tabla -->
+    <div class="tabla-container">
+        <div class="tabla-header">
+            <h2><i class="fas fa-list"></i> Listado de Entregas</h2>
+            <span class="text-muted">{{ entregas|length }} registro(s)</span>
+        </div>
+        
+        {% if entregas %}
+        <table class="tabla-entregas">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Fecha</th>
+                    <th>Agente</th>
+                    <th class="text-right">Efectivo MXN</th>
+                    <th class="text-right">Dólares USD</th>
+                    <th class="text-right">Cheques</th>
+                    <th class="text-right">Total Físico</th>
+                    <th>Estatus</th>
+                    <th>Receptor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entregas %}
+                <tr>
+                    <td class="folio">{{ e.folio }}</td>
+                    <td>{{ e.fecha.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ e.agente.nombre if e.agente else '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(e.efectivo_pesos|float) }}</td>
+                    <td class="monto dolares">
+                        {% if e.efectivo_dolares > 0 %}
+                        ${{ '{:,.2f}'.format(e.efectivo_dolares|float) }} USD
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="monto">${{ '{:,.2f}'.format(e.cheques|float) }}</td>
+                    <td class="monto" style="font-weight: 700;">${{ '{:,.2f}'.format(e.total_fisico|float) }}</td>
+                    <td>
+                        <span class="badge badge-{{ e.estatus }}">
+                            {{ e.estatus_descripcion }}
+                        </span>
+                    </td>
+                    <td>{{ e.receptor.nombre if e.receptor else '-' }}</td>
+                    <td class="acciones">
+                        <a href="{{ url_for('entregas.ver_entrega', id=e.id) }}" class="btn-accion btn-ver">
+                            <i class="fas fa-eye"></i> Ver
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>No hay entregas registradas</p>
+            <a href="{{ url_for('entregas.nueva_entrega') }}" class="btn-primary" style="margin-top: 1rem;">
+                <i class="fas fa-plus"></i> Crear Primer Vale
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -5,67 +5,340 @@
 {% endblock %}
 
 {% block content %}
-<div class="dashboard">
+<div class="dashboard-container">
     <div class="dashboard-header">
-        <h1>Bienvenido al Hub, {{ current_user.nombre }}</h1>
-        <p>Gestiona las operaciones administrativas de la agencia desde aquí.</p>
+        <h1>Bienvenido, {{ current_user.nombre.split()[0] }}</h1>
+        <p>{{ fecha_hoy.strftime('%A, %d de %B de %Y')|capitalize }}</p>
     </div>
 
-    <!-- Sección de Acciones Rápidas -->
-    <div class="section-title">Acciones Principales</div>
-    <div class="actions-grid">
-        <a href="{{ url_for('main.nuevo_desglose_form') }}" class="card new-item-card">
-            <div class="card-icon">
-                <i class="fas fa-file-invoice-dollar"></i>
+    {# ============================================================ #}
+    {# ALERTAS URGENTES (para todos los roles)                      #}
+    {# ============================================================ #}
+    
+    {% if papeletas_urgentes > 0 %}
+    <div class="alertas-urgentes">
+        <div class="alerta-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="alerta-content">
+            <h3>{{ papeletas_urgentes }} papeleta(s) con más de 3 días sin cerrar</h3>
+            <p>Requieren atención inmediata</p>
+        </div>
+        {% if current_user.es_admin() %}
+        <a href="{{ url_for('main.control_papeletas') }}" class="btn-alerta">Ver Control</a>
+        {% else %}
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alerta">Ver mis pendientes</a>
+        {% endif %}
+    </div>
+    {% elif papeletas_pendientes > 0 %}
+    <div class="alertas-urgentes warning">
+        <div class="alerta-icon"><i class="fas fa-clock"></i></div>
+        <div class="alerta-content">
+            <h3>{{ papeletas_pendientes }} papeleta(s) pendiente(s) de días anteriores</h3>
+            <p>Recuerda cerrarlas o justificarlas</p>
+        </div>
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alerta">Ver pendientes</a>
+    </div>
+    {% endif %}
+
+    {# ============================================================ #}
+    {# ESTADÍSTICAS SEGÚN ROL                                       #}
+    {# ============================================================ #}
+    
+    <div class="stats-row">
+        {% if current_user.es_admin() %}
+        {# === STATS PARA ADMIN === #}
+        <a href="{{ url_for('main.control_papeletas') }}" class="stat-card warning clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
             </div>
-            <div class="card-body">
-                <h3>Nuevo Desglose</h3>
-                <p>Crear un nuevo desglose de servicios para una empresa.</p>
-            </div>
+            <div class="stat-value">{{ total_papeletas_pendientes }}</div>
+            <div class="stat-label">Papeletas Pendientes</div>
+            <div class="stat-extra">${{ '{:,.0f}'.format(total_efectivo_pendiente) }}</div>
         </a>
-        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="card new-item-card">
-            <div class="card-icon">
-                <i class="fas fa-credit-card"></i>
+        
+        <a href="{{ url_for('main.lista_entregas') }}" class="stat-card info clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-hand-holding-usd"></i></div>
             </div>
-            <div class="card-body">
-                <h3>Nueva Papeleta</h3>
-                <p>Registrar un nuevo cargo a tarjeta de crédito.</p>
-            </div>
+            <div class="stat-value">{{ entregas_por_recibir }}</div>
+            <div class="stat-label">Entregas por Recibir</div>
         </a>
+        
+        <a href="{{ url_for('main.reportes_ventas') }}?estatus=enviado" class="stat-card purple clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+            </div>
+            <div class="stat-value">{{ reportes_por_revisar }}</div>
+            <div class="stat-label">Reportes por Revisar</div>
+        </a>
+        
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+            </div>
+            <div class="stat-value">{{ papeletas_hoy_total }}</div>
+            <div class="stat-label">Papeletas Hoy (Total)</div>
+            <div class="stat-extra">${{ '{:,.0f}'.format(total_ventas_hoy) }}</div>
+        </div>
+        
+        {% if autorizaciones_pendientes > 0 %}
+        <a href="{{ url_for('main.autorizaciones') }}" class="stat-card danger clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-key"></i></div>
+            </div>
+            <div class="stat-value">{{ autorizaciones_pendientes }}</div>
+            <div class="stat-label">Autorizaciones Pendientes</div>
+        </a>
+        {% endif %}
+        
+        {% else %}
+        {# === STATS PARA AGENTE === #}
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            </div>
+            <div class="stat-value">{{ mis_papeletas_hoy }}</div>
+            <div class="stat-label">Mis Papeletas Hoy</div>
+            <div class="stat-extra">${{ '{:,.0f}'.format(mi_total_hoy) }}</div>
+        </div>
+        
+        {% if papeletas_pendientes > 0 %}
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="stat-card {{ 'danger' if papeletas_urgentes > 0 else 'warning' }} clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            </div>
+            <div class="stat-value">{{ papeletas_pendientes }}</div>
+            <div class="stat-label">Pendientes de Reportar</div>
+        </a>
+        {% endif %}
+        
+        {% if mi_efectivo_pendiente > 0 %}
+        <div class="stat-card info">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+            </div>
+            <div class="stat-value">${{ '{:,.0f}'.format(mi_efectivo_pendiente) }}</div>
+            <div class="stat-label">Efectivo por Entregar</div>
+        </div>
+        {% endif %}
+        
+        <a href="{{ url_for('main.reportes_ventas') }}" class="stat-card purple clickable">
+            <div class="stat-header">
+                <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
+            </div>
+            <div class="stat-value">{{ mis_reportes_mes }}</div>
+            <div class="stat-label">Mis Reportes (Mes)</div>
+        </a>
+        {% endif %}
     </div>
 
-    <!-- Sección de Consultas -->
-    <div class="section-title">Consultas y Registros</div>
+    {# ============================================================ #}
+    {# CONTENIDO PRINCIPAL                                          #}
+    {# ============================================================ #}
+    
+    <div class="dashboard-grid">
+        <div class="panel-main">
+            {% if current_user.es_admin() %}
+            {# === PANEL ADMIN: Resumen por Agente === #}
+            <div class="panel-header">
+                <h3><i class="fas fa-users"></i> Papeletas Pendientes por Agente</h3>
+                <a href="{{ url_for('main.control_papeletas') }}">Ver control completo →</a>
+            </div>
+            <div class="panel-body">
+                {% if resumen_agentes %}
+                <table class="tabla-mini">
+                    <thead>
+                        <tr>
+                            <th>Agente</th>
+                            <th>Hoy</th>
+                            <th>Pend.</th>
+                            <th>Efectivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in resumen_agentes[:8] %}
+                        <tr>
+                            <td class="agente-nombre">{{ r.agente.split()[0] }}</td>
+                            <td>{{ r.papeletas_hoy or 0 }}</td>
+                            <td>
+                                {% if r.pendientes > 0 %}
+                                <span class="num-badge">{{ r.pendientes }}</span>
+                                {% else %}
+                                <span class="num-badge ok">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono">${{ '{:,.0f}'.format(r.efectivo|float or 0) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-mini">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No hay papeletas pendientes</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% else %}
+            {# === PANEL AGENTE: Mis Papeletas Pendientes === #}
+            <div class="panel-header">
+                <h3><i class="fas fa-file-alt"></i> Mis Papeletas Pendientes</h3>
+                <a href="{{ url_for('main.consulta_papeletas') }}">Ver todas →</a>
+            </div>
+            <div class="panel-body">
+                {% if mis_papeletas_pendientes %}
+                <ul class="lista-pendientes">
+                    {% for p in mis_papeletas_pendientes[:6] %}
+                    <li>
+                        <div class="item-icon {{ 'urgente' if p.dias > 3 else 'papeleta' }}">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="item-info">
+                            <div class="item-titulo">{{ p.folio }} - {{ p.solicito or p.facturar_a or 'Sin detalle' }}</div>
+                            <div class="item-meta">{{ p.fecha_venta.strftime('%d/%m') if p.fecha_venta else '' }} · {{ p.empresa.nombre_empresa if p.empresa else 'Mostrador' }}</div>
+                        </div>
+                        <div class="item-monto">${{ '{:,.0f}'.format(p.total|float) }}</div>
+                        {% if p.dias > 3 %}
+                        <span class="item-badge danger">{{ p.dias }}d</span>
+                        {% elif p.dias > 0 %}
+                        <span class="item-badge warning">{{ p.dias }}d</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if mis_papeletas_pendientes|length > 6 %}
+                <div style="text-align:center;padding-top:1rem;">
+                    <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="text-primary">
+                        Ver {{ mis_papeletas_pendientes|length - 6 }} más →
+                    </a>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-mini">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <p>¡Sin papeletas pendientes!</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# === PANEL LATERAL === #}
+        <div class="panel-lateral">
+            {# Acciones Rápidas #}
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fas fa-bolt"></i> Acciones Rápidas
+                </div>
+                <div class="widget-body">
+                    <div class="acciones-rapidas">
+                        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-accion-rapida">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Nueva Papeleta</span>
+                        </a>
+                        <a href="{{ url_for('main.nuevo_desglose_form') }}" class="btn-accion-rapida">
+                            <i class="fas fa-file-invoice"></i>
+                            <span>Nuevo Desglose</span>
+                        </a>
+                        <a href="{{ url_for('main.nuevo_reporte_venta') }}" class="btn-accion-rapida">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Reporte Ventas</span>
+                        </a>
+                        <a href="{{ url_for('main.lista_entregas') }}" class="btn-accion-rapida">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            <span>Vale Entrega</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if current_user.es_admin() %}
+            {# Widget Admin: Entregas Recientes #}
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fas fa-inbox"></i> Entregas por Procesar
+                </div>
+                <div class="widget-body">
+                    {% if entregas_pendientes %}
+                    <ul class="lista-pendientes">
+                        {% for e in entregas_pendientes[:4] %}
+                        <li>
+                            <div class="item-icon entrega">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <div class="item-info">
+                                <div class="item-titulo">{{ e.folio }}</div>
+                                <div class="item-meta">{{ e.agente.nombre.split()[0] if e.agente else '-' }}</div>
+                            </div>
+                            <div class="item-monto">${{ '{:,.0f}'.format(e.total_fisico|float) }}</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="empty-mini">
+                        <i class="fas fa-check"></i>
+                        <p>Sin entregas pendientes</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# Widget: Mi Resumen del Día #}
+            <div class="widget">
+                <div class="widget-header">
+                    <i class="fas fa-calendar-day"></i> Resumen del Día
+                </div>
+                <div class="widget-body">
+                    <div class="resumen-dia-row">
+                        <span>Papeletas:</span>
+                        <strong>{{ mis_papeletas_hoy if not current_user.es_admin() else papeletas_hoy_total }}</strong>
+                    </div>
+                    <div class="resumen-dia-row">
+                        <span>Ventas:</span>
+                        <strong class="success">${{ '{:,.2f}'.format(mi_total_hoy if not current_user.es_admin() else total_ventas_hoy) }}</strong>
+                    </div>
+                    <div class="resumen-dia-row">
+                        <span>Efectivo:</span>
+                        <strong>${{ '{:,.2f}'.format(mi_efectivo_hoy if not current_user.es_admin() else total_efectivo_hoy) }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ============================================================ #}
+    {# SECCIÓN ADMIN (si aplica)                                    #}
+    {# ============================================================ #}
+    
+    {% if current_user.es_admin() %}
+    <div class="section-header">
+        <h2><i class="fas fa-cog"></i> Administración</h2>
+    </div>
     <div class="management-grid">
-        <a href="{{ url_for('main.desgloses') }}" class="card">
-            <h3><i class="fas fa-search"></i> Consultar Desgloses</h3>
-            <p>Buscar, ver y editar desgloses existentes.</p>
+        <a href="{{ url_for('main.control_papeletas') }}" class="card">
+            <h3><i class="fas fa-clipboard-check"></i> Control de Papeletas</h3>
+            <p>Validar y auditar papeletas pendientes.</p>
         </a>
-        <a href="{{ url_for('main.consulta_papeletas') }}" class="card">
-            <h3><i class="fas fa-receipt"></i> Consultar Papeletas</h3>
-            <p>Buscar y gestionar los cargos registrados.</p>
+        <a href="{{ url_for('main.lista_entregas') }}" class="card">
+            <h3><i class="fas fa-hand-holding-usd"></i> Gestión de Entregas</h3>
+            <p>Recibir y procesar cortes de caja.</p>
         </a>
-    </div>
-
-    <!-- Sección de Administración -->
-    {% if current_user.is_authenticated and current_user.es_admin() %}
-    <div class="section-title admin-section">Panel de Administrador</div>
-    <div class="management-grid">
         <a href="{{ url_for('main.empresas') }}" class="card">
-            <h3><i class="fas fa-building"></i> Gestionar Empresas</h3>
-            <p>Añadir o editar empresas cliente.</p>
+            <h3><i class="fas fa-building"></i> Empresas</h3>
+            <p>Gestionar empresas cliente.</p>
         </a>
         <a href="{{ url_for('main.usuarios') }}" class="card">
-            <h3><i class="fas fa-users"></i> Gestionar Usuarios</h3>
-            <p>Crear y administrar cuentas de empleados.</p>
+            <h3><i class="fas fa-users"></i> Usuarios</h3>
+            <p>Administrar cuentas de empleados.</p>
         </a>
         <a href="{{ url_for('main.tarjetas') }}" class="card">
-            <h3><i class="fas fa-credit-card"></i> Gestionar Tarjetas</h3>
-            <p>Administrar tarjetas corporativas.</p>
+            <h3><i class="fas fa-credit-card"></i> Tarjetas</h3>
+            <p>Gestionar tarjetas corporativas.</p>
         </a>
-        <a href="{{ url_for('main.sucursales') }}" class="card">
-            <h3><i class="fas fa-map-marker-alt"></i> Gestionar Sucursales</h3>
-            <p>Configurar sucursales del sistema.</p>
+        <a href="{{ url_for('main.autorizaciones') }}" class="card">
+            <h3><i class="fas fa-key"></i> Autorizaciones</h3>
+            <p>Aprobar solicitudes pendientes.</p>
         </a>
     </div>
     {% endif %}

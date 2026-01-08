@@ -6,11 +6,21 @@ from flask_login import login_required, current_user
 from .models import (
     db, Usuario, Rol, Papeleta, Desglose, Empresa, Aerolinea, EmpresaBooking, 
     CargoServicio, Descuento, TarifaFija, Sucursal, TarjetaCorporativa, Autorizacion,
-    TarjetaUsuario, AuditLog,ReporteVenta, DetalleReporteVenta
+    TarjetaUsuario, AuditLog, ReporteVenta, DetalleReporteVenta, EntregaCorte, 
+    DetalleArqueo, HistorialEntrega, crear_entrega_desde_reporte
 )
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sqlalchemy import func
 from collections import OrderedDict
+from functools import wraps
+
+# Zona horaria de México (Tijuana/Ensenada)
+from zoneinfo import ZoneInfo
+TIMEZONE_MX = ZoneInfo('America/Tijuana')
+
+def fecha_mexico():
+    """Retorna la fecha actual en zona horaria de México (Tijuana)"""
+    return datetime.now(TIMEZONE_MX).date()
 
 
 main = Blueprint('main', __name__)
@@ -25,19 +35,245 @@ main = Blueprint('main', __name__)
 def index():
     return redirect(url_for('main.dashboard'))
 
+# ============================================================
+# REEMPLAZA tu función dashboard() en routes.py con esto:
+# Esta versión incluye manejo de errores de transacción
+# ============================================================
 
 @main.route('/dashboard')
 @login_required
 def dashboard():
-    autorizaciones_pendientes = 0
-    if current_user.rol in ['director', 'administrador', 'admin']:
-        autorizaciones_pendientes = Autorizacion.query.filter_by(estatus='pendiente').count()
+    """Dashboard unificado con manejo de errores"""
+    from datetime import date, timedelta
     
-    return render_template('dashboard.html', 
-                           usuario=current_user,
-                           autorizaciones_pendientes=autorizaciones_pendientes)
+    # IMPORTANTE: Limpiar cualquier transacción fallida anterior
+    try:
+        db.session.rollback()
+    except:
+        pass
+    
+    fecha_hoy = fecha_mexico()
+    
+    # Variables con valores por defecto
+    context = {
+        'fecha_hoy': fecha_hoy,
+        'usuario': current_user,
+        'autorizaciones_pendientes': 0,
+        'mis_papeletas_hoy': 0,
+        'mi_total_hoy': 0,
+        'mi_efectivo_hoy': 0,
+        'mis_papeletas_pendientes': [],
+        'papeletas_pendientes': 0,
+        'papeletas_urgentes': 0,
+        'mi_efectivo_pendiente': 0,
+        'mis_reportes_mes': 0,
+        # Para admin
+        'total_papeletas_pendientes': 0,
+        'total_efectivo_pendiente': 0,
+        'entregas_por_recibir': 0,
+        'entregas_pendientes': [],
+        'reportes_por_revisar': 0,
+        'papeletas_hoy_total': 0,
+        'total_ventas_hoy': 0,
+        'total_efectivo_hoy': 0,
+        'resumen_agentes': [],
+    }
+    
+    try:
+        # Autorizaciones pendientes (para admin)
+        if current_user.rol in ['director', 'administrador', 'admin']:
+            context['autorizaciones_pendientes'] = Autorizacion.query.filter_by(estatus='pendiente').count()
+    except Exception as e:
+        print(f"Error autorizaciones: {e}")
+        db.session.rollback()
+    
+    try:
+        # Papeletas del usuario actual - HOY
+        context['mis_papeletas_hoy'] = Papeleta.query.filter(
+            Papeleta.usuario_id == current_user.id,
+            Papeleta.fecha_venta == fecha_hoy
+        ).count()
+    except Exception as e:
+        print(f"Error mis_papeletas_hoy: {e}")
+        db.session.rollback()
+    
+    try:
+        mi_total = db.session.query(func.sum(Papeleta.total)).filter(
+            Papeleta.usuario_id == current_user.id,
+            Papeleta.fecha_venta == fecha_hoy
+        ).scalar()
+        context['mi_total_hoy'] = float(mi_total or 0)
+    except Exception as e:
+        print(f"Error mi_total_hoy: {e}")
+        db.session.rollback()
+    
+    try:
+        mi_efectivo = db.session.query(func.sum(Papeleta.total)).filter(
+            Papeleta.usuario_id == current_user.id,
+            Papeleta.fecha_venta == fecha_hoy,
+            Papeleta.forma_pago.ilike('%efectivo%')
+        ).scalar()
+        context['mi_efectivo_hoy'] = float(mi_efectivo or 0)
+    except Exception as e:
+        print(f"Error mi_efectivo_hoy: {e}")
+        db.session.rollback()
+    
+    try:
+        # Papeletas pendientes = MOSTRADOR no asignadas a un reporte de ventas
+        # Solo mostrador = sin empresa asignada o facturar_a = 'MOSTRADOR'
+        mis_pendientes = Papeleta.query.filter(
+            Papeleta.usuario_id == current_user.id,
+            Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+            Papeleta.reporte_venta_id.is_(None),
+            db.or_(
+                Papeleta.empresa_id.is_(None),
+                Papeleta.facturar_a.ilike('%MOSTRADOR%')
+            )
+        ).order_by(Papeleta.fecha_venta.desc()).all()
+        
+        for p in mis_pendientes:
+            p.dias = (fecha_hoy - p.fecha_venta).days if p.fecha_venta else 0
+        
+        context['mis_papeletas_pendientes'] = mis_pendientes
+        context['papeletas_pendientes'] = len(mis_pendientes)
+        context['papeletas_urgentes'] = len([p for p in mis_pendientes if p.dias > 3])
+        context['mi_efectivo_pendiente'] = sum([
+            float(p.total or 0) for p in mis_pendientes 
+            if p.forma_pago and 'efectivo' in p.forma_pago.lower()
+        ])
+    except Exception as e:
+        print(f"Error papeletas pendientes: {e}")
+        db.session.rollback()
+    
+    try:
+        # Reportes del mes
+        primer_dia_mes = fecha_hoy.replace(day=1)
+        context['mis_reportes_mes'] = ReporteVenta.query.filter(
+            ReporteVenta.usuario_id == current_user.id,
+            ReporteVenta.fecha >= primer_dia_mes
+        ).count()
+    except Exception as e:
+        print(f"Error reportes mes: {e}")
+        db.session.rollback()
+    
+    # ============================================================
+    # DATOS PARA ADMIN
+    # ============================================================
+    
+    if current_user.es_admin():
+        try:
+            context['total_papeletas_pendientes'] = Papeleta.query.filter(
+                Papeleta.fecha_venta < fecha_hoy,
+                Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30)
+            ).count()
+        except Exception as e:
+            print(f"Error total pendientes: {e}")
+            db.session.rollback()
+        
+        try:
+            total_efec = db.session.query(func.sum(Papeleta.total)).filter(
+                Papeleta.fecha_venta < fecha_hoy,
+                Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+                Papeleta.forma_pago.ilike('%efectivo%')
+            ).scalar()
+            context['total_efectivo_pendiente'] = float(total_efec or 0)
+        except Exception as e:
+            print(f"Error total efectivo: {e}")
+            db.session.rollback()
+        
+        try:
+            context['entregas_por_recibir'] = EntregaCorte.query.filter(
+                EntregaCorte.estatus.in_(['pendiente', 'entregado'])
+            ).count()
+            
+            context['entregas_pendientes'] = EntregaCorte.query.filter(
+                EntregaCorte.estatus.in_(['pendiente', 'entregado', 'en_custodia'])
+            ).order_by(EntregaCorte.fecha.desc()).limit(5).all()
+        except Exception as e:
+            print(f"Error entregas: {e}")
+            db.session.rollback()
+        
+        try:
+            context['reportes_por_revisar'] = ReporteVenta.query.filter(
+                ReporteVenta.estatus == 'enviado'
+            ).count()
+        except Exception as e:
+            print(f"Error reportes revisar: {e}")
+            db.session.rollback()
+        
+        try:
+            context['papeletas_hoy_total'] = Papeleta.query.filter(
+                Papeleta.fecha_venta == fecha_hoy
+            ).count()
+            
+            total_hoy = db.session.query(func.sum(Papeleta.total)).filter(
+                Papeleta.fecha_venta == fecha_hoy
+            ).scalar()
+            context['total_ventas_hoy'] = float(total_hoy or 0)
+            
+            efec_hoy = db.session.query(func.sum(Papeleta.total)).filter(
+                Papeleta.fecha_venta == fecha_hoy,
+                Papeleta.forma_pago.ilike('%efectivo%')
+            ).scalar()
+            context['total_efectivo_hoy'] = float(efec_hoy or 0)
+        except Exception as e:
+            print(f"Error papeletas hoy: {e}")
+            db.session.rollback()
+        
+        try:
+            # Resumen por agente
+            agentes = Usuario.query.filter(
+                Usuario.activo == True,
+                Usuario.rol.notin_(['admin', 'administrador', 'director', 'sistemas'])
+            ).all()
+            
+            resumen = []
+            for agente in agentes:
+                try:
+                    paps_hoy = Papeleta.query.filter(
+                        Papeleta.usuario_id == agente.id,
+                        Papeleta.fecha_venta == fecha_hoy
+                    ).count()
+                    
+                    paps_pend = Papeleta.query.filter(
+                        Papeleta.usuario_id == agente.id,
+                        Papeleta.fecha_venta < fecha_hoy,
+                        Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30)
+                    ).count()
+                    
+                    efec = db.session.query(func.sum(Papeleta.total)).filter(
+                        Papeleta.usuario_id == agente.id,
+                        Papeleta.fecha_venta < fecha_hoy,
+                        Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+                        Papeleta.forma_pago.ilike('%efectivo%')
+                    ).scalar()
+                    
+                    resumen.append({
+                        'id': agente.id,
+                        'agente': agente.nombre,
+                        'papeletas_hoy': paps_hoy,
+                        'pendientes': paps_pend,
+                        'efectivo': float(efec or 0)
+                    })
+                except:
+                    db.session.rollback()
+            
+            resumen.sort(key=lambda x: (-x['pendientes'], x['agente']))
+            context['resumen_agentes'] = resumen
+        except Exception as e:
+            print(f"Error resumen agentes: {e}")
+            db.session.rollback()
+    # Papeletas pendientes del usuario
 
-
+    papeletas_pendientes = Papeleta.query.filter(
+        Papeleta.usuario_id == current_user.id,
+        Papeleta.fecha_venta < fecha_mexico(),
+        Papeleta.estatus_control.in_(['activa', None]),
+        Papeleta.justificacion_pendiente.is_(None)
+    ).count()        
+    papeletas_pendientes=papeletas_pendientes
+    return render_template('dashboard.html', **context)
+  
 # =============================================================================
 # API ENDPOINTS
 # =============================================================================
@@ -821,7 +1057,11 @@ def nueva_papeleta_form():
             'tiempo_restante': tiempo_restante, 'fecha_expiracion': fecha_expiracion
         })
     
-    return render_template('papeletas.html', empresas=empresas_list, aerolineas=aerolineas_list, tarjetas_info=tarjetas_info)
+    return render_template('papeletas.html', 
+                           empresas=empresas_list, 
+                           aerolineas=aerolineas_list, 
+                           tarjetas_info=tarjetas_info,
+                           fecha_hoy=fecha_mexico().strftime('%Y-%m-%d'))
 
 
 @main.route('/papeletas/nueva', methods=['POST'])
@@ -1410,7 +1650,7 @@ def nuevo_reporte_venta():
         try:
             fecha = request.form.get('fecha')
             if not fecha:
-                fecha = date.today()
+                fecha = fecha_mexico()
             else:
                 fecha = datetime.strptime(fecha, '%Y-%m-%d').date()
             
@@ -1440,7 +1680,7 @@ def nuevo_reporte_venta():
             db.session.rollback()
             flash(f'Error al crear reporte: {str(e)}', 'danger')
     
-    return render_template('reportes_ventas/nuevo.html', fecha_hoy=date.today())
+    return render_template('reportes_ventas/nuevo.html', fecha_hoy=fecha_mexico())
 
 
 @main.route('/reportes-ventas/<int:id>')
@@ -1500,12 +1740,20 @@ def editar_reporte_venta(id):
             db.session.rollback()
             flash(f'Error al actualizar: {str(e)}', 'danger')
     
-    # Obtener papeletas del día que no están en ningún reporte
+    # Obtener papeletas de MOSTRADOR del usuario que no están en ningún reporte
+    # Solo mostrador = sin empresa asignada o facturar_a = 'MOSTRADOR'
+    fecha_limite = reporte.fecha - timedelta(days=30)
+    
     papeletas_disponibles = Papeleta.query.filter(
-        Papeleta.fecha_venta == reporte.fecha,
         Papeleta.usuario_id == reporte.usuario_id,
-        Papeleta.reporte_venta_id.is_(None)
-    ).order_by(Papeleta.id).all()
+        Papeleta.reporte_venta_id.is_(None),
+        Papeleta.fecha_venta >= fecha_limite,
+        Papeleta.fecha_venta <= reporte.fecha,
+        db.or_(
+            Papeleta.empresa_id.is_(None),
+            Papeleta.facturar_a.ilike('%MOSTRADOR%')
+        )
+    ).order_by(Papeleta.fecha_venta.desc(), Papeleta.id).all()
     
     # Papeletas ya agregadas
     detalles = reporte.detalles.order_by(DetalleReporteVenta.orden).all()
@@ -1730,10 +1978,17 @@ def agregar_papeleta_reporte(id):
     try:
         # Determinar clave de aerolínea
         clave_aerolinea = ''
+        nombre_aerolinea = ''
         if papeleta.aerolinea:
             clave_aerolinea = papeleta.aerolinea.codigo_iata or papeleta.aerolinea.nombre[:2].upper()
+            nombre_aerolinea = (papeleta.aerolinea.nombre or '').upper()
         
-        # Determinar forma de pago
+        # Obtener nombre de la tarjeta corporativa usada
+        nombre_tarjeta = (papeleta.tarjeta or '').upper()
+        if papeleta.tarjeta_rel:
+            nombre_tarjeta = (papeleta.tarjeta_rel.nombre_tarjeta or '').upper()
+        
+        # Forma de pago del cliente
         forma_pago = (papeleta.forma_pago or '').lower()
         total_ticket = float(papeleta.total_ticket or 0)
         total = float(papeleta.total or 0)
@@ -1746,25 +2001,49 @@ def agregar_papeleta_reporte(id):
         efectivo = 0
         pago_directo_tc = 0
         
-        # Determinar si es pago con tarjeta o efectivo
-        es_tarjeta = 'tarjeta' in forma_pago or 'tc' in forma_pago or 'crédito' in forma_pago or 'credito' in forma_pago
-        es_efectivo = 'efectivo' in forma_pago or 'contado' in forma_pago or 'transferencia' in forma_pago or 'depósito' in forma_pago or 'deposito' in forma_pago
+        # ============================================================
+        # CLASIFICACIÓN POR TARJETA CORPORATIVA USADA
+        # ============================================================
+        # - CREDITO VOLARIS (CVOL) → Columna Volaris
+        # - CREDITO VIVAAEROBUS (CVIV) → Columna VivaAerobus  
+        # - Otras tarjetas (VISA, MASTER, INVEX, etc.) → Columna Compra TC
+        # ============================================================
         
-        if es_tarjeta:
-            # Si es tarjeta, TODO va a compra TC (sin importar aerolínea)
-            monto_compra_tc = total_ticket
-            voucher_tc = total
+        es_tarjeta_volaris = (
+            'VOLARIS' in nombre_tarjeta or 
+            'CVOL' in nombre_tarjeta or
+            nombre_tarjeta.startswith('CREDITO VOL')
+        )
+        
+        es_tarjeta_vivaerobus = (
+            'VIVA' in nombre_tarjeta or 
+            'CVIV' in nombre_tarjeta or
+            nombre_tarjeta.startswith('CREDITO VIV')
+        )
+        
+        # Determinar si el cliente pagó en efectivo o con voucher
+        es_pago_efectivo = (
+            'efectivo' in forma_pago or 
+            'depósito' in forma_pago or 
+            'deposito' in forma_pago or
+            'transferencia' in forma_pago or
+            'contado' in forma_pago
+        )
+        
+        # Clasificar según la tarjeta corporativa
+        if es_tarjeta_volaris:
+            monto_volaris = total_ticket
+        elif es_tarjeta_vivaerobus:
+            monto_vivaerobus = total_ticket
         else:
-            # Si es efectivo/cash, clasificar por aerolínea
-            if clave_aerolinea in ['Y4', 'VOI', 'VLR']:
-                monto_volaris = total_ticket
-            elif clave_aerolinea in ['VB', 'VI', 'VIV', '4O']:
-                monto_vivaerobus = total_ticket
-            else:
-                # Otras aerolíneas van a compra TC también
-                monto_compra_tc = total_ticket
-            
+            # Cualquier otra tarjeta va a Compra TC
+            monto_compra_tc = total_ticket
+        
+        # El total va a efectivo o voucher según cómo pagó el cliente
+        if es_pago_efectivo:
             efectivo = total
+        else:
+            voucher_tc = total
         
         max_orden = db.session.query(func.max(DetalleReporteVenta.orden)).filter_by(reporte_id=id).scalar() or 0
         
@@ -1919,3 +2198,772 @@ def obtener_totales_reporte(id):
         },
         'boletos_aerolinea': {k: int(v) for k, v in boletos_aerolinea if k}
     })
+
+
+
+
+# ============================================================
+# Decoradores de permisos
+# ============================================================
+
+def admin_required(f):
+    """Solo administradores pueden acceder"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.es_admin():
+            flash('No tienes permisos para esta acción', 'error')
+            return redirect(url_for('main.lista_entregas'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def director_required(f):
+    """Solo directores pueden acceder"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('main.login'))
+        # Verificar si es director (ajustar según tu modelo)
+        if not (current_user.es_admin() or getattr(current_user, 'es_director', lambda: False)()):
+            flash('Solo la dirección puede realizar esta acción', 'error')
+            return redirect(url_for('main.lista_entregas'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# ============================================================
+# VISTAS PRINCIPALES
+# ============================================================
+
+@main.route('/entregas')
+@login_required
+def lista_entregas():
+    """Lista de entregas según rol del usuario"""
+    filtro_estatus = request.args.get('estatus', '')
+    filtro_fecha = request.args.get('fecha', '')
+    
+    # Base query
+    query = EntregaCorte.query
+    
+    # Filtrar por rol
+    if current_user.es_admin():
+        # Admin ve todo
+        pass
+    else:
+        # Agente solo ve sus entregas
+        query = query.filter(EntregaCorte.agente_id == current_user.id)
+    
+    # Filtros adicionales
+    if filtro_estatus:
+        query = query.filter(EntregaCorte.estatus == filtro_estatus)
+    
+    if filtro_fecha:
+        try:
+            fecha = datetime.strptime(filtro_fecha, '%Y-%m-%d').date()
+            query = query.filter(EntregaCorte.fecha == fecha)
+        except:
+            pass
+    
+    entregas = query.order_by(EntregaCorte.fecha.desc(), EntregaCorte.id.desc()).all()
+    
+    # Contadores para dashboard
+    pendientes = EntregaCorte.query.filter_by(estatus='pendiente').count()
+    en_custodia = EntregaCorte.query.filter_by(estatus='en_custodia').count()
+    por_depositar = EntregaCorte.query.filter(EntregaCorte.estatus.in_(['entregado', 'retirado'])).count()
+    por_revisar = EntregaCorte.query.filter_by(estatus='depositado').count()
+    
+    return render_template('entregas/lista.html',
+        entregas=entregas,
+        pendientes=pendientes,
+        en_custodia=en_custodia,
+        por_depositar=por_depositar,
+        por_revisar=por_revisar,
+        filtro_estatus=filtro_estatus,
+        filtro_fecha=filtro_fecha
+    )
+
+
+@main.route('/entregas/nueva', methods=['GET', 'POST'])
+@login_required
+def nueva_entrega():
+    """Crear nueva entrega de corte (Vale de Entrega)"""
+    if request.method == 'POST':
+        try:
+            # Obtener datos del formulario
+            efectivo_pesos = float(request.form.get('efectivo_pesos', 0) or 0)
+            efectivo_dolares = float(request.form.get('efectivo_dolares', 0) or 0)
+            tipo_cambio = float(request.form.get('tipo_cambio', 0) or 0)
+            cheques = float(request.form.get('cheques', 0) or 0)
+            vouchers_tc = float(request.form.get('vouchers_tc', 0) or 0)
+            reporte_id = request.form.get('reporte_venta_id')
+            notas = request.form.get('notas', '')
+            
+            # Crear entrega
+            entrega = EntregaCorte(
+                folio=EntregaCorte.generar_folio(),
+                fecha=fecha_mexico(),
+                agente_id=current_user.id,
+                efectivo_pesos=efectivo_pesos,
+                efectivo_dolares=efectivo_dolares,
+                tipo_cambio=tipo_cambio,
+                cheques=cheques,
+                vouchers_tc=vouchers_tc,
+                reporte_venta_id=int(reporte_id) if reporte_id else None,
+                estatus='pendiente'
+            )
+            
+            entrega.calcular_totales()
+            
+            db.session.add(entrega)
+            db.session.flush()
+            
+            # Registrar historial
+            entrega.registrar_historial('creado', current_user.id, None, notas)
+            
+            # Procesar arqueo si viene
+            denominaciones = request.form.getlist('denominacion[]')
+            cantidades = request.form.getlist('cantidad[]')
+            tipos = request.form.getlist('tipo_denominacion[]')
+            
+            for i, denom in enumerate(denominaciones):
+                if denom and cantidades[i]:
+                    detalle = DetalleArqueo(
+                        entrega_id=entrega.id,
+                        tipo=tipos[i] if i < len(tipos) else 'billete',
+                        denominacion=float(denom),
+                        cantidad=int(cantidades[i])
+                    )
+                    detalle.calcular_subtotal()
+                    db.session.add(detalle)
+            
+            db.session.commit()
+            
+            flash(f'Vale de entrega {entrega.folio} creado exitosamente', 'success')
+            return redirect(url_for('main.ver_entrega', id=entrega.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear entrega: {str(e)}', 'error')
+    
+    # GET: Mostrar formulario
+    # Obtener reportes del día sin entrega asociada
+    reportes_disponibles = ReporteVenta.query.filter(
+        ReporteVenta.usuario_id == current_user.id,
+        ReporteVenta.fecha == fecha_mexico(),
+        ~ReporteVenta.id.in_(
+            db.session.query(EntregaCorte.reporte_venta_id).filter(
+                EntregaCorte.reporte_venta_id.isnot(None)
+            )
+        )
+    ).all()
+    
+    return render_template('entregas/nueva.html',
+        reportes_disponibles=reportes_disponibles,
+        fecha_hoy=fecha_mexico()
+    )
+
+
+@main.route('/entregas/<int:id>')
+@login_required
+def ver_entrega(id):
+    """Ver detalle de una entrega"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    # Verificar permisos
+    if not current_user.es_admin() and entrega.agente_id != current_user.id:
+        flash('No tienes permisos para ver esta entrega', 'error')
+        return redirect(url_for('main.lista_entregas'))
+    
+    historial = entrega.historial.order_by(HistorialEntrega.fecha_hora.desc()).all()
+    arqueo = entrega.detalles_arqueo.all()
+    
+    # Obtener admins para asignar receptor
+    admins = Usuario.query.filter_by(activo=True).filter(
+        Usuario.rol.in_(['admin', 'supervisor'])
+    ).all() if current_user.es_admin() else []
+    
+    return render_template('entregas/ver.html',
+        entrega=entrega,
+        historial=historial,
+        arqueo=arqueo,
+        admins=admins
+    )
+
+
+# ============================================================
+# ACCIONES DEL FLUJO
+# ============================================================
+
+@main.route('/entregas/<int:id>/entregar', methods=['POST'])
+@login_required
+def entregar_a_admin(id):
+    """Paso 1: Agente entrega a administrativo"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if not entrega.puede_entregar:
+        flash('Esta entrega no puede ser procesada', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    receptor_id = request.form.get('receptor_id')
+    notas = request.form.get('notas', '')
+    
+    if not receptor_id:
+        flash('Debes seleccionar quién recibe', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    try:
+        entrega.entregar_a_admin(int(receptor_id), notas)
+        db.session.commit()
+        flash('Entrega registrada exitosamente', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.ver_entrega', id=id))
+
+
+@main.route('/entregas/<int:id>/confirmar-custodia', methods=['POST'])
+@login_required
+@admin_required
+def confirmar_custodia(id):
+    """Administrativo confirma custodia"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if entrega.estatus != 'entregado':
+        flash('Esta entrega no está en el estatus correcto', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    notas = request.form.get('notas', '')
+    
+    try:
+        entrega.confirmar_custodia(current_user.id, notas)
+        db.session.commit()
+        flash('Custodia confirmada', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.ver_entrega', id=id))
+
+
+@main.route('/entregas/<int:id>/retirar', methods=['POST'])
+@login_required
+@admin_required
+def retirar_para_deposito(id):
+    """Paso 2: Encargado retira para depositar"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if not entrega.puede_retirar:
+        flash('Esta entrega no puede ser retirada', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    notas = request.form.get('notas', '')
+    
+    try:
+        entrega.retirar_para_deposito(current_user.id, notas)
+        db.session.commit()
+        flash('Retiro registrado. Procede a depositar.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.ver_entrega', id=id))
+
+
+@main.route('/entregas/<int:id>/depositar', methods=['POST'])
+@login_required
+@admin_required
+def registrar_deposito(id):
+    """Paso 3: Registrar depósito bancario"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if not entrega.puede_depositar:
+        flash('Esta entrega no puede ser depositada aún', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    cuenta = request.form.get('cuenta_deposito', '')
+    referencia = request.form.get('referencia_deposito', '')
+    notas = request.form.get('notas', '')
+    
+    if not cuenta or not referencia:
+        flash('Debes ingresar cuenta y referencia del depósito', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    try:
+        entrega.registrar_deposito(current_user.id, cuenta, referencia, notas)
+        db.session.commit()
+        flash('Depósito registrado. Pendiente de revisión por dirección.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.ver_entrega', id=id))
+
+
+@main.route('/entregas/<int:id>/revisar', methods=['POST'])
+@login_required
+@director_required
+def revisar_entrega(id):
+    """Paso 4: Director revisa y aprueba/rechaza"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if not entrega.puede_revisar:
+        flash('Esta entrega no está lista para revisión', 'error')
+        return redirect(url_for('main.ver_entrega', id=id))
+    
+    accion = request.form.get('accion', 'aprobar')
+    notas = request.form.get('notas', '')
+    
+    try:
+        entrega.revisar_y_aprobar(
+            current_user.id, 
+            aprobado=(accion == 'aprobar'),
+            notas=notas
+        )
+        db.session.commit()
+        
+        if accion == 'aprobar':
+            flash('Entrega aprobada y cerrada', 'success')
+        else:
+            flash('Entrega rechazada', 'warning')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.ver_entrega', id=id))
+
+
+# ============================================================
+# API ENDPOINTS
+# ============================================================
+
+@main.route('/api/entregas/resumen')
+@login_required
+def api_resumen_entregas():
+    """Resumen de entregas para dashboard"""
+    try:
+        # Totales por estatus
+        pendientes = EntregaCorte.query.filter_by(estatus='pendiente').count()
+        en_custodia = EntregaCorte.query.filter(
+            EntregaCorte.estatus.in_(['entregado', 'en_custodia'])
+        ).count()
+        por_depositar = EntregaCorte.query.filter_by(estatus='retirado').count()
+        por_revisar = EntregaCorte.query.filter_by(estatus='depositado').count()
+        
+        # Totales monetarios pendientes
+        from sqlalchemy import func
+        
+        total_efectivo_pendiente = db.session.query(
+            func.sum(EntregaCorte.efectivo_pesos)
+        ).filter(
+            EntregaCorte.estatus.in_(['pendiente', 'entregado', 'en_custodia'])
+        ).scalar() or 0
+        
+        total_dolares_pendiente = db.session.query(
+            func.sum(EntregaCorte.efectivo_dolares)
+        ).filter(
+            EntregaCorte.estatus.in_(['pendiente', 'entregado', 'en_custodia'])
+        ).scalar() or 0
+        
+        return jsonify({
+            'success': True,
+            'contadores': {
+                'pendientes': pendientes,
+                'en_custodia': en_custodia,
+                'por_depositar': por_depositar,
+                'por_revisar': por_revisar
+            },
+            'totales': {
+                'efectivo_pendiente': float(total_efectivo_pendiente),
+                'dolares_pendiente': float(total_dolares_pendiente)
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/entregas/<int:id>')
+@login_required
+def api_detalle_entrega(id):
+    """Detalle de entrega en JSON"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    return jsonify({
+        'success': True,
+        'entrega': entrega.to_dict()
+    })
+
+
+@main.route('/api/entregas/desde-reporte/<int:reporte_id>', methods=['POST'])
+@login_required
+def api_crear_desde_reporte(reporte_id):
+    """Crear entrega desde un reporte de ventas"""
+    reporte = ReporteVenta.query.get_or_404(reporte_id)
+    
+    # Verificar que el reporte sea del usuario actual o sea admin
+    if reporte.usuario_id != current_user.id and not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
+    # Verificar que no tenga ya una entrega
+    existente = EntregaCorte.query.filter_by(reporte_venta_id=reporte_id).first()
+    if existente:
+        return jsonify({
+            'success': False, 
+            'error': f'Este reporte ya tiene una entrega asociada: {existente.folio}'
+        }), 400
+    
+    try:
+        entrega = crear_entrega_desde_reporte(reporte, current_user.id)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'entrega': entrega.to_dict(),
+            'redirect': url_for('main.ver_entrega', id=entrega.id)
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# IMPRESIÓN
+# ============================================================
+
+@main.route('/entregas/<int:id>/imprimir')
+@login_required
+def imprimir_vale(id):
+    """Vista de impresión del vale de entrega"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    arqueo = entrega.detalles_arqueo.all()
+    
+    return render_template('entregas/vale_impresion.html',
+        entrega=entrega,
+        arqueo=arqueo
+    )
+
+# ============================================================
+# RUTAS DE CONTROL DE PAPELETAS
+# Agregar a routes.py
+# ============================================================
+
+# ------------------------------------------------------------
+# VISTA PRINCIPAL DE CONTROL
+# ------------------------------------------------------------
+
+@main.route('/control-papeletas')
+@login_required
+def control_papeletas():
+    """Dashboard de control de papeletas para administración"""
+    if not current_user.es_admin():
+        flash('No tienes permisos para acceder a esta sección', 'error')
+        return redirect(url_for('main.dashboard'))
+    
+    from datetime import date, timedelta
+    from sqlalchemy import func, case
+    
+    fecha_hoy = fecha_mexico()
+    
+    # Filtro por agente (opcional)
+    agente_id = request.args.get('agente', type=int)
+    
+    # Query base
+    query = Papeleta.query
+    if agente_id:
+        query = query.filter(Papeleta.usuario_id == agente_id)
+    
+    # Estadísticas
+    papeletas_hoy = query.filter(
+        Papeleta.fecha_venta == fecha_hoy,
+        Papeleta.estatus_control.in_(['activa', None])
+    ).count()
+    
+    pendientes = query.filter(
+        Papeleta.fecha_venta < fecha_hoy,
+        Papeleta.estatus_control.in_(['activa', None])
+    ).all()
+    
+    pendientes_total = len(pendientes)
+    
+    urgentes = len([p for p in pendientes if (fecha_hoy - p.fecha_venta).days > 3])
+    
+    en_corte = query.filter(Papeleta.estatus_control == 'en_corte').count()
+    
+    # Totales monetarios
+    total_hoy = db.session.query(func.sum(Papeleta.total)).filter(
+        Papeleta.fecha_venta == fecha_hoy,
+        Papeleta.estatus_control.in_(['activa', None])
+    ).scalar() or 0
+    
+    total_pendiente = sum([float(p.total or 0) for p in pendientes])
+    
+    efectivo_pendiente = db.session.query(func.sum(Papeleta.total)).filter(
+        Papeleta.estatus_control.in_(['activa', None]),
+        Papeleta.forma_pago.ilike('%efectivo%')
+    ).scalar() or 0
+    
+    # Lista de papeletas (últimos 7 días o pendientes)
+    papeletas = query.filter(
+        db.or_(
+            Papeleta.fecha_venta >= fecha_hoy - timedelta(days=7),
+            Papeleta.estatus_control.in_(['activa', None])
+        )
+    ).order_by(
+        Papeleta.fecha_venta.desc(),
+        Papeleta.id.desc()
+    ).limit(100).all()
+    
+    # Resumen por agente
+    resumen_agentes = db.session.query(
+        Usuario.id.label('usuario_id'),
+        Usuario.nombre.label('agente'),
+        func.count(case((Papeleta.fecha_venta == fecha_hoy, 1))).label('papeletas_hoy'),
+        func.count(case((Papeleta.fecha_venta < fecha_hoy, 1))).label('pendientes_dias_anteriores'),
+        func.count(case((Papeleta.estatus_control == 'en_corte', 1))).label('en_corte'),
+        func.sum(case((Papeleta.estatus_control.in_(['activa', None]), Papeleta.total), else_=0)).label('total_pendiente'),
+        func.sum(case(
+            (db.and_(Papeleta.estatus_control.in_(['activa', None]), Papeleta.forma_pago.ilike('%efectivo%')), Papeleta.total),
+            else_=0
+        )).label('efectivo_pendiente')
+    ).outerjoin(Papeleta, db.and_(
+        Papeleta.usuario_id == Usuario.id,
+        Papeleta.estatus_control.in_(['activa', 'en_corte', None])
+    )).filter(
+        Usuario.activo == True
+    ).group_by(Usuario.id, Usuario.nombre).all()
+    
+    return render_template('control_papeletas.html',
+        papeletas=papeletas,
+        papeletas_hoy=papeletas_hoy,
+        pendientes_total=pendientes_total,
+        urgentes=urgentes,
+        en_corte=en_corte,
+        total_hoy=float(total_hoy),
+        total_pendiente=total_pendiente,
+        efectivo_pendiente=float(efectivo_pendiente),
+        resumen_agentes=resumen_agentes,
+        fecha_actual=fecha_hoy
+    )
+
+
+# ------------------------------------------------------------
+# APIs DE CONTROL
+# ------------------------------------------------------------
+
+@main.route('/api/papeleta/<int:id>/detalle')
+@login_required
+def api_papeleta_detalle_control(id):
+    """Obtiene detalle completo de una papeleta con historial"""
+    try:
+        papeleta = Papeleta.query.get_or_404(id)
+        
+        # Obtener historial
+        historial = []
+        try:
+            from sqlalchemy import text
+            result = db.session.execute(text("""
+                SELECT accion, campo_modificado, valor_anterior, valor_nuevo,
+                       u.nombre as usuario, fecha_hora
+                FROM papeletas_historial h
+                LEFT JOIN usuarios u ON h.usuario_id = u.id
+                WHERE h.papeleta_id = :pid
+                ORDER BY h.fecha_hora DESC
+                LIMIT 20
+            """), {'pid': id})
+            
+            for row in result:
+                historial.append({
+                    'accion': row.accion,
+                    'campo': row.campo_modificado,
+                    'anterior': row.valor_anterior,
+                    'nuevo': row.valor_nuevo,
+                    'usuario': row.usuario or 'Sistema',
+                    'fecha': row.fecha_hora.strftime('%d/%m/%Y %H:%M') if row.fecha_hora else ''
+                })
+        except Exception as e:
+            # Si no existe la tabla de historial aún
+            print(f"Error historial: {e}")
+            historial = [{'accion': 'creada', 'usuario': papeleta.usuario.nombre if papeleta.usuario else '-', 
+                          'fecha': papeleta.created_at.strftime('%d/%m/%Y %H:%M') if papeleta.created_at else ''}]
+        
+        return jsonify({
+            'success': True,
+            'papeleta': {
+                'id': papeleta.id,
+                'folio': papeleta.folio,
+                'fecha': papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '',
+                'agente': papeleta.usuario.nombre if papeleta.usuario else '-',
+                'cliente': papeleta.facturar_a or (papeleta.empresa.nombre_empresa if papeleta.empresa else '-'),
+                'concepto': papeleta.facturar_a or '-',
+                'tarifa': '{:,.2f}'.format(float(papeleta.total_ticket or 0)),
+                'cargo': '{:,.2f}'.format(float(papeleta.cargo or 0)),
+                'total': '{:,.2f}'.format(float(papeleta.total or 0)),
+                'forma_pago': papeleta.forma_pago or '-',
+                'estatus': papeleta.estatus_control or 'activa',
+                'clave_reserva': papeleta.clave_sabre or '-',
+                'pasajero': papeleta.solicito or '-',
+                'aerolinea': papeleta.aerolinea.nombre if papeleta.aerolinea else '-'
+            },
+            'historial': historial
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error api_papeleta_detalle_control: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/papeleta/<int:id>/validar', methods=['POST'])
+@login_required
+def api_validar_papeleta(id):
+    """Marca una papeleta como validada/revisada"""
+    # Limpiar cualquier transacción pendiente
+    try:
+        db.session.rollback()
+    except:
+        pass
+    
+    if not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    try:
+        papeleta.estatus_control = 'revisada'
+        papeleta.revisada_por_id = current_user.id
+        papeleta.fecha_revision = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/papeleta/<int:id>/justificar', methods=['POST'])
+@login_required
+def api_justificar_papeleta(id):
+    """Registra justificación de por qué una papeleta queda pendiente"""
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    # Verificar que sea del usuario o admin
+    if papeleta.usuario_id != current_user.id and not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
+    data = request.get_json()
+    justificacion = data.get('justificacion', '').strip()
+    
+    if not justificacion:
+        return jsonify({'success': False, 'error': 'La justificación es requerida'}), 400
+    
+    try:
+        papeleta.justificacion_pendiente = justificacion
+        papeleta.fecha_justificacion = datetime.utcnow()
+        
+        # Registrar en historial
+        try:
+            from sqlalchemy import text
+            db.session.execute(text("""
+                INSERT INTO papeletas_historial (papeleta_id, accion, campo_modificado, valor_nuevo, usuario_id, motivo)
+                VALUES (:pid, 'justificada', 'justificacion_pendiente', :just, :uid, :motivo)
+            """), {'pid': id, 'just': justificacion, 'uid': current_user.id, 'motivo': justificacion})
+        except:
+            pass
+        
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/papeletas/generar-alertas', methods=['POST'])
+@login_required
+def api_generar_alertas_papeletas():
+    """Genera alertas para papeletas pendientes"""
+    if not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
+    try:
+        from sqlalchemy import text
+        result = db.session.execute(text("SELECT generar_alertas_papeletas_pendientes()"))
+        count = result.scalar()
+        db.session.commit()
+        
+        return jsonify({'success': True, 'alertas': count})
+    except Exception as e:
+        return jsonify({'success': True, 'alertas': 0, 'nota': 'Función no disponible'})
+
+
+@main.route('/api/papeleta/<int:id>/cerrar', methods=['POST'])
+@login_required
+def api_cerrar_papeleta(id):
+    """Marca una papeleta como cerrada (proceso completo)"""
+    if not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    try:
+        papeleta.estatus_control = 'cerrada'
+        papeleta.cerrada_por_id = current_user.id
+        papeleta.fecha_cierre = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ------------------------------------------------------------
+# NOTIFICACIONES DE PAPELETAS PENDIENTES
+# ------------------------------------------------------------
+
+@main.route('/api/mis-papeletas-pendientes')
+@login_required
+def api_mis_papeletas_pendientes():
+    """Obtiene papeletas pendientes del usuario actual (para notificaciones)"""
+    from datetime import date
+    
+    pendientes = Papeleta.query.filter(
+        Papeleta.usuario_id == current_user.id,
+        Papeleta.fecha_venta < fecha_mexico(),
+        Papeleta.estatus_control.in_(['activa', None]),
+        Papeleta.justificacion_pendiente.is_(None)
+    ).all()
+    
+    return jsonify({
+        'count': len(pendientes),
+        'papeletas': [{
+            'id': p.id,
+            'folio': p.folio,
+            'fecha': p.fecha_venta.strftime('%d/%m') if p.fecha_venta else '',
+            'total': float(p.total or 0),
+            'dias': (fecha_mexico() - p.fecha_venta).days if p.fecha_venta else 0
+        } for p in pendientes]
+    })
+
+
+# ------------------------------------------------------------
+# WIDGET PARA DASHBOARD DEL AGENTE
+# ------------------------------------------------------------
+# Agregar esto en la ruta dashboard() existente para mostrar alertas
+
+"""
+En tu ruta de dashboard, agrega esto para pasar datos de papeletas pendientes:
+
+    # Papeletas pendientes del usuario
+    from datetime import date
+    papeletas_pendientes = Papeleta.query.filter(
+        Papeleta.usuario_id == current_user.id,
+        Papeleta.fecha_venta < fecha_mexico(),
+        Papeleta.estatus_control.in_(['activa', None]),
+        Papeleta.justificacion_pendiente.is_(None)
+    ).count()
+
+Y pásalo al template:
+    papeletas_pendientes=papeletas_pendientes
+"""

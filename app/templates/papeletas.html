@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     actualizarBoton();
-    document.getElementById('fecha_venta').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_venta').value = '{{ fecha_hoy }}';
     totalFinal.value = '0.00';
     
     const tipoCargo = document.getElementById('tipo_cargo');

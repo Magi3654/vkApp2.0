@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entrega.folio }} - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+.entrega-container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+.entrega-layout { display: grid; grid-template-columns: 1fr 350px; gap: 1.5rem; }
+@media (max-width: 1024px) { .entrega-layout { grid-template-columns: 1fr; } }
+
+.entrega-card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+
+.entrega-header { background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.entrega-header .folio { font-size: 1.5rem; font-weight: 700; }
+.entrega-header .fecha { opacity: 0.8; }
+
+.badge { display: inline-flex; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+.badge-pendiente { background: #fef3c7; color: #92400e; }
+.badge-entregado { background: #dbeafe; color: #1e40af; }
+.badge-en_custodia { background: #e0e7ff; color: #3730a3; }
+.badge-retirado { background: #f3f4f6; color: #374151; }
+.badge-depositado { background: #d1fae5; color: #065f46; }
+.badge-revisado { background: #1f2937; color: white; }
+
+.montos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; padding: 1.5rem; background: #f9fafb; }
+.monto-item { text-align: center; }
+.monto-item .label { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; }
+.monto-item .valor { font-size: 1.25rem; font-weight: 700; font-family: monospace; color: #1f2937; }
+.monto-item .valor.dolares { color: #059669; }
+.monto-item .valor.total { color: #dc3545; font-size: 1.5rem; }
+
+.flujo-section { padding: 1.5rem; border-top: 1px solid #e5e7eb; }
+.flujo-section h3 { font-size: 1rem; margin-bottom: 1rem; }
+
+.timeline { position: relative; padding-left: 2rem; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+.timeline-item { position: relative; padding-bottom: 1.5rem; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item::before { content: ''; position: absolute; left: -1.5rem; top: 0; width: 18px; height: 18px; border-radius: 50%; background: #e5e7eb; border: 3px solid white; }
+.timeline-item.completado::before { background: #10b981; }
+.timeline-item.actual::before { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2); }
+.timeline-item .paso-titulo { font-weight: 600; }
+.timeline-item .paso-info { font-size: 0.85rem; color: #6b7280; }
+.timeline-item.pendiente { opacity: 0.5; }
+
+.acciones-card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+.acciones-header { background: #f9fafb; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+.acciones-body { padding: 1.5rem; }
+
+.accion-form { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; }
+.accion-form:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.accion-titulo { font-weight: 600; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #6b7280; margin-bottom: 0.25rem; }
+.form-group select, .form-group input, .form-group textarea { width: 100%; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 6px; }
+
+.btn-accion { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.btn-entregar { background: #3b82f6; color: white; }
+.btn-retirar { background: #8b5cf6; color: white; }
+.btn-depositar { background: #10b981; color: white; }
+.btn-aprobar { background: #059669; color: white; }
+.btn-rechazar { background: #dc2626; color: white; }
+
+.historial-section { padding: 1.5rem; border-top: 1px solid #e5e7eb; }
+.historial-item { display: flex; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.historial-item:last-child { border-bottom: none; }
+.historial-item .icono { width: 32px; height: 32px; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; }
+.historial-item .info .accion { font-weight: 600; font-size: 0.9rem; }
+.historial-item .info .meta { font-size: 0.8rem; color: #6b7280; }
+
+.btn-imprimir { background: #6b7280; color: white; padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="entrega-container">
+    <div class="page-header">
+        <div class="page-title">
+            <span class="icon"><i class="fas fa-hand-holding-usd"></i></span>
+            <div>
+                <h1>{{ entrega.folio }}</h1>
+                <p>Vale de Entrega - {{ entrega.fecha.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('entregas.imprimir_vale', id=entrega.id) }}" class="btn-imprimir" target="_blank">
+                <i class="fas fa-print"></i> Imprimir
+            </a>
+            <a href="{{ url_for('entregas.lista_entregas') }}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="entrega-layout">
+        <!-- Panel Principal -->
+        <div>
+            <div class="entrega-card">
+                <div class="entrega-header">
+                    <div>
+                        <div class="folio">{{ entrega.folio }}</div>
+                        <div class="fecha">{{ entrega.fecha.strftime('%d de %B de %Y') }}</div>
+                    </div>
+                    <span class="badge badge-{{ entrega.estatus }}">{{ entrega.estatus_descripcion }}</span>
+                </div>
+
+                <!-- Montos -->
+                <div class="montos-grid">
+                    <div class="monto-item">
+                        <div class="label">Efectivo MXN</div>
+                        <div class="valor">${{ '{:,.2f}'.format(entrega.efectivo_pesos|float) }}</div>
+                    </div>
+                    <div class="monto-item">
+                        <div class="label">Dólares USD</div>
+                        <div class="valor dolares">${{ '{:,.2f}'.format(entrega.efectivo_dolares|float) }}</div>
+                    </div>
+                    <div class="monto-item">
+                        <div class="label">T.C.</div>
+                        <div class="valor">{{ '{:,.4f}'.format(entrega.tipo_cambio|float) }}</div>
+                    </div>
+                    <div class="monto-item">
+                        <div class="label">Cheques</div>
+                        <div class="valor">${{ '{:,.2f}'.format(entrega.cheques|float) }}</div>
+                    </div>
+                    <div class="monto-item">
+                        <div class="label">Vouchers (Ref)</div>
+                        <div class="valor" style="color:#6b7280">${{ '{:,.2f}'.format(entrega.vouchers_tc|float) }}</div>
+                    </div>
+                    <div class="monto-item">
+                        <div class="label">Total Físico</div>
+                        <div class="valor total">${{ '{:,.2f}'.format(entrega.total_fisico|float) }}</div>
+                    </div>
+                </div>
+
+                <!-- Flujo -->
+                <div class="flujo-section">
+                    <h3><i class="fas fa-route"></i> Flujo de Entrega</h3>
+                    <div class="timeline">
+                        <!-- Paso 1: Creado -->
+                        <div class="timeline-item completado">
+                            <div class="paso-titulo">Creado por Agente</div>
+                            <div class="paso-info">{{ entrega.agente.nombre if entrega.agente else '-' }} - {{ entrega.fecha_hora_creacion.strftime('%d/%m %H:%M') if entrega.fecha_hora_creacion else '' }}</div>
+                        </div>
+                        
+                        <!-- Paso 2: Entregado -->
+                        <div class="timeline-item {{ 'completado' if entrega.fecha_recepcion else ('actual' if entrega.estatus == 'pendiente' else 'pendiente') }}">
+                            <div class="paso-titulo">Entregado a Administrativo</div>
+                            {% if entrega.receptor %}
+                            <div class="paso-info">{{ entrega.receptor.nombre }} - {{ entrega.fecha_recepcion.strftime('%d/%m %H:%M') if entrega.fecha_recepcion else '' }}</div>
+                            {% else %}
+                            <div class="paso-info">Pendiente</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Paso 3: Retirado -->
+                        <div class="timeline-item {{ 'completado' if entrega.fecha_retiro else ('actual' if entrega.estatus in ['entregado', 'en_custodia'] else 'pendiente') }}">
+                            <div class="paso-titulo">Retirado para Depósito</div>
+                            {% if entrega.encargado_retiro %}
+                            <div class="paso-info">{{ entrega.encargado_retiro.nombre }} - {{ entrega.fecha_retiro.strftime('%d/%m %H:%M') if entrega.fecha_retiro else '' }}</div>
+                            {% else %}
+                            <div class="paso-info">Pendiente</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Paso 4: Depositado -->
+                        <div class="timeline-item {{ 'completado' if entrega.fecha_deposito else ('actual' if entrega.estatus == 'retirado' else 'pendiente') }}">
+                            <div class="paso-titulo">Depositado en Banco</div>
+                            {% if entrega.fecha_deposito %}
+                            <div class="paso-info">{{ entrega.cuenta_deposito }} - Ref: {{ entrega.referencia_deposito }}</div>
+                            {% else %}
+                            <div class="paso-info">Pendiente</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Paso 5: Revisado -->
+                        <div class="timeline-item {{ 'completado' if entrega.fecha_revision else ('actual' if entrega.estatus == 'depositado' else 'pendiente') }}">
+                            <div class="paso-titulo">Revisado por Dirección</div>
+                            {% if entrega.revisor %}
+                            <div class="paso-info">{{ entrega.revisor.nombre }} - {{ 'Aprobado' if entrega.aprobado else 'Rechazado' }}</div>
+                            {% else %}
+                            <div class="paso-info">Pendiente</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historial -->
+                {% if historial %}
+                <div class="historial-section">
+                    <h3><i class="fas fa-history"></i> Historial</h3>
+                    {% for h in historial %}
+                    <div class="historial-item">
+                        <div class="icono"><i class="fas fa-check"></i></div>
+                        <div class="info">
+                            <div class="accion">{{ h.accion_descripcion }}</div>
+                            <div class="meta">{{ h.usuario.nombre if h.usuario else '-' }} - {{ h.fecha_hora.strftime('%d/%m/%Y %H:%M') }}</div>
+                            {% if h.notas %}<div class="meta">{{ h.notas }}</div>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Panel de Acciones -->
+        <div>
+            <div class="acciones-card">
+                <div class="acciones-header">
+                    <i class="fas fa-tasks"></i> Acciones
+                </div>
+                <div class="acciones-body">
+                    
+                    {% if entrega.puede_entregar and current_user.es_admin() %}
+                    <!-- Acción: Registrar Entrega -->
+                    <form class="accion-form" method="POST" action="{{ url_for('entregas.entregar_a_admin', id=entrega.id) }}">
+                        <div class="accion-titulo" style="color: #3b82f6;">
+                            <i class="fas fa-hand-paper"></i> Registrar Recepción
+                        </div>
+                        <div class="form-group">
+                            <label>Recibido por</label>
+                            <select name="receptor_id" required>
+                                <option value="">Seleccionar...</option>
+                                {% for admin in admins %}
+                                <option value="{{ admin.id }}" {{ 'selected' if admin.id == current_user.id }}>{{ admin.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <textarea name="notas" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn-accion btn-entregar">
+                            <i class="fas fa-check"></i> Confirmar Recepción
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if entrega.puede_retirar and current_user.es_admin() %}
+                    <!-- Acción: Retirar para Depósito -->
+                    <form class="accion-form" method="POST" action="{{ url_for('entregas.retirar_para_deposito', id=entrega.id) }}">
+                        <div class="accion-titulo" style="color: #8b5cf6;">
+                            <i class="fas fa-walking"></i> Retirar para Depósito
+                        </div>
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <textarea name="notas" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn-accion btn-retirar">
+                            <i class="fas fa-sign-out-alt"></i> Registrar Retiro
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if entrega.puede_depositar and current_user.es_admin() %}
+                    <!-- Acción: Registrar Depósito -->
+                    <form class="accion-form" method="POST" action="{{ url_for('entregas.registrar_deposito', id=entrega.id) }}">
+                        <div class="accion-titulo" style="color: #10b981;">
+                            <i class="fas fa-university"></i> Registrar Depósito
+                        </div>
+                        <div class="form-group">
+                            <label>Cuenta de Depósito</label>
+                            <input type="text" name="cuenta_deposito" required placeholder="Suc. 0002 cta 7568815">
+                        </div>
+                        <div class="form-group">
+                            <label>Referencia / Folio</label>
+                            <input type="text" name="referencia_deposito" required placeholder="REF-123456">
+                        </div>
+                        <div class="form-group">
+                            <label>Notas</label>
+                            <textarea name="notas" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn-accion btn-depositar">
+                            <i class="fas fa-check-circle"></i> Confirmar Depósito
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% if entrega.puede_revisar and current_user.es_admin() %}
+                    <!-- Acción: Revisar (Director) -->
+                    <form class="accion-form" method="POST" action="{{ url_for('entregas.revisar_entrega', id=entrega.id) }}">
+                        <div class="accion-titulo" style="color: #059669;">
+                            <i class="fas fa-clipboard-check"></i> Revisión Final
+                        </div>
+                        <div class="form-group">
+                            <label>Notas de Revisión</label>
+                            <textarea name="notas" rows="2"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="submit" name="accion" value="aprobar" class="btn-accion btn-aprobar" style="flex:1">
+                                <i class="fas fa-check"></i> Aprobar
+                            </button>
+                            <button type="submit" name="accion" value="rechazar" class="btn-accion btn-rechazar" style="flex:1">
+                                <i class="fas fa-times"></i> Rechazar
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+
+                    {% if entrega.estatus == 'revisado' %}
+                    <div style="text-align: center; padding: 2rem; color: #059669;">
+                        <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p><strong>Entrega completada</strong></p>
+                        <p style="font-size: 0.85rem; color: #6b7280;">
+                            {{ 'Aprobada' if entrega.aprobado else 'Rechazada' }} el {{ entrega.fecha_revision.strftime('%d/%m/%Y') if entrega.fecha_revision else '' }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

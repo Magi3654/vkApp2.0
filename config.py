@@ -20,7 +20,7 @@ class Config:
         'postgresql://postgres:kinessia2025@db.fosbnyihupueithcogfe.supabase.co:5432/postgres'
 
     # PostgreSQL Local (Respaldo)
-    LOCAL_DB_URI = 'postgresql://postgres:kinessialinx@127.0.0.1:5432/vkapp_db'
+    LOCAL_DB_URI = 'postgresql://ilse:vkinessia2@localhost:5432/vkapp_db'
 
     # Conexión activa - Usa Supabase por defecto, o local si USE_LOCAL_DB está en True
     USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'False').lower() == 'true'

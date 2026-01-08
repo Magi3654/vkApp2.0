@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Vale de Entrega - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+.vale-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.vale-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.vale-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.vale-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.vale-header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.vale-body {
+    padding: 2rem;
+}
+
+/* Secciones */
+.seccion {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.seccion:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.seccion-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.seccion-titulo i {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.seccion-titulo.efectivo i { background: #d1fae5; color: #059669; }
+.seccion-titulo.dolares i { background: #cffafe; color: #0891b2; }
+.seccion-titulo.otros i { background: #fef3c7; color: #d97706; }
+.seccion-titulo.arqueo i { background: #e0e7ff; color: #4f46e5; }
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.form-group input[type="number"] {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-weight: 600;
+    text-align: right;
+}
+
+.input-grande {
+    font-size: 1.5rem !important;
+    padding: 1rem 1.25rem !important;
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.input-dolares {
+    background: #ecfeff;
+    border-color: #67e8f9;
+}
+
+/* Tipo de Cambio */
+.tipo-cambio-box {
+    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+    border: 2px solid #22d3ee;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.tipo-cambio-box .tc-label {
+    font-weight: 600;
+    color: #0e7490;
+}
+
+.tipo-cambio-box input {
+    width: 100px;
+    text-align: center;
+    font-weight: 700;
+    border: none;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.equivalente-pesos {
+    margin-left: auto;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #059669;
+}
+
+/* Arqueo */
+.arqueo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.arqueo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.arqueo-item .denominacion {
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.arqueo-item input {
+    width: 60px;
+    text-align: center;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.arqueo-item .subtotal {
+    font-size: 0.75rem;
+    color: #059669;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+/* Resumen */
+.resumen-box {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.resumen-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.resumen-row:last-child {
+    border-bottom: none;
+}
+
+.resumen-row.total {
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid rgba(255,255,255,0.2);
+}
+
+.resumen-row .valor {
+    font-family: 'Monaco', 'Consolas', monospace;
+}
+
+/* Footer */
+.vale-footer {
+    background: #f9fafb;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancelar {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-guardar {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.btn-guardar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+}
+
+/* Reporte selector */
+.reporte-selector {
+    background: #eff6ff;
+    border: 2px dashed #3b82f6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.reporte-selector label {
+    color: #1e40af;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vale-container">
+    <div class="vale-card">
+        <div class="vale-header">
+            <h1><i class="fas fa-file-invoice-dollar"></i> Vale de Entrega</h1>
+            <p>Cierre de turno - {{ fecha_hoy.strftime('%d de %B de %Y') }}</p>
+        </div>
+
+        <form method="POST" id="formVale">
+            <div class="vale-body">
+                
+                <!-- Vincular a Reporte (opcional) -->
+                {% if reportes_disponibles %}
+                <div class="reporte-selector">
+                    <div class="form-group">
+                        <label><i class="fas fa-link"></i> Vincular a Reporte de Ventas</label>
+                        <select name="reporte_venta_id" id="selectReporte">
+                            <option value="">-- Sin vincular --</option>
+                            {% for r in reportes_disponibles %}
+                            <option value="{{ r.id }}" 
+                                    data-efectivo="{{ r.total_efectivo }}"
+                                    data-dolares="{{ r.deposito_dolares_efectivo }}"
+                                    data-tc="{{ r.tipo_cambio }}"
+                                    data-cheques="{{ r.deposito_pesos_cheques }}"
+                                    data-vouchers="{{ r.total_voucher_tc }}">
+                                {{ r.folio }} - ${{ '{:,.2f}'.format(r.total_general|float) }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Efectivo Pesos -->
+                <div class="seccion">
+                    <div class="seccion-titulo efectivo">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Efectivo en Pesos (MXN)</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto Total en Pesos</label>
+                        <input type="number" name="efectivo_pesos" id="efectivoPesos" 
+                               step="0.01" value="0" class="input-grande"
+                               oninput="calcularTotales()">
+                    </div>
+                </div>
+
+                <!-- Dólares -->
+                <div class="seccion">
+                    <div class="seccion-titulo dolares">
+                        <i class="fas fa-dollar-sign"></i>
+                        <span>Dólares (USD)</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Cantidad en Dólares</label>
+                            <input type="number" name="efectivo_dolares" id="efectivoDolares" 
+                                   step="0.01" value="0" class="input-dolares"
+                                   oninput="calcularTotales()">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Cambio</label>
+                            <input type="number" name="tipo_cambio" id="tipoCambio" 
+                                   step="0.0001" value="17.50"
+                                   oninput="calcularTotales()">
+                        </div>
+                    </div>
+                    <div class="tipo-cambio-box" id="boxEquivalente" style="display: none;">
+                        <span class="tc-label">Equivalente en Pesos:</span>
+                        <span class="equivalente-pesos" id="equivalentePesos">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Otros -->
+                <div class="seccion">
+                    <div class="seccion-titulo otros">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Cheques y Vouchers</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Cheques</label>
+                            <input type="number" name="cheques" id="cheques" 
+                                   step="0.01" value="0"
+                                   oninput="calcularTotales()">
+                        </div>
+                        <div class="form-group">
+                            <label>Vouchers TC (Solo referencia)</label>
+                            <input type="number" name="vouchers_tc" id="vouchersTc" 
+                                   step="0.01" value="0" 
+                                   style="background: #f3f4f6;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arqueo Opcional -->
+                <div class="seccion">
+                    <div class="seccion-titulo arqueo">
+                        <i class="fas fa-coins"></i>
+                        <span>Arqueo Detallado (Opcional)</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">
+                        Puedes detallar la cantidad de billetes por denominación
+                    </p>
+                    <div class="arqueo-grid">
+                        {% for denom in [1000, 500, 200, 100, 50, 20] %}
+                        <div class="arqueo-item">
+                            <span class="denominacion">${{ denom }}</span>
+                            <input type="hidden" name="denominacion[]" value="{{ denom }}">
+                            <input type="hidden" name="tipo_denominacion[]" value="billete">
+                            <input type="number" name="cantidad[]" value="0" min="0"
+                                   data-denom="{{ denom }}" class="arqueo-input"
+                                   oninput="calcularArqueo(this)">
+                            <span class="subtotal" id="sub{{ denom }}">$0</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Notas -->
+                <div class="seccion">
+                    <div class="form-group">
+                        <label>Notas / Observaciones</label>
+                        <textarea name="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Resumen -->
+                <div class="resumen-box">
+                    <div class="resumen-row">
+                        <span>Efectivo Pesos</span>
+                        <span class="valor" id="resEfectivo">$0.00</span>
+                    </div>
+                    <div class="resumen-row">
+                        <span>Cheques</span>
+                        <span class="valor" id="resCheques">$0.00</span>
+                    </div>
+                    <div class="resumen-row">
+                        <span>Dólares → Pesos</span>
+                        <span class="valor" id="resDolares">$0.00</span>
+                    </div>
+                    <div class="resumen-row total">
+                        <span>TOTAL A ENTREGAR</span>
+                        <span class="valor" id="resTotal">$0.00</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="vale-footer">
+                <a href="{{ url_for('entregas.lista_entregas') }}" class="btn-cancelar">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn-guardar">
+                    <i class="fas fa-check"></i> Generar Vale de Entrega
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function formatMoney(n) {
+    return '$' + n.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function calcularTotales() {
+    var efectivo = parseFloat(document.getElementById('efectivoPesos').value) || 0;
+    var dolares = parseFloat(document.getElementById('efectivoDolares').value) || 0;
+    var tc = parseFloat(document.getElementById('tipoCambio').value) || 0;
+    var cheques = parseFloat(document.getElementById('cheques').value) || 0;
+    
+    var equivalente = dolares * tc;
+    var total = efectivo + cheques + equivalente;
+    
+    // Mostrar/ocultar equivalente
+    var boxEq = document.getElementById('boxEquivalente');
+    if (dolares > 0 && tc > 0) {
+        boxEq.style.display = 'flex';
+        document.getElementById('equivalentePesos').textContent = formatMoney(equivalente);
+    } else {
+        boxEq.style.display = 'none';
+    }
+    
+    // Actualizar resumen
+    document.getElementById('resEfectivo').textContent = formatMoney(efectivo);
+    document.getElementById('resCheques').textContent = formatMoney(cheques);
+    document.getElementById('resDolares').textContent = formatMoney(equivalente);
+    document.getElementById('resTotal').textContent = formatMoney(total);
+}
+
+function calcularArqueo(input) {
+    var denom = parseFloat(input.dataset.denom);
+    var cant = parseInt(input.value) || 0;
+    var subtotal = denom * cant;
+    document.getElementById('sub' + denom).textContent = formatMoney(subtotal);
+}
+
+// Cargar datos de reporte seleccionado
+var selectReporte = document.getElementById('selectReporte');
+if (selectReporte) {
+    selectReporte.addEventListener('change', function() {
+        var opt = this.options[this.selectedIndex];
+        if (opt.value) {
+            document.getElementById('efectivoPesos').value = opt.dataset.efectivo || 0;
+            document.getElementById('efectivoDolares').value = opt.dataset.dolares || 0;
+            document.getElementById('tipoCambio').value = opt.dataset.tc || 17.50;
+            document.getElementById('cheques').value = opt.dataset.cheques || 0;
+            document.getElementById('vouchersTc').value = opt.dataset.vouchers || 0;
+            calcularTotales();
+        }
+    });
+}
+
+// Calcular al cargar
+calcularTotales();
+</script>
+{% endblock %}

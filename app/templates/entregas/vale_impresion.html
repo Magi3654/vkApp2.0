@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vale {{ entrega.folio }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .vale {
+            border: 2px solid #333;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            font-size: 18pt;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .header .sucursal {
+            font-size: 9pt;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .header .folio {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 10px;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            display: inline-block;
+        }
+        
+        .header .fecha {
+            font-size: 10pt;
+            margin-top: 8px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row .label {
+            font-weight: bold;
+            color: #666;
+        }
+        
+        .info-row .valor {
+            font-family: 'Consolas', monospace;
+            font-weight: bold;
+        }
+        
+        .info-row.total {
+            font-size: 14pt;
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            margin-top: 10px;
+            padding: 12px 0;
+        }
+        
+        .info-row.total .valor {
+            color: #c00;
+        }
+        
+        .seccion {
+            margin: 15px 0;
+        }
+        
+        .seccion-titulo {
+            font-weight: bold;
+            font-size: 10pt;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 4px;
+        }
+        
+        .firma-box {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .firma {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .firma .linea {
+            border-top: 1px solid #333;
+            margin-top: 50px;
+            padding-top: 5px;
+        }
+        
+        .firma .nombre {
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        
+        .firma .cargo {
+            font-size: 8pt;
+            color: #666;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px dashed #ccc;
+            padding-top: 10px;
+        }
+        
+        .no-print { margin-top: 20px; text-align: center; }
+        .no-print button {
+            padding: 10px 30px;
+            font-size: 12pt;
+            background: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        @media print {
+            body { padding: 0; }
+            .vale { border: 1px solid #000; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="vale">
+        <div class="header">
+            <h1>Vale de Entrega</h1>
+            <div class="sucursal">Viajes Kinessia - Sucursal Matriz</div>
+            <div class="folio">{{ entrega.folio }}</div>
+            <div class="fecha">{{ entrega.fecha.strftime('%d de %B de %Y') }}</div>
+        </div>
+        
+        <div class="seccion">
+            <div class="seccion-titulo">Agente</div>
+            <div class="info-row">
+                <span class="label">Nombre:</span>
+                <span class="valor">{{ entrega.agente.nombre|upper if entrega.agente else '-' }}</span>
+            </div>
+        </div>
+        
+        <div class="seccion">
+            <div class="seccion-titulo">Detalle de Entrega</div>
+            
+            <div class="info-row">
+                <span class="label">Efectivo (MXN):</span>
+                <span class="valor">${{ '{:,.2f}'.format(entrega.efectivo_pesos|float) }}</span>
+            </div>
+            
+            {% if entrega.efectivo_dolares > 0 %}
+            <div class="info-row">
+                <span class="label">Dólares (USD):</span>
+                <span class="valor" style="color: #059669;">${{ '{:,.2f}'.format(entrega.efectivo_dolares|float) }} USD</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Tipo de Cambio:</span>
+                <span class="valor">${{ '{:,.4f}'.format(entrega.tipo_cambio|float) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Equivalente MXN:</span>
+                <span class="valor">${{ '{:,.2f}'.format(entrega.equivalente_pesos|float) }}</span>
+            </div>
+            {% endif %}
+            
+            {% if entrega.cheques > 0 %}
+            <div class="info-row">
+                <span class="label">Cheques:</span>
+                <span class="valor">${{ '{:,.2f}'.format(entrega.cheques|float) }}</span>
+            </div>
+            {% endif %}
+            
+            {% if entrega.vouchers_tc > 0 %}
+            <div class="info-row">
+                <span class="label">Vouchers TC (Ref):</span>
+                <span class="valor" style="color: #999;">${{ '{:,.2f}'.format(entrega.vouchers_tc|float) }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-row total">
+                <span class="label">TOTAL A ENTREGAR:</span>
+                <span class="valor">${{ '{:,.2f}'.format(entrega.total_fisico|float) }}</span>
+            </div>
+        </div>
+        
+        {% if arqueo %}
+        <div class="seccion">
+            <div class="seccion-titulo">Arqueo</div>
+            {% for d in arqueo %}
+            {% if d.cantidad > 0 %}
+            <div class="info-row">
+                <span class="label">${{ '{:,.0f}'.format(d.denominacion|float) }} x {{ d.cantidad }}:</span>
+                <span class="valor">${{ '{:,.2f}'.format(d.subtotal|float) }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="firma-box">
+            <div class="firma">
+                <div class="linea"></div>
+                <div class="nombre">{{ entrega.agente.nombre|upper if entrega.agente else '_______________' }}</div>
+                <div class="cargo">Entrega</div>
+            </div>
+            <div class="firma">
+                <div class="linea"></div>
+                <div class="nombre">{{ entrega.receptor.nombre|upper if entrega.receptor else '_______________' }}</div>
+                <div class="cargo">Recibe</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Generado: {{ entrega.fecha_hora_creacion.strftime('%d/%m/%Y %H:%M') if entrega.fecha_hora_creacion else '' }}<br>
+            Kinessia Hub - Sistema de Gestión
+        </div>
+    </div>
+    
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Imprimir Vale</button>
+    </div>
+</body>
+</html>

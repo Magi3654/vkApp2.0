@@ -81,7 +81,7 @@
             {% if papeletas_disponibles %}
             <div class="section-card">
                 <div class="section-header">
-                    <h3><i class="fas fa-file-alt"></i> Papeletas del Día ({{ papeletas_disponibles|length }})</h3>
+                    <h3><i class="fas fa-file-alt"></i> Papeletas Disponibles ({{ papeletas_disponibles|length }})</h3>
                     <button type="button" class="btn-sm btn-primary" id="btnAgregarTodas">
                         <i class="fas fa-plus-circle"></i> Agregar Todas
                     </button>
@@ -92,6 +92,7 @@
                         <div class="papeleta-info">
                             <span class="papeleta-folio">{{ papeleta.folio }}</span>
                             <span class="papeleta-cliente">{{ papeleta.facturar_a }}</span>
+                            <span class="papeleta-fecha" style="font-size:0.75rem;color:#6b7280;">{{ papeleta.fecha_venta.strftime('%d/%m') }}</span>
                         </div>
                         <div class="papeleta-monto">${{ '{:,.2f}'.format(papeleta.total|float) }}</div>
                         <button type="button" class="btn-add btn-agregar-papeleta" data-id="{{ papeleta.id }}">
