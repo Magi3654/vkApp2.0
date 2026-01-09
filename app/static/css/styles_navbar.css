@@ -1,31 +1,23 @@
 /* =============================================================================
    NAVBAR / HEADER - Kinessia Hub
-   Agregar este código a tu styles.css o crear como archivo separado
+   Sistema de navegación principal con paleta corporativa
    ============================================================================= */
 
-/* Reset para el nav */
-.main-nav,
-.main-nav * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Navbar principal */
+/* === NAVBAR PRINCIPAL === */
 .main-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    padding: 0 30px;
-    height: 65px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    padding: 0 1.875rem;
+    height: 4.0625rem;
+    box-shadow: var(--shadow-lg);
     position: sticky;
     top: 0;
     z-index: 1000;
 }
 
-/* Logo */
+/* === LOGO === */
 .logokinessia {
     display: flex;
     align-items: center;
@@ -34,31 +26,31 @@
 .logokinessia a {
     display: flex;
     align-items: center;
+    transition: transform var(--transition-base);
 }
 
-.logokinessia img {
-    height: 45px;
-    width: auto;
-    transition: transform 0.2s ease;
-}
-
-.logokinessia img:hover {
+.logokinessia a:hover {
     transform: scale(1.05);
 }
 
-/* Contenedor derecho (links + usuario) */
+.logokinessia img {
+    height: 2.8125rem;
+    width: auto;
+}
+
+/* === CONTENEDOR DERECHO === */
 .nav-right {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 1.875rem;
 }
 
-/* Links de navegación */
+/* === LINKS DE NAVEGACIÓN === */
 .nav-links {
     display: flex;
     align-items: center;
     list-style: none;
-    gap: 5px;
+    gap: 0.3125rem;
     margin: 0;
     padding: 0;
 }
@@ -68,134 +60,183 @@
 }
 
 .nav-links a {
-    color: white;
+    color: var(--white);
     text-decoration: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 0.625rem 1.125rem;
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 .nav-links a:hover {
     background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
+    transform: translateY(-0.0625rem);
 }
 
 .nav-links a.active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
 }
 
-/* Sección de usuario */
+/* === SECCIÓN DE USUARIO === */
 .nav-user {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding-left: 20px;
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    gap: var(--space-md);
+    padding-left: 1.25rem;
+    border-left: 0.0625rem solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-user span {
-    color: white;
-    font-size: 14px;
+    color: var(--white);
+    font-size: var(--text-sm);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 .nav-user a {
-    color: white;
+    color: var(--white);
     text-decoration: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 13px;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
     font-weight: 500;
     background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.2s ease;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+    transition: all var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
 .nav-user a:hover {
-    background: white;
-    color: #dc2626;
+    background: var(--white);
+    color: var(--brick-ember);
+    transform: translateY(-0.0625rem);
 }
 
-/* =============================================================================
-   RESPONSIVE
-   ============================================================================= */
+/* === MENÚ MÓVIL (HAMBURGER) === */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    transition: background var(--transition-base);
+}
 
+.nav-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* === RESPONSIVE === */
 @media (max-width: 1024px) {
     .main-nav {
-        padding: 0 20px;
+        padding: 0 1.25rem;
     }
     
     .nav-links a {
-        padding: 8px 12px;
-        font-size: 13px;
+        padding: 0.5rem 0.75rem;
+        font-size: var(--text-xs);
     }
     
     .nav-right {
-        gap: 20px;
+        gap: 1.25rem;
     }
 }
 
 @media (max-width: 768px) {
     .main-nav {
-        flex-direction: column;
+        flex-wrap: wrap;
         height: auto;
-        padding: 15px 20px;
-        gap: 15px;
+        padding: var(--space-md) 1.25rem;
+        gap: var(--space-md);
     }
     
     .nav-right {
-        flex-direction: column;
         width: 100%;
-        gap: 15px;
+        flex-direction: column;
+        gap: var(--space-md);
     }
     
     .nav-links {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 8px;
+        width: 100%;
+        gap: var(--space-sm);
+    }
+    
+    .nav-links a {
+        padding: 0.5rem 1rem;
     }
     
     .nav-user {
         border-left: none;
         padding-left: 0;
-        padding-top: 10px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: var(--space-sm);
+        border-top: 0.0625rem solid rgba(255, 255, 255, 0.2);
         width: 100%;
         justify-content: center;
     }
 }
 
-/* =============================================================================
-   ESTILOS ADICIONALES PARA BODY Y CONTAINER
-   ============================================================================= */
-
-body {
-    font-family: 'Noto Sans Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f5f5f5;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+@media (max-width: 480px) {
+    .main-nav {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .logokinessia img {
+        height: 2.5rem;
+    }
+    
+    .nav-links {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .nav-links a {
+        text-align: center;
+        padding: 0.75rem;
+    }
+    
+    .nav-user {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .nav-user a {
+        justify-content: center;
+        padding: 0.75rem;
+    }
 }
 
-.container {
-    flex: 1;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 30px;
-    width: 100%;
-}
-
-/* Footer */
+/* === FOOTER === */
 .footer {
-    background: #1f2937;
-    color: #9ca3af;
+    background: var(--gray-800);
+    color: var(--gray-400);
     text-align: center;
-    padding: 20px;
-    font-size: 13px;
+    padding: 1.25rem;
+    font-size: var(--text-sm);
     margin-top: auto;
+    border-top: 0.0625rem solid var(--gray-700);
+}
+
+.footer a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+.footer a:hover {
+    color: var(--brick-ember);
 }

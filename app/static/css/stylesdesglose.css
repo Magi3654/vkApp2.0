@@ -1,163 +1,78 @@
-/* Estilos para la página de gestión de Desgloses - Actualizado */
+/* =============================================================================
+   DESGLOSES - Kinessia Hub
+   Gestión de desgloses financieros
+   ============================================================================= */
 
-:root {
-    /* Tu paleta base */
-    --bright-snow: #f6f6f6;
-    --alabaster-grey: #e8e8e8;
-    --graphite: #333333;
-    --oxblood: #990100;
-    --brick-ember: #b90504;
-    --white: #ffffff;
-}
-
-/* ============================================
-   FORMULARIO DE GESTIÓN
-   ============================================ */
+/* === FORMULARIO DE GESTIÓN === */
 .form-container {
-    max-width: 1000px;
-    margin: 2rem auto;
+    max-width: 62.5rem;
+    margin: var(--space-xl) auto;
     padding: 2.5rem;
     background-color: var(--white);
-    border-radius: 12px;
-    /* Sombra suave y borde sutil */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--alabaster-grey);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 0.0625rem solid var(--gray-100);
 }
 
 .form-header {
     text-align: center;
-    margin-bottom: 2rem;
-    /* Línea decorativa roja en lugar de gris estándar */
-    border-bottom: 2px solid var(--bright-snow); 
-    padding-bottom: 1rem;
+    margin-bottom: var(--space-xl);
+    border-bottom: 0.125rem solid var(--gray-100);
+    padding-bottom: var(--space-md);
 }
 
 .form-header h2 {
     color: var(--graphite);
     margin: 0;
+    font-size: var(--text-3xl);
 }
 
 .crud-form .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(18.75rem, 1fr));
+    gap: var(--space-xl);
 }
 
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: var(--graphite);
-    font-size: 0.9rem;
-}
-
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--alabaster-grey);
-    border-radius: 8px;
-    font-size: 1rem;
-    color: var(--graphite);
-    transition: all 0.2s ease;
-    background-color: var(--white);
-}
-
-.form-group input:focus, .form-group select:focus {
-    outline: none;
-    border-color: var(--brick-ember); /* Foco rojo */
-    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
-}
-
-/* ============================================
-   ACCIONES DEL FORMULARIO
-   ============================================ */
-.form-actions {
-    text-align: right;
-    margin-top: 2rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-}
-
-.btn-submit {
-    /* Gradiente rojo marca */
-    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
-    color: var(--white);
-    border: none;
-    padding: 0.8rem 1.8rem;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
-}
-
-.btn-cancel {
-    background-color: var(--bright-snow);
-    color: var(--graphite);
-    text-decoration: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px; /* Ajustado a 8px para coincidir con submit */
-    display: inline-block;
-    border: 1px solid var(--alabaster-grey);
-    transition: all 0.2s ease;
-    margin-left: 0; /* Quitamos margen manual si usamos flex gap */
-}
-
-.btn-cancel:hover {
-    background-color: var(--alabaster-grey);
-    color: black;
-}
-
-/* ============================================
-   TABLA DE CONSULTA
-   ============================================ */
+/* === TABLA DE CONSULTA === */
 .table-container {
-    max-width: 1200px;
-    margin: 3rem auto;
-    padding: 2rem;
+    max-width: 75rem;
+    margin: var(--space-3xl) auto;
+    padding: var(--space-xl);
     background: var(--white);
-    border-radius: 12px;
-    border: 1px solid var(--alabaster-grey);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-radius: var(--radius-xl);
+    border: 0.0625rem solid var(--gray-100);
+    box-shadow: var(--shadow-md);
 }
 
 .table-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-lg);
 }
 
 .table-header h2 {
     color: var(--graphite);
     margin: 0;
+    font-size: var(--text-2xl);
 }
 
 .btn-new {
     background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: var(--white);
     text-decoration: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: transform 0.2s ease;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    transition: all var(--transition-base);
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-sm);
 }
 
 .btn-new:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(185, 5, 4, 0.3);
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.25rem 0.625rem rgba(185, 5, 4, 0.3);
 }
 
 .data-table {
@@ -165,74 +80,100 @@
     border-collapse: collapse;
 }
 
-.data-table th, .data-table td {
+.data-table th, 
+.data-table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid var(--alabaster-grey);
+    border-bottom: 0.0625rem solid var(--gray-100);
 }
 
 .data-table th {
-    background-color: var(--bright-snow);
+    background-color: var(--gray-50);
     color: var(--graphite);
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
+    font-size: var(--text-xs);
+    letter-spacing: 0.03125rem;
 }
 
 .data-table td {
     color: var(--graphite);
+    font-size: var(--text-sm);
 }
 
 .data-table tr:hover td {
-    background-color: #fafafa;
+    background-color: var(--gray-50);
 }
 
-/* ============================================
-   ACCIONES DE TABLA (BOTONES PEQUEÑOS)
-   ============================================ */
+/* === ACCIONES DE TABLA === */
 .actions a {
     text-decoration: none;
-    padding: 0.4rem 0.85rem;
-    border-radius: 6px;
-    margin-right: 0.5rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: var(--radius-md);
+    margin-right: var(--space-sm);
+    font-size: var(--text-sm);
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     display: inline-block;
 }
 
-/* Botón Editar: Sutil (Gris claro) */
 .btn-edit { 
-    background-color: var(--bright-snow);
+    background-color: var(--gray-50);
     color: var(--graphite);
-    border: 1px solid var(--alabaster-grey);
+    border: 0.0625rem solid var(--gray-200);
 }
 
 .btn-edit:hover {
-    background-color: var(--alabaster-grey);
-    color: black;
+    background-color: var(--gray-100);
+    color: var(--gray-900);
 }
 
-/* Botón Eliminar: Rojo pálido (Estilo "Danger" ligero) */
 .btn-delete { 
-    background-color: #fff5f5; 
+    background-color: rgba(248, 215, 218, 0.5);
     color: var(--brick-ember);
-    border: 1px solid #ffecec;
+    border: 0.0625rem solid var(--status-danger-bg);
 }
 
 .btn-delete:hover {
     background-color: var(--brick-ember);
-    color: white;
+    color: var(--white);
     border-color: var(--brick-ember);
 }
 
 .no-data {
     text-align: center;
-    padding: 3rem;
-    color: #888;
+    padding: var(--space-3xl);
+    color: var(--gray-500);
     font-style: italic;
-    background: var(--bright-snow);
-    border-radius: 8px;
-    margin-top: 1rem;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-md);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .form-container {
+        padding: var(--space-lg);
+        margin: var(--space-md) var(--space-sm);
+    }
+    
+    .crud-form .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-container {
+        padding: var(--space-md);
+        margin: var(--space-lg) var(--space-sm);
+    }
+    
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+    
+    .btn-new {
+        width: 100%;
+        justify-content: center;
+    }
 }
