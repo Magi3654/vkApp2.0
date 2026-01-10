@@ -1,0 +1,278 @@
+/* =============================================================================
+   ENTREGAS - NUEVO VALE - Kinessia Hub
+   Formulario para crear nuevos vales de entrega
+   ============================================================================= */
+
+/* === VARIABLES === */
+:root {
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+    
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    
+    --transition-base: 0.2s ease;
+}
+
+/* === CONTENEDOR === */
+.vale-container {
+    max-width: 56.25rem;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+/* === CARD === */
+.vale-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.vale-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: var(--white);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.vale-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.125rem;
+}
+
+.vale-header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.vale-body {
+    padding: var(--space-xl);
+}
+
+/* === SECCIONES === */
+.seccion {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-lg);
+    border-bottom: 0.0625rem solid var(--alabaster-grey);
+}
+
+.seccion:last-child {
+    border-bottom: none;
+}
+
+.seccion-titulo {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--graphite);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.seccion-titulo i {
+    color: var(--brick-ember);
+}
+
+/* === FORM GROUPS === */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.form-row.single {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--graphite);
+    font-size: 0.9375rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem var(--space-md);
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all var(--transition-base);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+    box-shadow: 0 0 0 0.1875rem rgba(185, 5, 4, 0.15);
+}
+
+.form-group small {
+    color: #6b7280;
+    font-size: 0.8125rem;
+}
+
+.form-group .monto-input {
+    font-family: 'Monaco', 'Consolas', monospace;
+    text-align: right;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+/* === ARQUEO TABLE === */
+.arqueo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-md);
+}
+
+.arqueo-table th {
+    background: var(--bright-snow);
+    padding: 0.625rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 0.125rem solid var(--alabaster-grey);
+}
+
+.arqueo-table td {
+    padding: 0.625rem;
+    border-bottom: 0.0625rem solid #f3f4f6;
+}
+
+.arqueo-table input {
+    padding: 0.375rem 0.5rem;
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    width: 5rem;
+}
+
+.arqueo-table .subtotal {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* === TOTAL BOX === */
+.total-box {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 0.125rem solid #10b981;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    text-align: center;
+    margin-top: var(--space-md);
+}
+
+.total-box .label {
+    font-size: 0.875rem;
+    color: #065f46;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: var(--space-xs);
+}
+
+.total-box .valor {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #047857;
+}
+
+/* === BOTONES === */
+.form-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: flex-end;
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 0.0625rem solid var(--alabaster-grey);
+}
+
+.btn-submit,
+.btn-cancel {
+    padding: 0.875rem 1.75rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    transition: all var(--transition-base);
+    border: none;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: var(--white);
+}
+
+.btn-submit:hover {
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.25rem 0.75rem rgba(220, 53, 69, 0.4);
+}
+
+.btn-cancel {
+    background: var(--bright-snow);
+    color: var(--graphite);
+    border: 0.0625rem solid var(--alabaster-grey);
+}
+
+.btn-cancel:hover {
+    background: var(--alabaster-grey);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .vale-container {
+        padding: var(--space-md);
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .vale-body {
+        padding: var(--space-md);
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .btn-submit,
+    .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+}
