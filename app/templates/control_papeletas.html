@@ -3,472 +3,7 @@
 {% block title %}Control de Papeletas - Kinessia Hub{% endblock %}
 
 {% block page_styles %}
-<style>
-.control-container {
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 1.5rem;
-}
-
-/* Dashboard Stats */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border-left: 4px solid #667eea;
-    transition: all 0.2s;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.stat-card.danger { border-left-color: #dc3545; background: linear-gradient(135deg, #fff 0%, #fff5f5 100%); }
-.stat-card.warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%); }
-.stat-card.success { border-left-color: #10b981; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%); }
-.stat-card.info { border-left-color: #3b82f6; background: linear-gradient(135deg, #fff 0%, #eff6ff 100%); }
-
-.stat-card .icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    margin-bottom: 0.75rem;
-}
-
-.stat-card.danger .icon { background: #fee2e2; color: #dc2626; }
-.stat-card.warning .icon { background: #fef3c7; color: #d97706; }
-.stat-card.success .icon { background: #d1fae5; color: #059669; }
-.stat-card.info .icon { background: #dbeafe; color: #2563eb; }
-
-.stat-card .value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1f2937;
-    line-height: 1;
-}
-
-.stat-card .label {
-    font-size: 0.8rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
-}
-
-.stat-card .monto {
-    font-size: 0.9rem;
-    font-family: 'Monaco', monospace;
-    color: #059669;
-    margin-top: 0.5rem;
-    font-weight: 600;
-}
-
-/* Alertas Panel */
-.alertas-panel {
-    background: linear-gradient(135deg, #dc3545 0%, #b91c1c 100%);
-    border-radius: 12px;
-    padding: 1rem 1.5rem;
-    color: white;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.alertas-panel.warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.alertas-panel .icon {
-    font-size: 2rem;
-}
-
-.alertas-panel .content h3 {
-    margin: 0;
-    font-size: 1.1rem;
-}
-
-.alertas-panel .content p {
-    margin: 0.25rem 0 0;
-    opacity: 0.9;
-    font-size: 0.9rem;
-}
-
-.alertas-panel .btn-ver {
-    margin-left: auto;
-    background: rgba(255,255,255,0.2);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.85rem;
-}
-
-/* Tabs */
-.tabs-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    overflow: hidden;
-}
-
-.tabs-header {
-    display: flex;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
-}
-
-.tab-btn {
-    padding: 1rem 1.5rem;
-    border: none;
-    background: none;
-    font-weight: 600;
-    color: #6b7280;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.tab-btn:hover {
-    color: #374151;
-    background: #f3f4f6;
-}
-
-.tab-btn.active {
-    color: #dc3545;
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: #dc3545;
-}
-
-.tab-btn .badge {
-    background: #dc3545;
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 10px;
-}
-
-.tab-btn .badge.warning { background: #f59e0b; }
-.tab-btn .badge.success { background: #10b981; }
-
-.tab-content {
-    display: none;
-    padding: 1.5rem;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-/* Tabla de Papeletas */
-.tabla-papeletas {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.tabla-papeletas th {
-    background: #f9fafb;
-    padding: 0.75rem 1rem;
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #6b7280;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.tabla-papeletas td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f3f4f6;
-    font-size: 0.9rem;
-}
-
-.tabla-papeletas tbody tr:hover {
-    background: #fafafa;
-}
-
-.tabla-papeletas .folio {
-    font-weight: 600;
-    color: #667eea;
-}
-
-.tabla-papeletas .agente {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.tabla-papeletas .agente .avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-.tabla-papeletas .monto {
-    font-family: 'Monaco', monospace;
-    font-weight: 600;
-    text-align: right;
-}
-
-.tabla-papeletas .dias-pendiente {
-    font-size: 0.8rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-}
-
-.tabla-papeletas .dias-pendiente.danger { background: #fee2e2; color: #dc2626; }
-.tabla-papeletas .dias-pendiente.warning { background: #fef3c7; color: #d97706; }
-.tabla-papeletas .dias-pendiente.info { background: #dbeafe; color: #2563eb; }
-
-/* Badges de estado */
-.badge-estado {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.badge-estado.activa { background: #dbeafe; color: #1e40af; }
-.badge-estado.en_corte { background: #e0e7ff; color: #4338ca; }
-.badge-estado.revisada { background: #d1fae5; color: #065f46; }
-.badge-estado.cerrada { background: #f3f4f6; color: #374151; }
-.badge-estado.cancelada { background: #fee2e2; color: #991b1b; }
-
-/* Acciones */
-.acciones-cell {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.btn-accion {
-    padding: 0.35rem 0.6rem;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    text-decoration: none;
-    transition: all 0.2s;
-}
-
-.btn-ver { background: #f3f4f6; color: #374151; }
-.btn-ver:hover { background: #e5e7eb; }
-
-.btn-validar { background: #d1fae5; color: #065f46; }
-.btn-validar:hover { background: #a7f3d0; }
-
-.btn-alerta { background: #fee2e2; color: #dc2626; }
-.btn-alerta:hover { background: #fecaca; }
-
-/* Panel Lateral de Detalle */
-.panel-detalle {
-    position: fixed;
-    top: 0;
-    right: -450px;
-    width: 450px;
-    height: 100vh;
-    background: white;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-    z-index: 1000;
-    transition: right 0.3s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.panel-detalle.active {
-    right: 0;
-}
-
-.panel-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 999;
-    display: none;
-}
-
-.panel-overlay.active {
-    display: block;
-}
-
-.panel-header {
-    padding: 1.25rem;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.panel-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-}
-
-.panel-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #9ca3af;
-}
-
-.panel-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1.25rem;
-}
-
-.detalle-section {
-    margin-bottom: 1.5rem;
-}
-
-.detalle-section h4 {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    color: #6b7280;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.detalle-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.4rem 0;
-    font-size: 0.9rem;
-}
-
-.detalle-row .label { color: #6b7280; }
-.detalle-row .value { font-weight: 600; }
-
-.panel-footer {
-    padding: 1rem 1.25rem;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    gap: 0.75rem;
-}
-
-.panel-footer .btn {
-    flex: 1;
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    border: none;
-}
-
-.panel-footer .btn-validar-full {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-}
-
-.panel-footer .btn-pendiente {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-/* Historial Timeline */
-.historial-timeline {
-    position: relative;
-    padding-left: 1.5rem;
-}
-
-.historial-timeline::before {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e5e7eb;
-}
-
-.historial-item {
-    position: relative;
-    padding-bottom: 1rem;
-    font-size: 0.85rem;
-}
-
-.historial-item::before {
-    content: '';
-    position: absolute;
-    left: -1.5rem;
-    top: 4px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #d1d5db;
-    border: 2px solid white;
-}
-
-.historial-item.creada::before { background: #3b82f6; }
-.historial-item.modificada::before { background: #f59e0b; }
-.historial-item.validada::before { background: #10b981; }
-
-.historial-item .fecha {
-    font-size: 0.75rem;
-    color: #9ca3af;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .panel-detalle {
-        width: 100%;
-        right: -100%;
-    }
-}
-
-@media (max-width: 640px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .tabs-header {
-        overflow-x: auto;
-    }
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_control_papeletas.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -483,33 +18,46 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn-secondary" onclick="generarAlertas()">
-                <i class="fas fa-bell"></i> Generar Alertas
-            </button>
-            <a href="{{ url_for('main.control_papeletas') }}" class="btn-primary">
+            <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-secondary">
+                <i class="fas fa-list"></i> Ver Todas
+            </a>
+            <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-primary">
                 <i class="fas fa-plus"></i> Nueva Papeleta
             </a>
         </div>
     </div>
 
-    <!-- Alerta de Urgentes -->
-    {% if urgentes > 0 %}
+    <!-- Alertas -->
+    {% if sin_reportar > 0 %}
     <div class="alertas-panel">
         <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
         <div class="content">
-            <h3>{{ urgentes }} papeleta(s) urgente(s)</h3>
-            <p>Papeletas con más de 3 días sin cerrar requieren atención inmediata</p>
+            <h3>{{ sin_reportar }} papeleta(s) sin reportar</h3>
+            <p>Papeletas que no han sido incluidas en ningún reporte de ventas</p>
         </div>
-        <a href="#" class="btn-ver" onclick="filtrarUrgentes()">Ver urgentes</a>
+        <a href="#" class="btn-ver" onclick="cambiarTab('sin_reportar')">Ver papeletas</a>
     </div>
-    {% elif pendientes_total > 0 %}
+    {% endif %}
+    
+    {% if sin_facturar > 0 %}
     <div class="alertas-panel warning">
+        <div class="icon"><i class="fas fa-file-invoice"></i></div>
+        <div class="content">
+            <h3>{{ sin_facturar }} papeleta(s) pendientes de facturar</h3>
+            <p>Papeletas reportadas que aún no tienen número de factura asignado</p>
+        </div>
+        <a href="#" class="btn-ver" onclick="cambiarTab('sin_facturar')">Ver papeletas</a>
+    </div>
+    {% endif %}
+    
+    {% if urgentes > 0 %}
+    <div class="alertas-panel" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
         <div class="icon"><i class="fas fa-clock"></i></div>
         <div class="content">
-            <h3>{{ pendientes_total }} papeleta(s) pendiente(s)</h3>
-            <p>Papeletas de días anteriores sin incluir en corte</p>
+            <h3>{{ urgentes }} papeleta(s) con más de 3 días</h3>
+            <p>Papeletas antiguas que requieren atención inmediata</p>
         </div>
-        <a href="#" class="btn-ver" onclick="filtrarPendientes()">Ver pendientes</a>
+        <a href="#" class="btn-ver" onclick="cambiarTab('pendientes')">Ver urgentes</a>
     </div>
     {% endif %}
 
@@ -522,29 +70,31 @@
             <div class="monto">${{ '{:,.2f}'.format(total_hoy) }}</div>
         </div>
         
-        <div class="stat-card warning">
-            <div class="icon"><i class="fas fa-clock"></i></div>
-            <div class="value">{{ pendientes_total }}</div>
-            <div class="label">Días Anteriores</div>
-            <div class="monto">${{ '{:,.2f}'.format(total_pendiente) }}</div>
-        </div>
-        
         <div class="stat-card danger">
             <div class="icon"><i class="fas fa-exclamation-circle"></i></div>
-            <div class="value">{{ urgentes }}</div>
-            <div class="label">Urgentes (+3 días)</div>
+            <div class="value">{{ sin_reportar }}</div>
+            <div class="label">Sin Reportar</div>
+            <div class="monto" style="color: #dc2626;">${{ '{:,.2f}'.format(total_sin_reportar) }}</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="icon"><i class="fas fa-file-invoice"></i></div>
+            <div class="value">{{ sin_facturar }}</div>
+            <div class="label">Sin Facturar</div>
+            <div class="monto" style="color: #d97706;">${{ '{:,.2f}'.format(total_sin_facturar) }}</div>
         </div>
         
         <div class="stat-card success">
             <div class="icon"><i class="fas fa-check-circle"></i></div>
-            <div class="value">{{ en_corte }}</div>
-            <div class="label">En Corte</div>
+            <div class="value">{{ facturadas }}</div>
+            <div class="label">Facturadas</div>
+            <div class="monto">${{ '{:,.2f}'.format(total_facturadas) }}</div>
         </div>
         
-        <div class="stat-card">
-            <div class="icon" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-money-bill-wave"></i></div>
+        <div class="stat-card purple">
+            <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
             <div class="value">${{ '{:,.0f}'.format(efectivo_pendiente) }}</div>
-            <div class="label">Efectivo por Recibir</div>
+            <div class="label">Efectivo Pendiente</div>
         </div>
     </div>
 
@@ -554,16 +104,21 @@
             <button class="tab-btn active" data-tab="todas">
                 <i class="fas fa-list"></i> Todas
             </button>
-            <button class="tab-btn" data-tab="pendientes">
-                <i class="fas fa-clock"></i> Pendientes
-                {% if pendientes_total > 0 %}<span class="badge warning">{{ pendientes_total }}</span>{% endif %}
+            <button class="tab-btn" data-tab="sin_reportar">
+                <i class="fas fa-exclamation-circle"></i> Sin Reportar
+                {% if sin_reportar > 0 %}<span class="badge">{{ sin_reportar }}</span>{% endif %}
+            </button>
+            <button class="tab-btn" data-tab="sin_facturar">
+                <i class="fas fa-file-invoice"></i> Sin Facturar
+                {% if sin_facturar > 0 %}<span class="badge warning">{{ sin_facturar }}</span>{% endif %}
+            </button>
+            <button class="tab-btn" data-tab="facturadas">
+                <i class="fas fa-check-circle"></i> Facturadas
+                <span class="badge success">{{ facturadas }}</span>
             </button>
             <button class="tab-btn" data-tab="hoy">
                 <i class="fas fa-calendar-day"></i> Hoy
-                <span class="badge">{{ papeletas_hoy }}</span>
-            </button>
-            <button class="tab-btn" data-tab="por_agente">
-                <i class="fas fa-users"></i> Por Agente
+                <span class="badge info">{{ papeletas_hoy }}</span>
             </button>
         </div>
 
@@ -575,11 +130,11 @@
                         <th>Folio</th>
                         <th>Fecha</th>
                         <th>Agente</th>
-                        <th>Cliente/Empresa</th>
-                        <th>Concepto</th>
+                        <th>Cliente</th>
                         <th class="text-right">Total</th>
-                        <th>Forma Pago</th>
-                        <th>Estado</th>
+                        <th>Estatus</th>
+                        <th>Reporte</th>
+                        <th>Factura</th>
                         <th>Días</th>
                         <th>Acciones</th>
                     </tr>
@@ -593,20 +148,149 @@
                             <span class="avatar">{{ p.usuario.nombre[:2]|upper if p.usuario else '??' }}</span>
                             {{ p.usuario.nombre.split()[0] if p.usuario else '-' }}
                         </td>
-                        <td>{{ p.facturar_a or p.empresa.nombre_empresa if p.empresa else '-' }}</td>
-                        <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                            {{ p.concepto or '-' }}
-                        </td>
+                        <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
                         <td>
-                            <span class="badge-estado {{ 'activa' if 'efectivo' in (p.forma_pago or '')|lower else '' }}">
-                                {{ p.forma_pago or '-' }}
-                            </span>
+                            {% if p.numero_factura %}
+                            <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
+                            {% elif p.reporte_venta_id %}
+                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
+                            {% else %}
+                            <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
+                            {% endif %}
                         </td>
                         <td>
-                            <span class="badge-estado {{ p.estatus_control or 'activa' }}">
-                                {{ (p.estatus_control or 'activa')|capitalize }}
-                            </span>
+                            {% if p.reporte_venta and p.reporte_venta.folio %}
+                            <a href="{{ url_for('main.ver_reporte_venta', id=p.reporte_venta_id) }}" 
+                               class="folio" style="font-size: 0.8rem;">
+                                {{ p.reporte_venta.folio }}
+                            </a>
+                            {% else %}
+                            <span style="color: #9ca3af;">---</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.numero_factura %}
+                            <span style="color: #059669; font-weight: 600;">{{ p.numero_factura }}</span>
+                            {% else %}
+                            <span style="color: #9ca3af;">---</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set dias = (fecha_actual - p.fecha_venta).days if p.fecha_venta else 0 %}
+                            {% if dias > 3 %}
+                            <span class="dias-pendiente danger">{{ dias }}d</span>
+                            {% elif dias > 0 %}
+                            <span class="dias-pendiente warning">{{ dias }}d</span>
+                            {% else %}
+                            <span class="dias-pendiente info">Hoy</span>
+                            {% endif %}
+                        </td>
+                        <td class="acciones-cell">
+                            <button class="btn-accion btn-ver" onclick="verDetalle({{ p.id }})" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% if not p.numero_factura and current_user.es_admin() %}
+                            <button class="btn-accion btn-factura" onclick="asignarFactura({{ p.id }}, '{{ p.folio }}')" title="Asignar factura">
+                                <i class="fas fa-file-invoice"></i>
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            No hay papeletas para mostrar
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab: Sin Reportar -->
+        <div class="tab-content" id="tab-sin_reportar">
+            <table class="tabla-papeletas">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Agente</th>
+                        <th>Cliente</th>
+                        <th class="text-right">Total</th>
+                        <th>Forma Pago</th>
+                        <th>Días</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in papeletas if not p.reporte_venta_id %}
+                    <tr data-id="{{ p.id }}">
+                        <td class="folio">{{ p.folio }}</td>
+                        <td>{{ p.fecha_venta.strftime('%d/%m/%y') if p.fecha_venta else '-' }}</td>
+                        <td class="agente">
+                            <span class="avatar">{{ p.usuario.nombre[:2]|upper if p.usuario else '??' }}</span>
+                            {{ p.usuario.nombre.split()[0] if p.usuario else '-' }}
+                        </td>
+                        <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
+                        <td>{{ p.forma_pago or '-' }}</td>
+                        <td>
+                            {% set dias = (fecha_actual - p.fecha_venta).days if p.fecha_venta else 0 %}
+                            {% if dias > 3 %}
+                            <span class="dias-pendiente danger">{{ dias }}d</span>
+                            {% elif dias > 0 %}
+                            <span class="dias-pendiente warning">{{ dias }}d</span>
+                            {% else %}
+                            <span class="dias-pendiente info">Hoy</span>
+                            {% endif %}
+                        </td>
+                        <td class="acciones-cell">
+                            <button class="btn-accion btn-ver" onclick="verDetalle({{ p.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state success">
+                            <i class="fas fa-check-circle"></i>
+                            ¡Todas las papeletas están reportadas!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab: Sin Facturar -->
+        <div class="tab-content" id="tab-sin_facturar">
+            <table class="tabla-papeletas">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th class="text-right">Total</th>
+                        <th>Reporte</th>
+                        <th>Días</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in papeletas if p.reporte_venta_id and not p.numero_factura %}
+                    <tr data-id="{{ p.id }}">
+                        <td class="folio">{{ p.folio }}</td>
+                        <td>{{ p.fecha_venta.strftime('%d/%m/%y') if p.fecha_venta else '-' }}</td>
+                        <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
+                        <td>
+                            {% if p.reporte_venta %}
+                            <a href="{{ url_for('main.ver_reporte_venta', id=p.reporte_venta_id) }}" class="folio" style="font-size: 0.8rem;">
+                                {{ p.reporte_venta.folio }}
+                            </a>
+                            {% endif %}
                         </td>
                         <td>
                             {% set dias = (fecha_actual - p.fecha_venta).days if p.fecha_venta else 0 %}
@@ -622,18 +306,18 @@
                             <button class="btn-accion btn-ver" onclick="verDetalle({{ p.id }})">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            {% if p.estatus_control != 'cerrada' %}
-                            <button class="btn-accion btn-validar" onclick="validarPapeleta({{ p.id }})">
-                                <i class="fas fa-check"></i>
+                            {% if current_user.es_admin() %}
+                            <button class="btn-accion btn-factura" onclick="asignarFactura({{ p.id }}, '{{ p.folio }}')">
+                                <i class="fas fa-file-invoice"></i>
                             </button>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="10" class="text-center" style="padding: 3rem; color: #9ca3af;">
-                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
-                            No hay papeletas para mostrar
+                        <td colspan="7" class="empty-state success">
+                            <i class="fas fa-check-circle"></i>
+                            ¡Todas las papeletas reportadas están facturadas!
                         </td>
                     </tr>
                     {% endfor %}
@@ -641,59 +325,52 @@
             </table>
         </div>
 
-        <!-- Tab: Pendientes -->
-        <div class="tab-content" id="tab-pendientes">
+        <!-- Tab: Facturadas -->
+        <div class="tab-content" id="tab-facturadas">
             <table class="tabla-papeletas">
                 <thead>
                     <tr>
                         <th>Folio</th>
                         <th>Fecha</th>
-                        <th>Agente</th>
-                        <th>Cliente/Empresa</th>
+                        <th>Cliente</th>
                         <th class="text-right">Total</th>
-                        <th>Forma Pago</th>
-                        <th>Días</th>
+                        <th>Reporte</th>
+                        <th>Factura</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for p in pendientes %}
+                    {% for p in papeletas if p.numero_factura %}
                     <tr data-id="{{ p.id }}">
                         <td class="folio">{{ p.folio }}</td>
                         <td>{{ p.fecha_venta.strftime('%d/%m/%y') if p.fecha_venta else '-' }}</td>
-                        <td class="agente">
-                            <span class="avatar">{{ p.usuario.nombre[:2]|upper if p.usuario else '??' }}</span>
-                            {{ p.usuario.nombre.split()[0] if p.usuario else '-' }}
-                        </td>
                         <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
                         <td>
-                            <span class="badge-estado {{ 'activa' if 'efectivo' in (p.forma_pago or '')|lower else '' }}">
-                                {{ p.forma_pago or '-' }}
-                            </span>
+                            {% if p.reporte_venta %}
+                            <a href="{{ url_for('main.ver_reporte_venta', id=p.reporte_venta_id) }}" class="folio" style="font-size: 0.8rem;">
+                                {{ p.reporte_venta.folio }}
+                            </a>
+                            {% else %}
+                            <span style="color: #9ca3af;">---</span>
+                            {% endif %}
                         </td>
                         <td>
-                            {% set dias = (fecha_actual - p.fecha_venta).days if p.fecha_venta else 0 %}
-                            {% if dias > 3 %}
-                            <span class="dias-pendiente danger">{{ dias }}d</span>
-                            {% elif dias > 0 %}
-                            <span class="dias-pendiente warning">{{ dias }}d</span>
-                            {% endif %}
+                            <span style="color: #059669; font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> {{ p.numero_factura }}
+                            </span>
                         </td>
                         <td class="acciones-cell">
                             <button class="btn-accion btn-ver" onclick="verDetalle({{ p.id }})">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn-accion btn-validar" onclick="validarPapeleta({{ p.id }})">
-                                <i class="fas fa-check"></i>
-                            </button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="8" class="text-center" style="padding: 3rem; color: #9ca3af;">
-                            <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: #10b981;"></i>
-                            ¡Sin papeletas pendientes!
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-file-invoice"></i>
+                            No hay papeletas facturadas
                         </td>
                     </tr>
                     {% endfor %}
@@ -708,10 +385,10 @@
                     <tr>
                         <th>Folio</th>
                         <th>Agente</th>
-                        <th>Cliente/Empresa</th>
+                        <th>Cliente</th>
                         <th class="text-right">Total</th>
                         <th>Forma Pago</th>
-                        <th>Estado</th>
+                        <th>Estatus</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -725,79 +402,27 @@
                         </td>
                         <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
+                        <td>{{ p.forma_pago or '-' }}</td>
                         <td>
-                            <span class="badge-estado {{ 'activa' if 'efectivo' in (p.forma_pago or '')|lower else '' }}">
-                                {{ p.forma_pago or '-' }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="badge-estado {{ p.estatus_control or 'activa' }}">
-                                {{ (p.estatus_control or 'activa')|capitalize }}
-                            </span>
+                            {% if p.numero_factura %}
+                            <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
+                            {% elif p.reporte_venta_id %}
+                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
+                            {% else %}
+                            <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
+                            {% endif %}
                         </td>
                         <td class="acciones-cell">
                             <button class="btn-accion btn-ver" onclick="verDetalle({{ p.id }})">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            {% if p.estatus_control != 'cerrada' %}
-                            <button class="btn-accion btn-validar" onclick="validarPapeleta({{ p.id }})">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center" style="padding: 3rem; color: #9ca3af;">
-                            <i class="fas fa-calendar-day" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-calendar-day"></i>
                             No hay papeletas de hoy
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Tab: Por Agente -->
-        <div class="tab-content" id="tab-por_agente">
-            <table class="tabla-papeletas">
-                <thead>
-                    <tr>
-                        <th>Agente</th>
-                        <th class="text-center">Hoy</th>
-                        <th class="text-center">Pendientes</th>
-                        <th class="text-center">En Corte</th>
-                        <th class="text-right">Total Pendiente</th>
-                        <th class="text-right">Efectivo</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in resumen_agentes %}
-                    <tr>
-                        <td class="agente">
-                            <span class="avatar">{{ r.agente[:2]|upper }}</span>
-                            {{ r.agente }}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge-estado activa">{{ r.papeletas_hoy or 0 }}</span>
-                        </td>
-                        <td class="text-center">
-                            {% if r.pendientes_dias_anteriores > 0 %}
-                            <span class="badge-estado" style="background:#fee2e2;color:#dc2626;">
-                                {{ r.pendientes_dias_anteriores }}
-                            </span>
-                            {% else %}
-                            <span style="color:#9ca3af;">0</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">{{ r.en_corte or 0 }}</td>
-                        <td class="monto">${{ '{:,.2f}'.format(r.total_pendiente|float or 0) }}</td>
-                        <td class="monto" style="color:#059669;">${{ '{:,.2f}'.format(r.efectivo_pendiente|float or 0) }}</td>
-                        <td>
-                            <a href="?agente={{ r.usuario_id }}" class="btn-accion btn-ver">
-                                <i class="fas fa-filter"></i> Ver
-                            </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -807,7 +432,7 @@
     </div>
 </div>
 
-<!-- Panel Detalle (Lateral) -->
+<!-- Panel Detalle -->
 <div class="panel-overlay" id="panelOverlay" onclick="cerrarPanel()"></div>
 <div class="panel-detalle" id="panelDetalle">
     <div class="panel-header">
@@ -817,13 +442,31 @@
     <div class="panel-body" id="panelBody">
         <!-- Contenido cargado por JS -->
     </div>
-    <div class="panel-footer">
-        <button class="btn btn-pendiente" onclick="marcarPendiente()">
-            <i class="fas fa-clock"></i> Justificar Pendiente
-        </button>
-        <button class="btn btn-validar-full" onclick="confirmarValidacion()">
-            <i class="fas fa-check"></i> Validar
-        </button>
+    <div class="panel-footer" id="panelFooter">
+        <!-- Acciones según estatus -->
+    </div>
+</div>
+
+<!-- Modal Asignar Factura -->
+<div class="modal-overlay" id="modalFactura">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-invoice"></i> Asignar Factura</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalFactura()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Papeleta: <strong id="facturaFolio"></strong></p>
+            <div class="form-group">
+                <label>Número de Factura</label>
+                <input type="text" id="numeroFactura" placeholder="Ej: F-12345" style="width:100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="cerrarModalFactura()">Cancelar</button>
+            <button type="button" class="btn-primary" onclick="guardarFactura()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+        </div>
     </div>
 </div>
 
@@ -839,54 +482,92 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
+function cambiarTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.tab === tab) b.classList.add('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
 // Panel Detalle
 var papeletaActual = null;
 
 function verDetalle(id) {
     papeletaActual = id;
     
-    fetch('/api/papeleta/' + id + '/detalle')
+    fetch('/api/papeleta/' + id)
         .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                document.getElementById('panelFolio').textContent = data.papeleta.folio;
-                document.getElementById('panelBody').innerHTML = renderDetalle(data.papeleta, data.historial);
-                document.getElementById('panelDetalle').classList.add('active');
-                document.getElementById('panelOverlay').classList.add('active');
+            document.getElementById('panelFolio').textContent = data.folio;
+            document.getElementById('panelBody').innerHTML = renderDetalle(data);
+            
+            // Mostrar acciones según estatus
+            let footerHTML = '';
+            if (!data.numero_factura) {
+                footerHTML = `
+                    <button class="btn btn-pendiente" onclick="cerrarPanel()">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button class="btn btn-validar-full" onclick="asignarFactura(${id}, '${data.folio}')">
+                        <i class="fas fa-file-invoice"></i> Asignar Factura
+                    </button>
+                `;
+            } else {
+                footerHTML = `
+                    <button class="btn btn-validar-full" onclick="cerrarPanel()" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
+                        <i class="fas fa-check"></i> Cerrar
+                    </button>
+                `;
             }
+            document.getElementById('panelFooter').innerHTML = footerHTML;
+            
+            document.getElementById('panelDetalle').classList.add('active');
+            document.getElementById('panelOverlay').classList.add('active');
+        })
+        .catch(err => {
+            alert('Error al cargar detalle: ' + err.message);
         });
 }
 
-function renderDetalle(p, historial) {
+function renderDetalle(p) {
+    let estatusHTML = '';
+    if (p.numero_factura) {
+        estatusHTML = '<span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>';
+    } else if (p.reporte_venta_id) {
+        estatusHTML = '<span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>';
+    } else {
+        estatusHTML = '<span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>';
+    }
+    
     return `
         <div class="detalle-section">
-            <h4>Información General</h4>
+            <h4><i class="fas fa-info-circle"></i> Información General</h4>
             <div class="detalle-row"><span class="label">Folio</span><span class="value">${p.folio}</span></div>
             <div class="detalle-row"><span class="label">Fecha</span><span class="value">${p.fecha_venta}</span></div>
-            <div class="detalle-row"><span class="label">Agente</span><span class="value">${p.agente}</span></div>
-            <div class="detalle-row"><span class="label">Cliente</span><span class="value">${p.cliente}</span></div>
+            <div class="detalle-row"><span class="label">Tarjeta</span><span class="value">${p.tarjeta_nombre || '**** ' + p.tarjeta}</span></div>
+            <div class="detalle-row"><span class="label">Cliente</span><span class="value">${p.facturar_a || '---'}</span></div>
+            <div class="detalle-row"><span class="label">Aerolínea</span><span class="value">${p.aerolinea || p.proveedor || '---'}</span></div>
         </div>
         <div class="detalle-section">
-            <h4>Importes</h4>
-            <div class="detalle-row"><span class="label">Tarifa</span><span class="value">$${p.tarifa}</span></div>
-            <div class="detalle-row"><span class="label">Cargo</span><span class="value">$${p.cargo}</span></div>
-            <div class="detalle-row"><span class="label">Total</span><span class="value" style="font-size:1.1rem;color:#059669;">$${p.total}</span></div>
+            <h4><i class="fas fa-dollar-sign"></i> Importes</h4>
+            <div class="detalle-row"><span class="label">Total Ticket</span><span class="value">$${Number(p.total_ticket).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></div>
+            <div class="detalle-row"><span class="label">10%</span><span class="value">$${Number(p.diez_porciento).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></div>
+            <div class="detalle-row"><span class="label">Cargo</span><span class="value">$${Number(p.cargo).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></div>
+            <div class="detalle-row"><span class="label">Total</span><span class="value" style="font-size:1.1rem;color:#059669;">$${Number(p.total).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></div>
         </div>
         <div class="detalle-section">
-            <h4>Pago</h4>
-            <div class="detalle-row"><span class="label">Forma de Pago</span><span class="value">${p.forma_pago}</span></div>
-            <div class="detalle-row"><span class="label">Estado</span><span class="value">${p.estatus}</span></div>
+            <h4><i class="fas fa-clipboard-check"></i> Estatus</h4>
+            <div class="detalle-row"><span class="label">Estado</span><span class="value">${estatusHTML}</span></div>
+            <div class="detalle-row"><span class="label">Reporte</span><span class="value">${p.reporte_folio || '---'}</span></div>
+            <div class="detalle-row"><span class="label">Factura</span><span class="value">${p.numero_factura || '---'}</span></div>
+            <div class="detalle-row"><span class="label">Forma Pago</span><span class="value">${p.forma_pago || '---'}</span></div>
         </div>
         <div class="detalle-section">
-            <h4>Historial</h4>
-            <div class="historial-timeline">
-                ${historial.map(h => `
-                    <div class="historial-item ${h.accion}">
-                        <strong>${h.accion}</strong> - ${h.usuario}
-                        <div class="fecha">${h.fecha}</div>
-                    </div>
-                `).join('')}
-            </div>
+            <h4><i class="fas fa-user"></i> Registro</h4>
+            <div class="detalle-row"><span class="label">Creado por</span><span class="value">${p.usuario}</span></div>
+            <div class="detalle-row"><span class="label">Fecha registro</span><span class="value">${p.created_at}</span></div>
         </div>
     `;
 }
@@ -897,52 +578,55 @@ function cerrarPanel() {
     papeletaActual = null;
 }
 
-function validarPapeleta(id) {
-    if (confirm('¿Confirmar validación de esta papeleta?')) {
-        fetch('/api/papeleta/' + id + '/validar', { method: 'POST' })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            });
-    }
+// Modal Factura
+var facturaId = null;
+
+function asignarFactura(id, folio) {
+    facturaId = id;
+    document.getElementById('facturaFolio').textContent = folio;
+    document.getElementById('numeroFactura').value = '';
+    document.getElementById('modalFactura').classList.add('active');
+    cerrarPanel();
 }
 
-function confirmarValidacion() {
-    if (papeletaActual) {
-        validarPapeleta(papeletaActual);
-    }
+function cerrarModalFactura() {
+    document.getElementById('modalFactura').classList.remove('active');
+    facturaId = null;
 }
 
-function marcarPendiente() {
-    var justificacion = prompt('Ingresa la justificación por la cual esta papeleta queda pendiente:');
-    if (justificacion && papeletaActual) {
-        fetch('/api/papeleta/' + papeletaActual + '/justificar', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({justificacion: justificacion})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert('Justificación registrada');
-                cerrarPanel();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        });
-    }
+function guardarFactura() {
+    const numero = document.getElementById('numeroFactura').value.trim();
+    
+    fetch('/api/papeleta/' + facturaId + '/factura', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({numero_factura: numero})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            cerrarModalFactura();
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo guardar'));
+        }
+    })
+    .catch(err => {
+        alert('Error de conexión: ' + err.message);
+    });
 }
 
-function generarAlertas() {
-    fetch('/api/papeletas/generar-alertas', { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
-            alert('Se generaron ' + data.alertas + ' alertas');
-        });
-}
+// Cerrar modales con Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarPanel();
+        cerrarModalFactura();
+    }
+});
+
+// Click fuera del modal
+document.getElementById('modalFactura').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalFactura();
+});
 </script>
 {% endblock %}

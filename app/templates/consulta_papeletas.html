@@ -2,6 +2,62 @@
 
 {% block page_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_consulta_papeletas.css') }}">
+<style>
+/* Badges de estatus de reporte */
+.badge-reportada {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #d1e7dd;
+    color: #0f5132;
+}
+.badge-sin-reportar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #e8e8e8;
+    color: #6b7280;
+}
+.estatus-cell {
+    text-align: center;
+}
+/* Sección del reporte en modal */
+.detail-section.reporte-info {
+    background: linear-gradient(135deg, #d1e7dd 0%, #a7f3d0 100%);
+    border: 1px solid #10b981;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+.detail-section.reporte-info h4 {
+    color: #065f46;
+    margin-bottom: 0.75rem;
+}
+.detail-section.reporte-info .reporte-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #065f46;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.7);
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+.detail-section.reporte-info .reporte-link:hover {
+    background: #fff;
+    transform: translateX(0.25rem);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -87,6 +143,7 @@
                         <th>CLIENTE / FACTURAR A</th>
                         <th>PROVEEDOR</th>
                         <th>MONTO</th>
+                        <th>ESTATUS</th>
                         <th>FACTURA</th>
                         <th class="no-print">ACCIONES</th>
                     </tr>
@@ -111,6 +168,17 @@
                             {% endif %}
                         </td>
                         <td class="monto-cell">${{ "{:,.2f}".format(papeleta.total) }}</td>
+                        <td class="estatus-cell">
+                            {% if papeleta.reporte_venta_id %}
+                            <span class="badge-reportada" title="En reporte {{ papeleta.reporte_venta.folio if papeleta.reporte_venta else '' }}">
+                                <i class="fas fa-check-circle"></i> Reportada
+                            </span>
+                            {% else %}
+                            <span class="badge-sin-reportar" title="Sin reportar">
+                                <i class="fas fa-minus-circle"></i> Pendiente
+                            </span>
+                            {% endif %}
+                        </td>
                         <td class="factura-cell">
                             {% if papeleta.numero_factura %}
                             <span class="badge-facturada" title="Facturada"><i class="fas fa-file-invoice"></i> {{ papeleta.numero_factura }}</span>
@@ -125,8 +193,8 @@
                             <button type="button" class="btn-action btn-view" title="Ver detalle" 
                                     onclick="verPapeleta({{ papeleta.id }})"><i class="fas fa-eye"></i></button>
                             {% if current_user.es_admin() %}
-                            <button type="button" class="btn-action btn-edit" title="Editar"
-                                    onclick="window.location.href='{{ url_for('main.editar_papeleta', id=papeleta.id) }}'"><i class="fas fa-edit"></i></button>
+                            <button type="button" class="btn-action btn-edit" title="Editar factura"
+                                    onclick="editarFactura({{ papeleta.id }}, '{{ papeleta.folio }}', '{{ papeleta.numero_factura or '' }}')"><i class="fas fa-edit"></i></button>
                             <button type="button" class="btn-action btn-delete" title="Eliminar"
                                     onclick="confirmarEliminar({{ papeleta.id }}, '{{ papeleta.folio }}')"><i class="fas fa-trash"></i></button>
                             {% endif %}
@@ -134,15 +202,16 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="empty-row">No hay papeletas registradas para esta tarjeta.</td>
+                        <td colspan="8" class="empty-row">No hay papeletas registradas para esta tarjeta.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
+                        <td colspan="4" class="text-right"><strong>TOTAL:</strong></td>
                         <td class="monto-cell"><strong>${{ "{:,.2f}".format(papeletas|sum(attribute='total')) }}</strong></td>
-                        <td class="no-print"></td>
+                        <td></td>
+                        <td></td>
                         <td class="no-print"></td>
                     </tr>
                 </tfoot>
@@ -520,6 +589,36 @@ function verPapeleta(id) {
                 `;
             }
             
+            // ====== NUEVA SECCIÓN: Reporte de Ventas ======
+            let seccionReporte = '';
+            if (data.esta_reportada && data.reporte_folio) {
+                seccionReporte = `
+                    <div class="detail-section reporte-info">
+                        <h4><i class="fas fa-chart-bar"></i> Reporte de Ventas</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-hashtag"></i> Folio Reporte</span>
+                                <span class="value"><strong>${data.reporte_folio}</strong></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-calendar"></i> Fecha Reporte</span>
+                                <span class="value">${data.reporte_fecha || '---'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label"><i class="fas fa-info-circle"></i> Estatus</span>
+                                <span class="value" style="text-transform: capitalize;">${data.reporte_estatus || '---'}</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.75rem;">
+                            <a href="/reportes-ventas/${data.reporte_venta_id}/ver" class="reporte-link">
+                                <i class="fas fa-external-link-alt"></i> Ver Reporte Completo
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+            // =============================================
+            
             document.getElementById('modalVerContent').innerHTML = `
                 <div class="papeleta-detail">
                     <div class="detail-grid">
@@ -590,6 +689,7 @@ function verPapeleta(id) {
                     
                     ${seccionExtemporanea}
                     ${seccionReembolso}
+                    ${seccionReporte}
                     
                     <div class="detail-footer">
                         <small>Creado por: ${data.usuario} | ${data.created_at}</small>

@@ -391,12 +391,24 @@ def api_papeleta_detalle(id):
     
     tarjeta_nombre = papeleta.tarjeta_rel.nombre_tarjeta if papeleta.tarjeta_rel else ''
     aerolinea_nombre = papeleta.aerolinea.nombre if papeleta.aerolinea else ''
+    sucursal_nombre = papeleta.sucursal.nombre if papeleta.sucursal else ''
     
     papeleta_relacionada_folio = ''
     if papeleta.papeleta_relacionada_id:
         pap_rel = Papeleta.query.get(papeleta.papeleta_relacionada_id)
         if pap_rel:
             papeleta_relacionada_folio = pap_rel.folio
+    
+    # Obtener datos del reporte de ventas
+    reporte_folio = ''
+    reporte_fecha = ''
+    reporte_estatus = ''
+    if papeleta.reporte_venta_id:
+        reporte = ReporteVenta.query.get(papeleta.reporte_venta_id)
+        if reporte:
+            reporte_folio = reporte.folio
+            reporte_fecha = reporte.fecha.strftime('%d/%m/%Y') if reporte.fecha else ''
+            reporte_estatus = reporte.estatus or ''
     
     return jsonify({
         'id': papeleta.id,
@@ -415,6 +427,7 @@ def api_papeleta_detalle(id):
         'aerolinea': aerolinea_nombre,
         'proveedor': papeleta.proveedor or '',
         'tipo_cargo': papeleta.tipo_cargo or '',
+        'sucursal': sucursal_nombre,
         'extemporanea': papeleta.extemporanea or False,
         'fecha_cargo_real': papeleta.fecha_cargo_real.strftime('%d/%m/%Y') if papeleta.fecha_cargo_real else '',
         'motivo_extemporanea': papeleta.motivo_extemporanea or '',
@@ -426,7 +439,13 @@ def api_papeleta_detalle(id):
         'referencia_reembolso': papeleta.referencia_reembolso or '',
         'papeleta_relacionada': papeleta_relacionada_folio,
         'usuario': papeleta.usuario.nombre if papeleta.usuario else '',
-        'created_at': papeleta.created_at.strftime('%d/%m/%Y %H:%M') if papeleta.created_at else ''
+        'created_at': papeleta.created_at.strftime('%d/%m/%Y %H:%M') if papeleta.created_at else '',
+        # Campos del reporte de ventas
+        'reporte_venta_id': papeleta.reporte_venta_id,
+        'reporte_folio': reporte_folio,
+        'reporte_fecha': reporte_fecha,
+        'reporte_estatus': reporte_estatus,
+        'esta_reportada': papeleta.reporte_venta_id is not None
     })
 
 
@@ -1244,7 +1263,7 @@ def editar_papeleta(id):
     
     empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
     aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
-    return render_template('papeleta_edit.html', papeleta=papeleta, empresas=empresas_list, aerolineas=aerolineas_list)
+    return render_template('papeletas_edit.html', papeleta=papeleta, empresas=empresas_list, aerolineas=aerolineas_list)
 
 
 @main.route('/papeletas/eliminar/<int:id>', methods=['POST'])
@@ -2664,84 +2683,58 @@ def control_papeletas():
     
     fecha_hoy = fecha_mexico()
     
-    # Filtro por agente (opcional)
-    agente_id = request.args.get('agente', type=int)
-    
-    # Query base
-    query = Papeleta.query
-    if agente_id:
-        query = query.filter(Papeleta.usuario_id == agente_id)
-    
-    # Estadísticas
-    papeletas_hoy = query.filter(
-        Papeleta.fecha_venta == fecha_hoy,
-        Papeleta.estatus_control.in_(['activa', None])
-    ).count()
-    
-    pendientes = query.filter(
-        Papeleta.fecha_venta < fecha_hoy,
-        Papeleta.estatus_control.in_(['activa', None])
-    ).all()
-    
-    pendientes_total = len(pendientes)
-    
-    urgentes = len([p for p in pendientes if (fecha_hoy - p.fecha_venta).days > 3])
-    
-    en_corte = query.filter(Papeleta.estatus_control == 'en_corte').count()
-    
-    # Totales monetarios
-    total_hoy = db.session.query(func.sum(Papeleta.total)).filter(
-        Papeleta.fecha_venta == fecha_hoy,
-        Papeleta.estatus_control.in_(['activa', None])
-    ).scalar() or 0
-    
-    total_pendiente = sum([float(p.total or 0) for p in pendientes])
-    
-    efectivo_pendiente = db.session.query(func.sum(Papeleta.total)).filter(
-        Papeleta.estatus_control.in_(['activa', None]),
-        Papeleta.forma_pago.ilike('%efectivo%')
-    ).scalar() or 0
-    
-    # Lista de papeletas (últimos 7 días o pendientes)
-    papeletas = query.filter(
+    # Query base - últimos 30 días o sin reportar
+    papeletas = Papeleta.query.filter(
         db.or_(
-            Papeleta.fecha_venta >= fecha_hoy - timedelta(days=7),
-            Papeleta.estatus_control.in_(['activa', None])
+            Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+            Papeleta.reporte_venta_id.is_(None)
         )
     ).order_by(
         Papeleta.fecha_venta.desc(),
         Papeleta.id.desc()
-    ).limit(100).all()
+    ).all()
     
-    # Resumen por agente
-    resumen_agentes = db.session.query(
-        Usuario.id.label('usuario_id'),
-        Usuario.nombre.label('agente'),
-        func.count(case((Papeleta.fecha_venta == fecha_hoy, 1))).label('papeletas_hoy'),
-        func.count(case((Papeleta.fecha_venta < fecha_hoy, 1))).label('pendientes_dias_anteriores'),
-        func.count(case((Papeleta.estatus_control == 'en_corte', 1))).label('en_corte'),
-        func.sum(case((Papeleta.estatus_control.in_(['activa', None]), Papeleta.total), else_=0)).label('total_pendiente'),
-        func.sum(case(
-            (db.and_(Papeleta.estatus_control.in_(['activa', None]), Papeleta.forma_pago.ilike('%efectivo%')), Papeleta.total),
-            else_=0
-        )).label('efectivo_pendiente')
-    ).outerjoin(Papeleta, db.and_(
-        Papeleta.usuario_id == Usuario.id,
-        Papeleta.estatus_control.in_(['activa', 'en_corte', None])
-    )).filter(
-        Usuario.activo == True
-    ).group_by(Usuario.id, Usuario.nombre).all()
+    # === ESTADÍSTICAS POR ESTATUS ===
+    
+    # Papeletas de hoy
+    papeletas_hoy = len([p for p in papeletas if p.fecha_venta == fecha_hoy])
+    total_hoy = sum([float(p.total or 0) for p in papeletas if p.fecha_venta == fecha_hoy])
+    
+    # Sin reportar (no tienen reporte_venta_id)
+    sin_reportar_list = [p for p in papeletas if not p.reporte_venta_id]
+    sin_reportar = len(sin_reportar_list)
+    total_sin_reportar = sum([float(p.total or 0) for p in sin_reportar_list])
+    
+    # Reportadas pero sin facturar (tienen reporte_venta_id pero no numero_factura)
+    sin_facturar_list = [p for p in papeletas if p.reporte_venta_id and not p.numero_factura]
+    sin_facturar = len(sin_facturar_list)
+    total_sin_facturar = sum([float(p.total or 0) for p in sin_facturar_list])
+    
+    # Facturadas (tienen numero_factura)
+    facturadas_list = [p for p in papeletas if p.numero_factura]
+    facturadas = len(facturadas_list)
+    total_facturadas = sum([float(p.total or 0) for p in facturadas_list])
+    
+    # Urgentes (más de 3 días sin reportar)
+    urgentes = len([p for p in sin_reportar_list 
+                    if p.fecha_venta and (fecha_hoy - p.fecha_venta).days > 3])
+    
+    # Efectivo pendiente (sin reportar y forma de pago efectivo)
+    efectivo_pendiente = sum([float(p.total or 0) for p in sin_reportar_list 
+                              if p.forma_pago and 'efectivo' in p.forma_pago.lower()])
     
     return render_template('control_papeletas.html',
         papeletas=papeletas,
         papeletas_hoy=papeletas_hoy,
-        pendientes_total=pendientes_total,
+        total_hoy=total_hoy,
+        sin_reportar=sin_reportar,
+        total_sin_reportar=total_sin_reportar,
+        sin_facturar=sin_facturar,
+        total_sin_facturar=total_sin_facturar,
+        facturadas=facturadas,
+        total_facturadas=total_facturadas,
         urgentes=urgentes,
-        en_corte=en_corte,
-        total_hoy=float(total_hoy),
-        total_pendiente=total_pendiente,
-        efectivo_pendiente=float(efectivo_pendiente),
-        resumen_agentes=resumen_agentes,
+        efectivo_pendiente=efectivo_pendiente,
         fecha_actual=fecha_hoy
     )
 

@@ -486,6 +486,7 @@ class Papeleta(db.Model):
     fecha_conciliacion = db.Column(db.Date)
     sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'))
     reporte_venta_id = db.Column(db.BigInteger, db.ForeignKey('reportes_ventas.id'))
+    numero_factura = db.Column(db.String(50))  # Número de factura asignada
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
     # Campos de control de papeletas (agregar después de los otros campos)
@@ -505,6 +506,7 @@ class Papeleta(db.Model):
     autorizacion = db.relationship('Autorizacion')
     sucursal = db.relationship('Sucursal')
     papeleta_relacionada = db.relationship('Papeleta', remote_side=[id], backref='papeletas_vinculadas')
+    reporte_venta = db.relationship('ReporteVenta', backref='papeletas')
     
     def __repr__(self):
         return f'<Papeleta {self.folio}>'
