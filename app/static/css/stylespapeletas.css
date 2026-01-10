@@ -210,20 +210,25 @@
 
 .form-header {
     background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
-    padding: 1.5rem 2rem;
+    padding: 1.75rem 2rem;
     color: var(--white);
 }
 
 .form-header h2 {
     margin: 0 0 var(--space-sm) 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.0125rem;
 }
 
 .form-header p {
     margin: 0;
-    opacity: 0.9;
-    font-size: 0.9375rem;
+    opacity: 1;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 400;
 }
 
 /* === FORMULARIO === */
@@ -619,11 +624,11 @@
     }
     
     .form-header {
-        padding: 1rem 1.25rem;
+        padding: 1.25rem 1.5rem;
     }
     
     .form-header h2 {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
     }
     
     .crud-form {

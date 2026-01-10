@@ -1,653 +1,670 @@
 {% extends "base.html" %}
 
 {% block page_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_consulta_papeletas.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
+    <style>
+        .extemporanea-section {
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border: 2px solid #ec4899;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .extemporanea-section.active { background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%); }
+        .extemporanea-header { display: flex; align-items: center; gap: 0.75rem; }
+        .extemporanea-header input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .extemporanea-header label { font-weight: 600; color: #9d174d; cursor: pointer; margin: 0; }
+        .extemporanea-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #db2777; }
+        .extemporanea-fields.active { display: block; }
+        .extemporanea-fields .form-group { margin-bottom: 1rem; }
+        .extemporanea-fields label { color: #9d174d; font-weight: 500; }
+        .extemporanea-fields textarea { min-height: 80px; resize: vertical; }
+        .extemporanea-warning { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #9d174d; margin-top: 0.5rem; background: rgba(255,255,255,0.5); padding: 0.5rem; border-radius: 6px; }
+        
+        .reembolso-section {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .reembolso-section.active { background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%); }
+        .reembolso-header { display: flex; align-items: center; gap: 0.75rem; }
+        .reembolso-header input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .reembolso-header label { font-weight: 600; color: #92400e; cursor: pointer; margin: 0; }
+        .reembolso-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #d97706; }
+        .reembolso-fields.active { display: block; }
+        .reembolso-fields .form-group { margin-bottom: 1rem; }
+        .reembolso-fields label { color: #92400e; font-weight: 500; }
+        .reembolso-fields textarea { min-height: 60px; resize: vertical; }
+        .reembolso-fields .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .reembolso-warning { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #92400e; margin-top: 0.5rem; }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="papeletas-page">
-    <!-- Header -->
-    <div class="page-header">
-        <div class="page-title">
-            <span class="icon"><i class="fas fa-file-alt"></i></span>
-            <div>
-                <h1>Consulta de Papeletas</h1>
-                <p>Selecciona una tarjeta para ver sus movimientos.</p>
-            </div>
-        </div>
-        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-primary"><i class="fas fa-plus"></i> Nueva Papeleta</a>
-    </div>
-
-    <!-- Selector de Tarjetas -->
-    <div class="tarjetas-selector">
-        {% for tarjeta, papeletas in papeletas_por_tarjeta.items() %}
-        <div class="tarjeta-card {% if loop.first %}active{% endif %}" 
-             data-tarjeta="{{ tarjeta.numero }}"
-             onclick="seleccionarTarjeta(this, '{{ tarjeta.numero }}')">
-            <div class="tarjeta-chip">
-                <span class="chip-brand">VISA</span>
-            </div>
-            <div class="tarjeta-info">
-                <span class="tarjeta-nombre">{{ tarjeta.nombre or 'Tarjeta ' + tarjeta.numero }}</span>
-                <span class="tarjeta-numero">**** {{ tarjeta.numero }}</span>
-            </div>
-            {% if loop.first %}<span class="check-icon"><i class="fas fa-check"></i></span>{% endif %}
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Filtros y Acciones -->
-    <div class="filtros-section">
-        <div class="filtros-row">
-            <div class="filtro-group">
-                <label><i class="fas fa-calendar"></i> Desde:</label>
-                <input type="date" id="fechaDesde" onchange="filtrarPorFecha()">
-            </div>
-            <div class="filtro-group">
-                <label><i class="fas fa-calendar"></i> Hasta:</label>
-                <input type="date" id="fechaHasta" onchange="filtrarPorFecha()">
-            </div>
-            <div class="filtro-group">
-                <label><i class="fas fa-search"></i> Buscar:</label>
-                <input type="text" id="buscarTexto" placeholder="Folio, cliente, proveedor..." onkeyup="filtrarPorTexto()">
-            </div>
-            <div class="filtro-group">
-                <label><i class="fas fa-file-invoice"></i> Factura:</label>
-                <select id="filtroFactura" onchange="filtrarTabla()">
-                    <option value="">Todas</option>
-                    <option value="facturada">Facturadas</option>
-                    <option value="pendiente">Sin facturar</option>
-                </select>
-            </div>
-            <div class="filtro-actions">
-                <button type="button" class="btn-secondary" onclick="limpiarFiltros()">
-                    <i class="fas fa-sync"></i> Limpiar
-                </button>
-                <button type="button" class="btn-print" onclick="abrirModalImprimir()">
-                    <i class="fas fa-print"></i> Imprimir
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tablas por Tarjeta -->
-    {% for tarjeta, papeletas in papeletas_por_tarjeta.items() %}
-    <div class="tabla-tarjeta {% if loop.first %}active{% endif %}" data-tarjeta="{{ tarjeta.numero }}">
-        <div class="tabla-header">
-            <h3><i class="fas fa-list"></i> Movimientos: <span class="tarjeta-ref">{{ tarjeta.nombre or tarjeta.numero }}</span></h3>
-            <span class="contador-registros">Mostrando <span class="count">{{ papeletas|length }}</span> registro(s)</span>
+<div class="crud-container-single">
+    <div class="form-section">
+        <div class="form-header">
+            <h2>Registrar Nueva Papeleta</h2>
+            <p>Completa la información del cargo a tarjeta de crédito.</p>
         </div>
         
-        <div class="table-responsive">
-            <table class="papeletas-table">
-                <thead>
-                    <tr>
-                        <th>FOLIO</th>
-                        <th>FECHA</th>
-                        <th>CLIENTE / FACTURAR A</th>
-                        <th>PROVEEDOR</th>
-                        <th>MONTO</th>
-                        <th>FACTURA</th>
-                        <th class="no-print">ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for papeleta in papeletas %}
-                    <tr data-fecha="{{ papeleta.fecha_venta.strftime('%Y-%m-%d') if papeleta.fecha_venta else '' }}"
-                        data-folio="{{ papeleta.folio }}"
-                        data-cliente="{{ papeleta.facturar_a|lower if papeleta.facturar_a else '' }}"
-                        data-proveedor="{{ papeleta.aerolinea.nombre|lower if papeleta.aerolinea else '' }}"
-                        data-factura="{{ 'facturada' if papeleta.numero_factura else 'pendiente' }}">
-                        <td class="folio-cell">{{ papeleta.folio }}</td>
-                        <td>{{ papeleta.fecha_venta.strftime('%d/%m/%Y') if papeleta.fecha_venta else '---' }}</td>
-                        <td>{{ papeleta.facturar_a or '---' }}</td>
-                        <td>
-                            {% if papeleta.aerolinea %}
-                            <span class="proveedor-badge">
-                                <i class="fas fa-plane"></i> {{ papeleta.aerolinea.nombre }}
-                            </span>
-                            {% else %}
-                            <span class="text-muted">---</span>
-                            {% endif %}
-                        </td>
-                        <td class="monto-cell">${{ "{:,.2f}".format(papeleta.total) }}</td>
-                        <td class="factura-cell">
-                            {% if papeleta.numero_factura %}
-                            <span class="badge-facturada" title="Facturada"><i class="fas fa-file-invoice"></i> {{ papeleta.numero_factura }}</span>
-                            {% else %}
-                            <span class="badge-pendiente" title="Sin facturar"><i class="fas fa-clock"></i> Pendiente</span>
-                            {% endif %}
-                            {% if current_user.es_admin() %}
-                            <button type="button" class="btn-factura" title="Editar factura" onclick="editarFactura({{ papeleta.id }}, '{{ papeleta.folio }}', '{{ papeleta.numero_factura or '' }}')"><i class="fas fa-edit"></i></button>
-                            {% endif %}
-                        </td>
-                        <td class="acciones-cell no-print">
-                            <button type="button" class="btn-action btn-view" title="Ver detalle" 
-                                    onclick="verPapeleta({{ papeleta.id }})"><i class="fas fa-eye"></i></button>
-                            {% if current_user.es_admin() %}
-                            <button type="button" class="btn-action btn-edit" title="Editar"
-                                    onclick="window.location.href='{{ url_for('main.editar_papeleta', id=papeleta.id) }}'"><i class="fas fa-edit"></i></button>
-                            <button type="button" class="btn-action btn-delete" title="Eliminar"
-                                    onclick="confirmarEliminar({{ papeleta.id }}, '{{ papeleta.folio }}')"><i class="fas fa-trash"></i></button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="empty-row">No hay papeletas registradas para esta tarjeta.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr class="total-row">
-                        <td colspan="5" class="text-right"><strong>TOTAL:</strong></td>
-                        <td class="monto-cell"><strong>${{ "{:,.2f}".format(papeletas|sum(attribute='total')) }}</strong></td>
-                        <td class="no-print"></td>
-                        <td class="no-print"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Modal Imprimir -->
-<div class="modal-overlay" id="modalImprimir">
-    <div class="modal-content modal-sm">
-        <div class="modal-header">
-            <h3><i class="fas fa-print"></i> Imprimir Reporte</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalImprimir')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <div class="print-options">
-                <h4>Tarjeta seleccionada:</h4>
-                <p id="printTarjetaInfo" class="tarjeta-selected">---</p>
-                
-                <h4>Rango de fechas:</h4>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Desde:</label>
-                        <input type="date" id="printFechaDesde">
+        <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
+            
+            <div class="extemporanea-section" id="extemporaneaSection">
+                <div class="extemporanea-header">
+                    <input type="checkbox" id="extemporanea" name="extemporanea" value="1">
+                    <label for="extemporanea"><i class="fas fa-clock"></i> Es papeleta extemporánea (cargo ya realizado, registro tardío)</label>
+                </div>
+                <div class="extemporanea-fields" id="extemporaneaFields">
+                    <div class="extemporanea-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Las papeletas extemporáneas no requieren autorización de tarjeta ya que el cargo ya fue procesado.
                     </div>
                     <div class="form-group">
-                        <label>Hasta:</label>
-                        <input type="date" id="printFechaHasta">
+                        <label for="fecha_cargo_real">Fecha real del cargo *</label>
+                        <input type="date" id="fecha_cargo_real" name="fecha_cargo_real">
+                        <small>Fecha en que realmente se hizo el cargo a la tarjeta</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo_extemporanea">Motivo del registro tardío *</label>
+                        <textarea id="motivo_extemporanea" name="motivo_extemporanea" placeholder="Explica por qué no se registró a tiempo"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reembolso-section" id="reembolsoSection">
+                <div class="reembolso-header">
+                    <input type="checkbox" id="tiene_reembolso" name="tiene_reembolso" value="1">
+                    <label for="tiene_reembolso"><i class="fas fa-undo"></i> Este cargo tiene/tendrá reembolso (duplicado, cancelación, error)</label>
+                </div>
+                <div class="reembolso-fields" id="reembolsoFields">
+                    <div class="reembolso-warning">
+                        <i class="fas fa-lightbulb"></i> Usa esta opción para cargos duplicados, boletos cancelados o errores que serán reembolsados.
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo_reembolso">Motivo del reembolso *</label>
+                        <select id="motivo_reembolso" name="motivo_reembolso">
+                            <option value="">Selecciona el motivo...</option>
+                            <option value="duplicado">Compra duplicada (doble cargo)</option>
+                            <option value="cancelacion">Cancelación de boleto/reserva</option>
+                            <option value="cambio">Cambio de itinerario con diferencia</option>
+                            <option value="error_monto">Error en el monto cobrado</option>
+                            <option value="no_show">No show (pasajero no se presentó)</option>
+                            <option value="otro">Otro motivo</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="motivoOtroGroup" style="display: none;">
+                        <label for="motivo_reembolso_otro">Especifica el motivo *</label>
+                        <textarea id="motivo_reembolso_otro" name="motivo_reembolso_otro" placeholder="Describe el motivo del reembolso..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="monto_reembolso">Monto a reembolsar *</label>
+                            <input type="number" step="0.01" min="0" id="monto_reembolso" name="monto_reembolso" placeholder="0.00" class="monto-input">
+                            <small>Deja en 0 si es reembolso total del ticket</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="estatus_reembolso">Estatus del reembolso</label>
+                            <select id="estatus_reembolso" name="estatus_reembolso">
+                                <option value="pendiente">Pendiente de solicitar</option>
+                                <option value="en_proceso">En proceso con aerolínea</option>
+                                <option value="completado">Reembolso recibido</option>
+                                <option value="rechazado">Rechazado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fecha_solicitud_reembolso">Fecha de solicitud</label>
+                            <input type="date" id="fecha_solicitud_reembolso" name="fecha_solicitud_reembolso">
+                        </div>
+                        <div class="form-group">
+                            <label for="referencia_reembolso">Referencia / Caso</label>
+                            <input type="text" id="referencia_reembolso" name="referencia_reembolso" placeholder="Ej: CASO-12345, REF-ABC">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="papeleta_relacionada">Papeleta relacionada (si es duplicado)</label>
+                        <input type="text" id="papeleta_relacionada" name="papeleta_relacionada_folio" placeholder="Folio de la otra papeleta (ej: 8821-015)">
+                        <small>Si es compra duplicada, indica el folio de la otra papeleta</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="tarjeta_id">Tarjeta Corporativa *</label>
+                        <div class="dropdown-input" id="dropdownContainer">
+                            <select id="tarjeta_id" name="tarjeta_id">
+                                <option value="">Selecciona una tarjeta...</option>
+                                {% for item in tarjetas_info %}
+                                    <option value="{{ item.tarjeta.id }}" 
+                                            data-numero="{{ item.tarjeta.numero_tarjeta }}"
+                                            data-requiere="{{ item.requiere_autorizacion|lower }}"
+                                            data-tiene-auth="{{ item.tiene_autorizacion|lower }}"
+                                            data-puede-usar="{{ item.puede_usar|lower }}"
+                                            data-usuarios="{{ item.usuarios_asignados|join(', ') if item.usuarios_asignados else '' }}"
+                                            data-tiempo-restante="{{ item.tiempo_restante or '' }}"
+                                            data-fecha-expiracion="{{ item.fecha_expiracion or '' }}"
+                                            class="{% if item.puede_usar %}tarjeta-disponible{% else %}tarjeta-bloqueada{% endif %}">
+                                        {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }})
+                                        {% if item.puede_usar %}✓{% else %}🔒{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <span class="toggle-link" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
+                        <div class="manual-input" id="manualContainer">
+                            <input type="text" id="tarjeta_manual" name="tarjeta_manual" maxlength="4" pattern="\d{4}" placeholder="Últimos 4 dígitos">
+                            <span class="toggle-link" id="toggleDropdown">Volver al selector</span>
+                        </div>
+                        <div id="tarjetaInfo" class="tarjeta-info"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="folio">Folio</label>
+                        <input type="text" id="folio" name="folio" readonly required>
+                        <small>Se genera automáticamente</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_venta">Fecha de Venta *</label>
+                        <input type="date" id="fecha_venta" name="fecha_venta" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="facturar_a">Facturar a *</label>
+                        <select id="facturar_a" name="facturar_a" required>
+                            <option value="">Selecciona una empresa...</option>
+                            {% for empresa in empresas %}
+                                <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
+                            {% endfor %}
+                        </select>
+                        <small id="cargoEmpresaInfo"></small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo_cargo">Tipo de Cargo *</label>
+                        <select id="tipo_cargo" name="tipo_cargo" required>
+                            <option value="">Selecciona...</option>
+                            <option value="aerolinea">Aerolínea</option>
+                            <option value="hotel">Hotel</option>
+                            <option value="auto">Renta de Auto</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="aerolineaGroup">
+                        <label for="aerolinea_id">Aerolínea</label>
+                        <select id="aerolinea_id" name="aerolinea_id">
+                            <option value="">Selecciona una aerolínea...</option>
+                            {% for aerolinea in aerolineas %}
+                                <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="proveedorGroup" style="display: none;">
+                        <label for="proveedor">Nombre del Proveedor *</label>
+                        <input type="text" id="proveedor" name="proveedor" placeholder="Ej: Marriott, Hertz, etc.">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="solicito">Solicitó *</label>
+                        <input type="text" id="solicito" name="solicito" required placeholder="Nombre del solicitante" style="text-transform: uppercase;">
                     </div>
                 </div>
                 
-                <div class="print-preview">
-                    <p><i class="fas fa-chart-bar"></i> Registros a imprimir: <strong id="printCount">0</strong></p>
-                    <p><i class="fas fa-dollar-sign"></i> Total: <strong id="printTotal">$0.00</strong></p>
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="clave_sabre">Clave Sabre / Reserva *</label>
+                        <input type="text" id="clave_sabre" name="clave_sabre" required placeholder="Ej: ABC123" style="text-transform: uppercase;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="forma_pago">Forma de Pago</label>
+                        <select id="forma_pago" name="forma_pago">
+                            <option value="">Selecciona...</option>
+                            <option value="Crédito">Crédito</option>
+                            <option value="Contado">Contado</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Depósito">Depósito</option>
+                        </select>
+                    </div>
+                    
+                    <div class="montos-section">
+                        <h4><i class="fas fa-dollar-sign"></i> Desglose de Montos</h4>
+                        
+                        <div class="form-group">
+                            <label for="total_ticket">Total del Ticket *</label>
+                            <input type="number" step="0.01" min="0" id="total_ticket" name="total_ticket" required placeholder="0.00" class="monto-input">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="diez_porciento">
+                                10% Comisión
+                                <input type="checkbox" id="check_comision" checked style="margin-left: 0.5rem;">
+                                <button type="button" class="btn-calcular" id="btnCalcular10" title="Calcular 10%"><i class="fas fa-calculator"></i></button>
+                            </label>
+                            <input type="number" step="0.01" min="0" id="diez_porciento" name="diez_porciento" placeholder="0.00" class="monto-input" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cargo">Cargo Visible <small>(facturado)</small></label>
+                            <input type="number" step="0.01" min="0" id="cargo" name="cargo" placeholder="0.00" class="monto-input" value="0">
+                            <small id="cargoEmpresaInfo"></small>
+                        </div>
+                        
+                        <div class="form-group" id="cargoOcultoGroup" style="display: none;">
+                            <label for="cargo_oculto"><i class="fas fa-eye-slash"></i> Cargo Oculto <small>(incluido en tarifa)</small></label>
+                            <input type="number" step="0.01" min="0" id="cargo_oculto" name="cargo_oculto" placeholder="0.00" class="monto-input monto-oculto" value="0" readonly>
+                            <small>Este cargo se agrega al total pero no se factura por separado</small>
+                        </div>
+                        
+                        <div class="form-group total-group">
+                            <label for="total">TOTAL A COBRAR</label>
+                            <input type="number" step="0.01" min="0" id="total" name="total" required readonly class="monto-total">
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn-secondary" onclick="cerrarModal('modalImprimir')">Cancelar</button>
-            <button type="button" class="btn-primary" onclick="imprimirReporte()"><i class="fas fa-print"></i> Imprimir</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Ver Papeleta -->
-<div class="modal-overlay" id="modalVer">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-file-alt"></i> Detalle de Papeleta</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalVer')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body" id="modalVerContent">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Cargando...</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Confirmar Eliminación -->
-<div class="modal-overlay" id="modalEliminar">
-    <div class="modal-content modal-sm">
-        <div class="modal-header modal-header-danger">
-            <h3><i class="fas fa-trash"></i> Eliminar Papeleta</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalEliminar')"><i class="fas fa-times"></i></button>
-        </div>
-        <form action="" method="POST" id="formEliminar">
-            <div class="modal-body">
-                <p class="confirm-message">¿Estás seguro de eliminar la papeleta <strong id="eliminarFolio"></strong>?</p>
-                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Esta acción no se puede deshacer.</p>
-                
-                <div class="form-group">
-                    <label>Tipo de motivo: *</label>
-                    <select name="motivo_eliminacion_tipo" required>
-                        <option value="">Seleccione...</option>
-                        <option value="error_captura">Error de captura</option>
-                        <option value="duplicado">Registro duplicado</option>
-                        <option value="cancelacion">Cancelación de servicio</option>
-                        <option value="correccion">Corrección de datos</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Detalle del motivo: *</label>
-                    <textarea name="motivo_eliminacion_detalle" rows="3" required minlength="10"
-                              placeholder="Explique el motivo de la eliminación (mínimo 10 caracteres)"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalEliminar')">Cancelar</button>
-                <button type="submit" class="btn-danger"><i class="fas fa-trash"></i> Eliminar</button>
+            
+            <div class="form-actions">
+                <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-cancel">Cancelar</a>
+                <button type="submit" id="btnSubmit" class="btn-submit" disabled><i class="fas fa-save"></i> Guardar Papeleta</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Modal Editar Factura -->
-<div class="modal-overlay" id="modalFactura">
-    <div class="modal-content modal-sm">
+<div class="modal-overlay" id="modalAutorizacion">
+    <div class="modal-content">
         <div class="modal-header">
-            <h3><i class="fas fa-file-invoice"></i> Asignar Número de Factura</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalFactura')"><i class="fas fa-times"></i></button>
+            <h3><i class="fas fa-lock"></i> Solicitar Autorización</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button>
         </div>
-        <form id="formFactura" onsubmit="guardarFactura(event)">
+        <form action="{{ url_for('main.solicitar_autorizacion') }}" method="POST">
             <div class="modal-body">
-                <p>Papeleta: <strong id="facturaFolio"></strong></p>
-                <input type="hidden" id="facturaPapeletaId">
+                <p>No tienes acceso a esta tarjeta. Necesitas autorización de Dirección General.</p>
+                <input type="hidden" name="tarjeta_id" id="modal_tarjeta_id">
                 <div class="form-group">
-                    <label for="numeroFactura">Número de Factura:</label>
-                    <input type="text" id="numeroFactura" name="numero_factura" placeholder="Ej: FA-001234, UUID..." maxlength="50">
-                    <small>Dejar vacío para quitar la factura asignada</small>
+                    <label for="motivo">Motivo de la solicitud: *</label>
+                    <textarea name="motivo" id="motivo" required rows="4" placeholder="Ej: Cliente urgente, tarjeta de sucursal sin fondos, etc."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalFactura')">Cancelar</button>
-                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+                <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Enviar Solicitud</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-let tarjetaActiva = '';
-
-function seleccionarTarjeta(element, tarjeta) {
-    document.querySelectorAll('.tarjeta-card').forEach(card => {
-        card.classList.remove('active');
-        card.querySelector('.check-icon')?.remove();
-    });
-    
-    element.classList.add('active');
-    const checkIcon = document.createElement('span');
-    checkIcon.className = 'check-icon';
-    checkIcon.innerHTML = '<i class="fas fa-check"></i>';
-    element.appendChild(checkIcon);
-    
-    document.querySelectorAll('.tabla-tarjeta').forEach(tabla => { tabla.classList.remove('active'); });
-    document.querySelector(`.tabla-tarjeta[data-tarjeta="${tarjeta}"]`).classList.add('active');
-    
-    tarjetaActiva = tarjeta;
-    limpiarFiltros();
-}
-
-function filtrarPorFecha() { filtrarTabla(); }
-function filtrarPorTexto() { filtrarTabla(); }
-
-function filtrarTabla() {
-    const desde = document.getElementById('fechaDesde').value;
-    const hasta = document.getElementById('fechaHasta').value;
-    const texto = document.getElementById('buscarTexto').value.toLowerCase();
-    const filtroFactura = document.getElementById('filtroFactura').value;
-    
-    const tablaActiva = document.querySelector('.tabla-tarjeta.active');
-    if (!tablaActiva) return;
-    
-    const filas = tablaActiva.querySelectorAll('tbody tr[data-fecha]');
-    let visibles = 0;
-    let total = 0;
-    
-    filas.forEach(fila => {
-        const fecha = fila.dataset.fecha;
-        const folio = fila.dataset.folio.toLowerCase();
-        const cliente = fila.dataset.cliente || '';
-        const proveedor = fila.dataset.proveedor || '';
-        const factura = fila.dataset.factura || '';
-        
-        let mostrar = true;
-        if (desde && fecha < desde) mostrar = false;
-        if (hasta && fecha > hasta) mostrar = false;
-        if (texto && !folio.includes(texto) && !cliente.includes(texto) && !proveedor.includes(texto)) mostrar = false;
-        if (filtroFactura && factura !== filtroFactura) mostrar = false;
-        
-        fila.style.display = mostrar ? '' : 'none';
-        
-        if (mostrar) {
-            visibles++;
-            const montoText = fila.querySelector('.monto-cell').textContent;
-            total += parseFloat(montoText.replace(/[$,]/g, '')) || 0;
-        }
-    });
-    
-    tablaActiva.querySelector('.count').textContent = visibles;
-    const tfoot = tablaActiva.querySelector('tfoot .monto-cell strong');
-    if (tfoot) tfoot.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
-function limpiarFiltros() {
-    document.getElementById('fechaDesde').value = '';
-    document.getElementById('fechaHasta').value = '';
-    document.getElementById('buscarTexto').value = '';
-    document.getElementById('filtroFactura').value = '';
-    
-    const tablaActiva = document.querySelector('.tabla-tarjeta.active');
-    if (tablaActiva) {
-        const filas = tablaActiva.querySelectorAll('tbody tr');
-        let total = 0, count = 0;
-        filas.forEach(fila => {
-            fila.style.display = '';
-            if (fila.dataset.fecha) {
-                count++;
-                const montoText = fila.querySelector('.monto-cell')?.textContent || '0';
-                total += parseFloat(montoText.replace(/[$,]/g, '')) || 0;
-            }
-        });
-        tablaActiva.querySelector('.count').textContent = count;
-        const tfoot = tablaActiva.querySelector('tfoot .monto-cell strong');
-        if (tfoot) tfoot.textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
-}
-
-function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
-
-function abrirModalImprimir() {
-    const tarjetaCard = document.querySelector('.tarjeta-card.active');
-    const tarjetaNombre = tarjetaCard?.querySelector('.tarjeta-nombre')?.textContent || 'Tarjeta';
-    const tarjetaNumero = tarjetaCard?.querySelector('.tarjeta-numero')?.textContent || '';
-    
-    document.getElementById('printTarjetaInfo').textContent = `${tarjetaNombre} (${tarjetaNumero})`;
-    document.getElementById('printFechaDesde').value = document.getElementById('fechaDesde').value;
-    document.getElementById('printFechaHasta').value = document.getElementById('fechaHasta').value;
-    
-    actualizarPreviewImprimir();
-    abrirModal('modalImprimir');
-}
-
-function actualizarPreviewImprimir() {
-    const tablaActiva = document.querySelector('.tabla-tarjeta.active');
-    if (!tablaActiva) return;
-    
-    const desde = document.getElementById('printFechaDesde').value;
-    const hasta = document.getElementById('printFechaHasta').value;
-    const filas = tablaActiva.querySelectorAll('tbody tr[data-fecha]');
-    let count = 0, total = 0;
-    
-    filas.forEach(fila => {
-        const fecha = fila.dataset.fecha;
-        let incluir = true;
-        if (desde && fecha < desde) incluir = false;
-        if (hasta && fecha > hasta) incluir = false;
-        if (incluir) {
-            count++;
-            const montoText = fila.querySelector('.monto-cell').textContent;
-            total += parseFloat(montoText.replace(/[$,]/g, '')) || 0;
-        }
-    });
-    
-    document.getElementById('printCount').textContent = count;
-    document.getElementById('printTotal').textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('printFechaDesde')?.addEventListener('change', actualizarPreviewImprimir);
-    document.getElementById('printFechaHasta')?.addEventListener('change', actualizarPreviewImprimir);
-});
-
-function imprimirReporte() {
-    const desde = document.getElementById('printFechaDesde').value;
-    const hasta = document.getElementById('printFechaHasta').value;
-    const tablaActiva = document.querySelector('.tabla-tarjeta.active');
-    if (!tablaActiva) return;
+    const tarjetaSelect = document.getElementById('tarjeta_id');
+    const tarjetaManual = document.getElementById('tarjeta_manual');
+    const folioInput = document.getElementById('folio');
+    const tarjetaInfo = document.getElementById('tarjetaInfo');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const toggleManual = document.getElementById('toggleManual');
+    const toggleDropdown = document.getElementById('toggleDropdown');
+    const dropdownContainer = document.getElementById('dropdownContainer');
+    const manualContainer = document.getElementById('manualContainer');
+    const formPapeleta = document.getElementById('formPapeleta');
+    const totalTicket = document.getElementById('total_ticket');
+    const diezPorciento = document.getElementById('diez_porciento');
+    const cargo = document.getElementById('cargo');
+    const totalFinal = document.getElementById('total');
+    const btnCalcular10 = document.getElementById('btnCalcular10');
+    const empresaSelect = document.getElementById('facturar_a');
+    const cargoEmpresaInfo = document.getElementById('cargoEmpresaInfo');
     
-    const filas = tablaActiva.querySelectorAll('tbody tr[data-fecha]');
-    filas.forEach(fila => {
-        const fecha = fila.dataset.fecha;
-        let incluir = true;
-        if (desde && fecha < desde) incluir = false;
-        if (hasta && fecha > hasta) incluir = false;
-        fila.classList.toggle('print-hide', !incluir);
+    let modoManual = false;
+    let puedeEnviar = false;
+    
+    toggleManual.addEventListener('click', function() {
+        modoManual = true;
+        dropdownContainer.classList.add('hidden');
+        manualContainer.classList.add('active');
+        tarjetaSelect.value = '';
+        tarjetaInfo.style.display = 'none';
+        tarjetaInfo.innerHTML = '';
+        puedeEnviar = true;
+        actualizarBoton();
     });
     
-    cerrarModal('modalImprimir');
+    toggleDropdown.addEventListener('click', function() {
+        modoManual = false;
+        dropdownContainer.classList.remove('hidden');
+        manualContainer.classList.remove('active');
+        tarjetaManual.value = '';
+        folioInput.value = '';
+        puedeEnviar = false;
+        actualizarBoton();
+    });
     
-    const tarjetaInfo = document.getElementById('printTarjetaInfo').textContent;
-    const fechaRango = (desde || hasta) ? `Del ${formatearFecha(desde) || 'inicio'} al ${formatearFecha(hasta) || 'hoy'}` : 'Todos los registros';
-    
-    const printHeader = document.createElement('div');
-    printHeader.id = 'printHeader';
-    printHeader.className = 'print-only';
-    printHeader.innerHTML = `
-        <div class="print-header-content">
-            <img src="{{ url_for('static', filename='img/logo_kinessia.png') }}" alt="Kinessia" class="print-logo">
-            <h1>Reporte de Papeletas</h1>
-            <div class="print-info">
-                <p><strong>Tarjeta:</strong> ${tarjetaInfo}</p>
-                <p><strong>Período:</strong> ${fechaRango}</p>
-                <p><strong>Fecha de impresión:</strong> ${new Date().toLocaleDateString('es-MX', {day: '2-digit', month: '2-digit', year: 'numeric'})}</p>
-            </div>
-        </div>
-    `;
-    document.body.insertBefore(printHeader, document.body.firstChild);
-    
-    setTimeout(() => {
-        window.print();
-        setTimeout(() => {
-            document.getElementById('printHeader')?.remove();
-            filas.forEach(fila => fila.classList.remove('print-hide'));
-        }, 500);
-    }, 100);
-}
-
-function formatearFecha(fecha) {
-    if (!fecha) return '';
-    const [year, month, day] = fecha.split('-');
-    return `${day}/${month}/${year}`;
-}
-
-function verPapeleta(id) {
-    abrirModal('modalVer');
-    document.getElementById('modalVerContent').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Cargando...</p></div>';
-    
-    fetch(`/api/papeleta/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById('modalVerContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> ${data.error}</p>`;
-                return;
-            }
-            
-            // Construir secciones opcionales
-            let seccionExtemporanea = '';
-            if (data.extemporanea) {
-                seccionExtemporanea = `
-                    <div class="detail-section extemporanea-section">
-                        <h4><i class="fas fa-clock"></i> Papeleta Extemporánea</h4>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-calendar-alt"></i> Fecha Cargo Real</span>
-                                <span class="value">${data.fecha_cargo_real || '---'}</span>
-                            </div>
-                            <div class="detail-item full-width">
-                                <span class="label"><i class="fas fa-comment"></i> Motivo Tardío</span>
-                                <span class="value">${data.motivo_extemporanea || '---'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            let seccionReembolso = '';
-            if (data.tiene_reembolso) {
-                seccionReembolso = `
-                    <div class="detail-section reembolso-section">
-                        <h4><i class="fas fa-undo"></i> Información de Reembolso</h4>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-tag"></i> Motivo</span>
-                                <span class="value">${data.motivo_reembolso || '---'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-dollar-sign"></i> Monto</span>
-                                <span class="value">${data.monto_reembolso ? '$' + Number(data.monto_reembolso).toLocaleString('en-US', {minimumFractionDigits: 2}) : '---'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-info-circle"></i> Estatus</span>
-                                <span class="value badge-estatus-${data.estatus_reembolso || 'pendiente'}">${data.estatus_reembolso || 'pendiente'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-calendar"></i> Fecha Solicitud</span>
-                                <span class="value">${data.fecha_solicitud_reembolso || '---'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-file-alt"></i> Referencia/Caso</span>
-                                <span class="value">${data.referencia_reembolso || '---'}</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="label"><i class="fas fa-link"></i> Papeleta Relacionada</span>
-                                <span class="value">${data.papeleta_relacionada || '---'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('modalVerContent').innerHTML = `
-                <div class="papeleta-detail">
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-hashtag"></i> Folio</span>
-                            <span class="value">${data.folio}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-credit-card"></i> Tarjeta</span>
-                            <span class="value">${data.tarjeta_nombre || '**** ' + data.tarjeta}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-calendar"></i> Fecha Venta</span>
-                            <span class="value">${data.fecha_venta}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-building"></i> Facturar a</span>
-                            <span class="value">${data.facturar_a || '---'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-user"></i> Solicitó</span>
-                            <span class="value">${data.solicito || '---'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-plane"></i> Aerolínea/Proveedor</span>
-                            <span class="value">${data.aerolinea || data.proveedor || '---'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-map-marker-alt"></i> Sucursal</span>
-                            <span class="value">${data.sucursal || '---'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-key"></i> Clave Sabre</span>
-                            <span class="value">${data.clave_sabre || '---'}</span>
-                        </div>
-                    </div>
-                    
-                    ${data.extemporanea ? '<span class="badge-extemporanea"><i class="fas fa-clock"></i> Extemporánea</span>' : ''}
-                    ${data.tiene_reembolso ? '<span class="badge-reembolso"><i class="fas fa-undo"></i> Con Reembolso</span>' : ''}
-                    
-                    <div class="detail-section montos">
-                        <h4><i class="fas fa-dollar-sign"></i> Desglose de Montos</h4>
-                        <div class="montos-grid">
-                            <div class="monto-item">
-                                <span class="label">Total Ticket</span>
-                                <span class="value">$${Number(data.total_ticket).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div class="monto-item">
-                                <span class="label">10%</span>
-                                <span class="value">$${Number(data.diez_porciento).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div class="monto-item">
-                                <span class="label">Cargo Visible</span>
-                                <span class="value">$${Number(data.cargo).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            ${data.cargo_oculto > 0 ? `
-                            <div class="monto-item oculto">
-                                <span class="label"><i class="fas fa-eye-slash"></i> Cargo Oculto</span>
-                                <span class="value">$${Number(data.cargo_oculto).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            ` : ''}
-                            <div class="monto-item total">
-                                <span class="label">TOTAL</span>
-                                <span class="value">$${Number(data.total).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    ${seccionExtemporanea}
-                    ${seccionReembolso}
-                    
-                    <div class="detail-footer">
-                        <small>Creado por: ${data.usuario} | ${data.created_at}</small>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            document.getElementById('modalVerContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> Error: ${error.message}</p>`;
-        });
-}
-
-function confirmarEliminar(id, folio) {
-    document.getElementById('eliminarFolio').textContent = folio;
-    document.getElementById('formEliminar').action = `/papeletas/eliminar/${id}`;
-    abrirModal('modalEliminar');
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.active').forEach(modal => { modal.classList.remove('active'); });
-    }
-});
-
-document.querySelectorAll('.modal-overlay').forEach(modal => {
-    modal.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('active'); });
-});
-
-// === FACTURA ===
-function editarFactura(id, folio, numeroActual) {
-    document.getElementById('facturaPapeletaId').value = id;
-    document.getElementById('facturaFolio').textContent = folio;
-    document.getElementById('numeroFactura').value = numeroActual || '';
-    abrirModal('modalFactura');
-}
-
-function guardarFactura(e) {
-    e.preventDefault();
-    const id = document.getElementById('facturaPapeletaId').value;
-    const numero = document.getElementById('numeroFactura').value.trim();
-    
-    fetch(`/api/papeleta/${id}/factura`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numero_factura: numero })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            cerrarModal('modalFactura');
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo guardar'));
+    tarjetaSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        if (!this.value) {
+            tarjetaInfo.style.display = 'none';
+            tarjetaInfo.innerHTML = '';
+            folioInput.value = '';
+            puedeEnviar = false;
+            actualizarBoton();
+            return;
         }
-    })
-    .catch(error => {
-        alert('Error de conexión: ' + error.message);
+        
+        const numero = option.dataset.numero;
+        const puedeUsar = option.dataset.puedeUsar === 'true';
+        const usuariosAsignados = option.dataset.usuarios;
+        const tiempoRestante = option.dataset.tiempoRestante;
+        const fechaExpiracion = option.dataset.fechaExpiracion;
+        
+        tarjetaInfo.style.display = 'block';
+        
+        if (puedeUsar) {
+            tarjetaInfo.className = 'tarjeta-info puede-usar';
+            let html = '<i class="fas fa-check-circle"></i> Puedes usar esta tarjeta.';
+            if (tiempoRestante) {
+                html += `<br><small><i class="fas fa-stopwatch"></i> <strong>Autorización temporal:</strong> expira en ${tiempoRestante}</small>`;
+                html += `<br><small><i class="fas fa-calendar"></i> Válida hasta: ${fechaExpiracion}</small>`;
+            } else if (usuariosAsignados) {
+                html += `<br><small><i class="fas fa-users"></i> Asignada a: ${usuariosAsignados}</small>`;
+            }
+            tarjetaInfo.innerHTML = html;
+            puedeEnviar = true;
+        } else {
+            tarjetaInfo.className = 'tarjeta-info sin-auth';
+            let html = '<i class="fas fa-lock"></i> No tienes acceso a esta tarjeta.';
+            if (usuariosAsignados) {
+                html += `<br><small><i class="fas fa-users"></i> Asignada a: ${usuariosAsignados}</small>`;
+            }
+            html += `<br><small><i class="fas fa-lightbulb"></i> Puedes solicitar autorización temporal (válida por 24 horas)</small>`;
+            html += `<br><button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})"><i class="fas fa-key"></i> Solicitar Autorización (24 hrs)</button>`;
+            tarjetaInfo.innerHTML = html;
+            puedeEnviar = false;
+        }
+        
+        actualizarBoton();
+        
+        if (numero) {
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
+                .then(response => response.json())
+                .then(data => { if (data.folio) folioInput.value = data.folio; })
+                .catch(error => console.error('Error:', error));
+        }
     });
+    
+    tarjetaManual.addEventListener('input', function() {
+        const tarjeta = this.value;
+        if (tarjeta.length === 4 && /^\d{4}$/.test(tarjeta)) {
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${tarjeta}`)
+                .then(response => response.json())
+                .then(data => { if (data.folio) folioInput.value = data.folio; })
+                .catch(error => console.error('Error:', error));
+            puedeEnviar = true;
+        } else {
+            folioInput.value = '';
+            puedeEnviar = false;
+        }
+        actualizarBoton();
+    });
+    
+    function calcularTotal() {
+        const ticket = parseFloat(totalTicket.value) || 0;
+        const comision = parseFloat(diezPorciento.value) || 0;
+        const cargoServicio = parseFloat(cargo.value) || 0;
+        const cargoOcultoVal = parseFloat(document.getElementById('cargo_oculto').value) || 0;
+        totalFinal.value = (ticket + comision + cargoServicio + cargoOcultoVal).toFixed(2);
+    }
+    
+    btnCalcular10.addEventListener('click', function() {
+        const ticket = parseFloat(totalTicket.value) || 0;
+        diezPorciento.value = (ticket * 0.10).toFixed(2);
+        calcularTotal();
+    });
+    
+    totalTicket.addEventListener('input', calcularTotal);
+    diezPorciento.addEventListener('input', calcularTotal);
+    cargo.addEventListener('input', calcularTotal);
+    
+    empresaSelect.addEventListener('change', function() {
+        const empresaId = this.value;
+        const cargoOcultoInput = document.getElementById('cargo_oculto');
+        const cargoOcultoGroup = document.getElementById('cargoOcultoGroup');
+        const tipoCargoSelect = document.getElementById('tipo_cargo');
+        const tipoServicio = tipoCargoSelect.value === 'aerolinea' ? 'nacional' : (tipoCargoSelect.value || 'nacional');
+        
+        if (!empresaId) {
+            cargoEmpresaInfo.innerHTML = '';
+            cargo.value = '0';
+            cargoOcultoInput.value = '0';
+            cargoOcultoGroup.style.display = 'none';
+            calcularTotal();
+            return;
+        }
+        
+        fetch(`/api/cargos-empresa/${empresaId}?tipo_servicio=${tipoServicio}`)
+            .then(response => response.json())
+            .then(data => {
+                const cargoVisible = data.cargo_visible || 0;
+                const cargoOculto = data.cargo_oculto || 0;
+                
+                cargo.value = cargoVisible.toFixed(2);
+                cargoOcultoInput.value = cargoOculto.toFixed(2);
+                
+                // Mostrar/ocultar campo de cargo oculto
+                if (cargoOculto > 0) {
+                    cargoOcultoGroup.style.display = 'block';
+                } else {
+                    cargoOcultoGroup.style.display = 'none';
+                }
+                
+                // Info de cargos
+                let info = '';
+                if (cargoVisible > 0) info += `<i class="fas fa-eye"></i> $${cargoVisible.toFixed(2)}`;
+                if (cargoOculto > 0) info += (info ? ' + ' : '') + `<i class="fas fa-eye-slash"></i> $${cargoOculto.toFixed(2)} oculto`;
+                if (!info) info = '<i class="fas fa-info-circle"></i> Sin cargos configurados';
+                
+                cargoEmpresaInfo.innerHTML = info;
+                cargoEmpresaInfo.style.color = (cargoVisible > 0 || cargoOculto > 0) ? '#28a745' : '#6c757d';
+                
+                calcularTotal();
+            })
+            .catch(error => { 
+                console.error('Error:', error); 
+                cargoEmpresaInfo.innerHTML = ''; 
+                cargoOcultoGroup.style.display = 'none';
+            });
+    });
+    
+    // Recargar cargos cuando cambie el tipo de cargo
+    document.getElementById('tipo_cargo').addEventListener('change', function() {
+        if (empresaSelect.value) {
+            empresaSelect.dispatchEvent(new Event('change'));
+        }
+    });
+    
+    function actualizarBoton() {
+        btnSubmit.disabled = !puedeEnviar;
+        btnSubmit.classList.toggle('disabled', !puedeEnviar);
+    }
+    
+    const extemporaneaCheckbox = document.getElementById('extemporanea');
+    const extemporaneaSection = document.getElementById('extemporaneaSection');
+    const extemporaneaFields = document.getElementById('extemporaneaFields');
+    const fechaCargoReal = document.getElementById('fecha_cargo_real');
+    const motivoExtemporanea = document.getElementById('motivo_extemporanea');
+    let esExtemporanea = false;
+    
+    extemporaneaCheckbox.addEventListener('change', function() {
+        esExtemporanea = this.checked;
+        extemporaneaSection.classList.toggle('active', esExtemporanea);
+        extemporaneaFields.classList.toggle('active', esExtemporanea);
+        
+        if (esExtemporanea) {
+            fechaCargoReal.required = true;
+            motivoExtemporanea.required = true;
+            const selectedOption = tarjetaSelect.options[tarjetaSelect.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                puedeEnviar = true;
+                tarjetaInfo.className = 'tarjeta-info puede-usar';
+                tarjetaInfo.innerHTML = '<i class="fas fa-check-circle"></i> Papeleta extemporánea - No requiere autorización.<br><small><i class="fas fa-clock"></i> El cargo ya fue procesado anteriormente.</small>';
+                tarjetaInfo.style.display = 'block';
+            }
+        } else {
+            fechaCargoReal.required = false;
+            motivoExtemporanea.required = false;
+            fechaCargoReal.value = '';
+            motivoExtemporanea.value = '';
+            if (tarjetaSelect.value) {
+                tarjetaSelect.dispatchEvent(new Event('change'));
+            } else if (tarjetaManual.value.length === 4) {
+                puedeEnviar = true;
+            } else {
+                puedeEnviar = false;
+            }
+        }
+        actualizarBoton();
+    });
+    
+    tarjetaSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        if (!this.value) {
+            tarjetaInfo.style.display = 'none';
+            tarjetaInfo.innerHTML = '';
+            folioInput.value = '';
+            puedeEnviar = false;
+            actualizarBoton();
+            return;
+        }
+        
+        const numero = option.dataset.numero;
+        if (esExtemporanea) {
+            tarjetaInfo.className = 'tarjeta-info puede-usar';
+            tarjetaInfo.innerHTML = '<i class="fas fa-check-circle"></i> Papeleta extemporánea - No requiere autorización.<br><small><i class="fas fa-clock"></i> El cargo ya fue procesado anteriormente.</small>';
+            tarjetaInfo.style.display = 'block';
+            puedeEnviar = true;
+        }
+        
+        actualizarBoton();
+        
+        if (numero) {
+            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
+                .then(response => response.json())
+                .then(data => { if (data.folio) folioInput.value = data.folio; })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+    
+    const reembolsoCheckbox = document.getElementById('tiene_reembolso');
+    const reembolsoSection = document.getElementById('reembolsoSection');
+    const reembolsoFields = document.getElementById('reembolsoFields');
+    const motivoReembolsoSelect = document.getElementById('motivo_reembolso');
+    const motivoOtroGroup = document.getElementById('motivoOtroGroup');
+    const montoReembolso = document.getElementById('monto_reembolso');
+    let tieneReembolso = false;
+    
+    reembolsoCheckbox.addEventListener('change', function() {
+        tieneReembolso = this.checked;
+        reembolsoSection.classList.toggle('active', tieneReembolso);
+        reembolsoFields.classList.toggle('active', tieneReembolso);
+        
+        if (tieneReembolso) {
+            motivoReembolsoSelect.required = true;
+        } else {
+            motivoReembolsoSelect.required = false;
+            motivoReembolsoSelect.value = '';
+            montoReembolso.value = '';
+            document.getElementById('referencia_reembolso').value = '';
+            document.getElementById('fecha_solicitud_reembolso').value = '';
+            document.getElementById('papeleta_relacionada').value = '';
+            motivoOtroGroup.style.display = 'none';
+        }
+    });
+    
+    motivoReembolsoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+            motivoOtroGroup.style.display = 'block';
+            document.getElementById('motivo_reembolso_otro').required = true;
+        } else {
+            motivoOtroGroup.style.display = 'none';
+            document.getElementById('motivo_reembolso_otro').required = false;
+            document.getElementById('motivo_reembolso_otro').value = '';
+        }
+    });
+    
+    totalTicket.addEventListener('change', function() {
+        if (tieneReembolso && !montoReembolso.value) montoReembolso.value = this.value;
+    });
+    
+    formPapeleta.addEventListener('submit', function(e) {
+        if (!puedeEnviar) {
+            e.preventDefault();
+            alert('Debes seleccionar una tarjeta válida o solicitar autorización.');
+            return false;
+        }
+        if (esExtemporanea) {
+            if (!fechaCargoReal.value) { e.preventDefault(); alert('Debes ingresar la fecha real del cargo.'); fechaCargoReal.focus(); return false; }
+            if (!motivoExtemporanea.value.trim()) { e.preventDefault(); alert('Debes ingresar el motivo del registro tardío.'); motivoExtemporanea.focus(); return false; }
+        }
+        if (tieneReembolso) {
+            if (!motivoReembolsoSelect.value) { e.preventDefault(); alert('Debes seleccionar el motivo del reembolso.'); motivoReembolsoSelect.focus(); return false; }
+            if (motivoReembolsoSelect.value === 'otro' && !document.getElementById('motivo_reembolso_otro').value.trim()) { e.preventDefault(); alert('Debes especificar el motivo del reembolso.'); document.getElementById('motivo_reembolso_otro').focus(); return false; }
+        }
+        if (modoManual) { tarjetaSelect.value = ''; } else { tarjetaManual.value = ''; }
+    });
+    
+    actualizarBoton();
+    document.getElementById('fecha_venta').value = new Date().toISOString().split('T')[0];
+    totalFinal.value = '0.00';
+    
+    const tipoCargo = document.getElementById('tipo_cargo');
+    const aerolineaGroup = document.getElementById('aerolineaGroup');
+    const proveedorGroup = document.getElementById('proveedorGroup');
+    const aerolineaSelect = document.getElementById('aerolinea_id');
+    const proveedorInput = document.getElementById('proveedor');
+    
+    tipoCargo.addEventListener('change', function() {
+        const tipo = this.value;
+        if (tipo === 'aerolinea') {
+            aerolineaGroup.style.display = 'flex';
+            proveedorGroup.style.display = 'none';
+            aerolineaSelect.required = true;
+            proveedorInput.required = false;
+            proveedorInput.value = '';
+        } else if (tipo === 'hotel' || tipo === 'auto' || tipo === 'otro') {
+            aerolineaGroup.style.display = 'none';
+            proveedorGroup.style.display = 'flex';
+            aerolineaSelect.required = false;
+            aerolineaSelect.value = '';
+            proveedorInput.required = true;
+            if (tipo === 'hotel') proveedorInput.placeholder = 'Ej: Marriott, Hilton, Holiday Inn...';
+            else if (tipo === 'auto') proveedorInput.placeholder = 'Ej: Hertz, Avis, National...';
+            else proveedorInput.placeholder = 'Especifica el proveedor o servicio...';
+        } else {
+            aerolineaGroup.style.display = 'flex';
+            proveedorGroup.style.display = 'none';
+            aerolineaSelect.required = false;
+            proveedorInput.required = false;
+        }
+    });
+});
+
+function abrirModalAutorizacion(tarjetaId) {
+    document.getElementById('modal_tarjeta_id').value = tarjetaId;
+    document.getElementById('modalAutorizacion').classList.add('active');
 }
+
+function cerrarModal() {
+    document.getElementById('modalAutorizacion').classList.remove('active');
+    document.getElementById('motivo').value = '';
+}
+
+document.getElementById('modalAutorizacion').addEventListener('click', function(e) { if (e.target === this) cerrarModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarModal(); });
 </script>
 {% endblock %}
