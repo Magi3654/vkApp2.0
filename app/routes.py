@@ -221,11 +221,16 @@ def dashboard():
             db.session.rollback()
         
         try:
-            # Resumen por agente
+            # Resumen por agente - incluye todos los agentes + usuario actual
             agentes = Usuario.query.filter(
                 Usuario.activo == True,
-                Usuario.rol.notin_(['admin', 'administrador', 'director', 'sistemas'])
-            ).all()
+                db.or_(
+                    # Agentes (roles operativos)
+                    Usuario.rol.in_(['agente', 'mostrador', 'vendedor', 'ejecutivo']),
+                    # O el usuario actual (aunque sea admin)
+                    Usuario.id == current_user.id
+                )
+            ).order_by(Usuario.nombre).all()
             
             resumen = []
             for agente in agentes:
@@ -445,7 +450,13 @@ def api_papeleta_detalle(id):
         'reporte_folio': reporte_folio,
         'reporte_fecha': reporte_fecha,
         'reporte_estatus': reporte_estatus,
-        'esta_reportada': papeleta.reporte_venta_id is not None
+        'esta_reportada': papeleta.reporte_venta_id is not None,
+        # Factura
+        'numero_factura': papeleta.numero_factura,
+        'esta_facturada': papeleta.numero_factura is not None,
+        # Archivo del boleto
+        'archivo_boleto': papeleta.archivo_boleto,
+        'tiene_archivo': papeleta.archivo_boleto is not None
     })
 
 
@@ -1037,7 +1048,50 @@ def consulta_papeletas():
             papeletas_por_tarjeta[tarjeta_key] = []
         papeletas_por_tarjeta[tarjeta_key].append(papeleta)
     
-    return render_template('consulta_papeletas.html', papeletas_por_tarjeta=papeletas_por_tarjeta)
+    # === ESTADÍSTICAS PARA EL TEMPLATE ===
+    fecha_hoy = fecha_mexico()
+    
+    # Papeletas de hoy
+    papeletas_hoy_list = [p for p in papeletas_list if p.fecha_venta == fecha_hoy]
+    papeletas_hoy = len(papeletas_hoy_list)
+    total_hoy = sum([float(p.total or 0) for p in papeletas_hoy_list])
+    
+    # Sin reportar (no tienen reporte_venta_id y no tienen factura)
+    sin_reportar_list = [p for p in papeletas_list if not p.reporte_venta_id and not p.numero_factura]
+    sin_reportar = len(sin_reportar_list)
+    total_sin_reportar = sum([float(p.total or 0) for p in sin_reportar_list])
+    
+    # Sin facturar (tienen reporte pero no factura)
+    sin_facturar_list = [p for p in papeletas_list if p.reporte_venta_id and not p.numero_factura]
+    sin_facturar = len(sin_facturar_list)
+    total_sin_facturar = sum([float(p.total or 0) for p in sin_facturar_list])
+    
+    # Facturadas
+    facturadas_list = [p for p in papeletas_list if p.numero_factura]
+    facturadas = len(facturadas_list)
+    total_facturadas = sum([float(p.total or 0) for p in facturadas_list])
+    
+    # Urgentes (más de 3 días sin reportar)
+    urgentes = len([p for p in sin_reportar_list 
+                    if p.fecha_venta and (fecha_hoy - p.fecha_venta).days > 3])
+    
+    # Efectivo pendiente
+    efectivo_pendiente = sum([float(p.total or 0) for p in sin_reportar_list 
+                              if p.forma_pago and 'efectivo' in p.forma_pago.lower()])
+    
+    return render_template('consulta_papeletas.html', 
+        papeletas_por_tarjeta=papeletas_por_tarjeta,
+        papeletas_hoy=papeletas_hoy,
+        total_hoy=total_hoy,
+        sin_reportar=sin_reportar,
+        total_sin_reportar=total_sin_reportar,
+        sin_facturar=sin_facturar,
+        total_sin_facturar=total_sin_facturar,
+        facturadas=facturadas,
+        total_facturadas=total_facturadas,
+        urgentes=urgentes,
+        efectivo_pendiente=efectivo_pendiente,
+        fecha_actual=fecha_hoy)
 
 
 @main.route('/papeletas/nueva', methods=['GET'])
@@ -1087,7 +1141,36 @@ def nueva_papeleta_form():
 @login_required
 def nueva_papeleta_post():
     """Recibe los datos del formulario y crea una nueva papeleta."""
+    import os
+    from werkzeug.utils import secure_filename
+    from flask import current_app
+    
+    # Configuración de archivos - usar la carpeta static de la app
+    UPLOAD_FOLDER = os.path.join(current_app.static_folder, 'uploads', 'boletos')
+    ALLOWED_EXTENSIONS = {'pdf'}
+    
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    
+    # Crear carpeta si no existe
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
+    
     try:
+        # Validar archivo PDF
+        if 'archivo_boleto' not in request.files:
+            flash('Debe adjuntar el PDF del boleto.', 'warning')
+            return redirect(url_for('main.nueva_papeleta_form'))
+        
+        archivo = request.files['archivo_boleto']
+        if archivo.filename == '':
+            flash('Debe seleccionar un archivo PDF del boleto.', 'warning')
+            return redirect(url_for('main.nueva_papeleta_form'))
+        
+        if not allowed_file(archivo.filename):
+            flash('Solo se permiten archivos PDF.', 'warning')
+            return redirect(url_for('main.nueva_papeleta_form'))
+        
         tarjeta_id = request.form.get('tarjeta_id')
         tarjeta_manual = request.form.get('tarjeta_manual', '').strip()
         es_extemporanea = request.form.get('extemporanea') == '1'
@@ -1188,6 +1271,15 @@ def nueva_papeleta_post():
             referencia_reembolso=referencia_reembolso, papeleta_relacionada_id=papeleta_relacionada_id
         )
         db.session.add(nueva)
+        db.session.flush()  # Para obtener el ID antes del commit
+        
+        # Guardar archivo PDF
+        nombre_archivo = f"{folio}_boleto.pdf"
+        nombre_archivo = secure_filename(nombre_archivo)
+        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+        archivo.save(ruta_archivo)
+        nueva.archivo_boleto = nombre_archivo
+        
         db.session.commit()
 
         if tiene_reembolso:
@@ -1620,6 +1712,101 @@ def actualizar_factura_papeleta(id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# =============================================================================
+# API - ACTUALIZAR PDF DEL BOLETO
+# =============================================================================
+
+@main.route('/api/papeleta/<int:id>/archivo', methods=['POST'])
+@login_required
+def actualizar_archivo_papeleta(id):
+    """Actualiza el archivo PDF del boleto de una papeleta"""
+    import os
+    from werkzeug.utils import secure_filename
+    from flask import current_app
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    # Verificar que el usuario sea el dueño o admin
+    if papeleta.usuario_id != current_user.id and not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'No tienes permisos para modificar esta papeleta'}), 403
+    
+    if 'archivo_boleto' not in request.files:
+        return jsonify({'success': False, 'error': 'No se envió ningún archivo'}), 400
+    
+    archivo = request.files['archivo_boleto']
+    if archivo.filename == '':
+        return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
+    
+    # Validar extensión
+    if not archivo.filename.lower().endswith('.pdf'):
+        return jsonify({'success': False, 'error': 'Solo se permiten archivos PDF'}), 400
+    
+    try:
+        UPLOAD_FOLDER = os.path.join(current_app.static_folder, 'uploads', 'boletos')
+        
+        # Crear carpeta si no existe
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        
+        # Eliminar archivo anterior si existe
+        if papeleta.archivo_boleto:
+            archivo_anterior = os.path.join(UPLOAD_FOLDER, papeleta.archivo_boleto)
+            if os.path.exists(archivo_anterior):
+                os.remove(archivo_anterior)
+        
+        # Guardar nuevo archivo
+        nombre_archivo = f"{papeleta.folio}_boleto.pdf"
+        nombre_archivo = secure_filename(nombre_archivo)
+        ruta_archivo = os.path.join(UPLOAD_FOLDER, nombre_archivo)
+        archivo.save(ruta_archivo)
+        
+        papeleta.archivo_boleto = nombre_archivo
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'archivo': nombre_archivo,
+            'message': 'Archivo actualizado correctamente'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/papeleta/<int:id>/archivo', methods=['DELETE'])
+@login_required
+def eliminar_archivo_papeleta(id):
+    """Elimina el archivo PDF del boleto de una papeleta (solo admin)"""
+    import os
+    from flask import current_app
+    
+    if not current_user.es_admin():
+        return jsonify({'success': False, 'error': 'Solo administración puede eliminar archivos'}), 403
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    if not papeleta.archivo_boleto:
+        return jsonify({'success': False, 'error': 'La papeleta no tiene archivo adjunto'}), 400
+    
+    try:
+        UPLOAD_FOLDER = os.path.join(current_app.static_folder, 'uploads', 'boletos')
+        archivo_path = os.path.join(UPLOAD_FOLDER, papeleta.archivo_boleto)
+        
+        if os.path.exists(archivo_path):
+            os.remove(archivo_path)
+        
+        papeleta.archivo_boleto = None
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Archivo eliminado correctamente'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # =============================================================================
 # RUTAS DE REPORTES DE VENTAS
 # Agregar a routes.py
@@ -1829,6 +2016,30 @@ def aprobar_reporte_venta(id):
     reporte.estatus = 'aprobado'
     reporte.fecha_aprobacion = datetime.utcnow()
     reporte.aprobado_por = current_user.id
+    
+    # === AUTO-APROBAR VALE DE ENTREGA ASOCIADO ===
+    # Si el reporte tiene un vale de entrega vinculado y está en estatus 'depositado',
+    # se aprueba automáticamente
+    if reporte.entrega_corte:
+        entrega = reporte.entrega_corte
+        if hasattr(entrega, '__iter__'):
+            # Si es una lista (múltiples entregas)
+            for e in entrega:
+                if e.estatus == 'depositado' and not e.fecha_revision:
+                    e.revisar_y_aprobar(
+                        director_id=current_user.id,
+                        aprobado=True,
+                        notas=f'Aprobado automáticamente al aprobar reporte {reporte.folio}'
+                    )
+        else:
+            # Si es un solo objeto
+            if entrega.estatus == 'depositado' and not entrega.fecha_revision:
+                entrega.revisar_y_aprobar(
+                    director_id=current_user.id,
+                    aprobado=True,
+                    notas=f'Aprobado automáticamente al aprobar reporte {reporte.folio}'
+                )
+    
     db.session.commit()
     
     flash(f'Reporte {reporte.folio} aprobado.', 'success')
@@ -2700,8 +2911,9 @@ def control_papeletas():
     papeletas_hoy = len([p for p in papeletas if p.fecha_venta == fecha_hoy])
     total_hoy = sum([float(p.total or 0) for p in papeletas if p.fecha_venta == fecha_hoy])
     
-    # Sin reportar (no tienen reporte_venta_id)
-    sin_reportar_list = [p for p in papeletas if not p.reporte_venta_id]
+    # Sin reportar Y sin facturar (realmente pendientes de acción)
+    # Una papeleta facturada ya está "resuelta" aunque no tenga reporte
+    sin_reportar_list = [p for p in papeletas if not p.reporte_venta_id and not p.numero_factura]
     sin_reportar = len(sin_reportar_list)
     total_sin_reportar = sum([float(p.total or 0) for p in sin_reportar_list])
     

@@ -487,6 +487,7 @@ class Papeleta(db.Model):
     sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'))
     reporte_venta_id = db.Column(db.BigInteger, db.ForeignKey('reportes_ventas.id'))
     numero_factura = db.Column(db.String(50))  # Número de factura asignada
+    archivo_boleto = db.Column(db.String(255))  # Nombre del archivo PDF del boleto
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
     # Campos de control de papeletas (agregar después de los otros campos)

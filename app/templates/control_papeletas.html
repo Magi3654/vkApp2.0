@@ -153,8 +153,6 @@
                         <td>
                             {% if p.numero_factura %}
                             <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
-                            {% elif p.reporte_venta_id %}
-                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
                             {% else %}
                             <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
                             {% endif %}
@@ -225,7 +223,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for p in papeletas if not p.reporte_venta_id %}
+                    {% for p in papeletas if not p.reporte_venta_id and not p.numero_factura %}
                     <tr data-id="{{ p.id }}">
                         <td class="folio">{{ p.folio }}</td>
                         <td>{{ p.fecha_venta.strftime('%d/%m/%y') if p.fecha_venta else '-' }}</td>
@@ -406,8 +404,6 @@
                         <td>
                             {% if p.numero_factura %}
                             <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
-                            {% elif p.reporte_venta_id %}
-                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
                             {% else %}
                             <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
                             {% endif %}
@@ -470,6 +466,78 @@
     </div>
 </div>
 
+<!-- Modal Subir Archivo -->
+<div class="modal-overlay" id="modalArchivo">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+            <h3><i class="fas fa-file-pdf"></i> Subir PDF del Boleto</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalArchivo()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 1rem;">Papeleta: <strong id="archivoFolio"></strong></p>
+            <div class="archivo-upload-area" id="archivoUploadArea">
+                <input type="file" id="archivoInput" accept=".pdf" style="display: none;">
+                <div class="upload-placeholder" onclick="document.getElementById('archivoInput').click()">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: #3b82f6; margin-bottom: 0.75rem;"></i>
+                    <p style="margin: 0; font-weight: 600; color: #1e40af;">Click para seleccionar PDF</p>
+                    <small style="color: #6b7280;">o arrastra el archivo aquí</small>
+                </div>
+                <div class="upload-selected" style="display: none;">
+                    <i class="fas fa-file-pdf" style="font-size: 2rem; color: #10b981;"></i>
+                    <span id="archivoSeleccionado"></span>
+                    <button type="button" onclick="limpiarArchivo()" style="background: none; border: none; color: #dc2626; cursor: pointer;">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+            </div>
+            <small style="display: block; margin-top: 0.5rem; color: #6b7280;">
+                <i class="fas fa-info-circle"></i> Solo archivos PDF, máximo 10MB
+            </small>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="cerrarModalArchivo()">Cancelar</button>
+            <button type="button" class="btn-primary" id="btnGuardarArchivo" onclick="guardarArchivo()" disabled>
+                <i class="fas fa-upload"></i> Subir Archivo
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.archivo-upload-area {
+    border: 2px dashed #93c5fd;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    background: #eff6ff;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.archivo-upload-area:hover {
+    border-color: #3b82f6;
+    background: #dbeafe;
+}
+.archivo-upload-area.dragover {
+    border-color: #10b981;
+    background: #d1fae5;
+}
+.archivo-upload-area.has-file {
+    border-style: solid;
+    border-color: #10b981;
+    background: #d1fae5;
+}
+.upload-selected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+.upload-selected span {
+    font-weight: 600;
+    color: #065f46;
+}
+</style>
+
 <script>
 // Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -498,8 +566,21 @@ function verDetalle(id) {
     papeletaActual = id;
     
     fetch('/api/papeleta/' + id)
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Error HTTP: ' + r.status);
+            }
+            const contentType = r.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('La sesión ha expirado. Por favor recarga la página.');
+            }
+            return r.json();
+        })
         .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
             document.getElementById('panelFolio').textContent = data.folio;
             document.getElementById('panelBody').innerHTML = renderDetalle(data);
             
@@ -535,10 +616,45 @@ function renderDetalle(p) {
     let estatusHTML = '';
     if (p.numero_factura) {
         estatusHTML = '<span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>';
-    } else if (p.reporte_venta_id) {
-        estatusHTML = '<span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>';
     } else {
         estatusHTML = '<span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>';
+    }
+    
+    // Sección del archivo PDF
+    let archivoHTML = '';
+    if (p.archivo_boleto) {
+        archivoHTML = `
+            <div class="detalle-section archivo-section-panel">
+                <h4><i class="fas fa-file-pdf"></i> Boleto PDF</h4>
+                <div class="archivo-actions">
+                    <a href="/static/uploads/boletos/${p.archivo_boleto}" target="_blank" class="btn-archivo btn-ver-pdf">
+                        <i class="fas fa-eye"></i> Ver PDF
+                    </a>
+                    <a href="/static/uploads/boletos/${p.archivo_boleto}" download class="btn-archivo btn-descargar">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                </div>
+                <div class="archivo-info">
+                    <small class="archivo-nombre"><i class="fas fa-paperclip"></i> ${p.archivo_boleto}</small>
+                    <button type="button" class="btn-cambiar-archivo" onclick="cambiarArchivo(${p.id})">
+                        <i class="fas fa-sync-alt"></i> Cambiar
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        archivoHTML = `
+            <div class="detalle-section archivo-section-panel sin-archivo">
+                <h4><i class="fas fa-file-pdf"></i> Boleto PDF</h4>
+                <div class="archivo-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>No hay archivo adjunto</span>
+                </div>
+                <button type="button" class="btn-subir-archivo" onclick="subirArchivo(${p.id})">
+                    <i class="fas fa-upload"></i> Subir PDF del Boleto
+                </button>
+            </div>
+        `;
     }
     
     return `
@@ -550,6 +666,7 @@ function renderDetalle(p) {
             <div class="detalle-row"><span class="label">Cliente</span><span class="value">${p.facturar_a || '---'}</span></div>
             <div class="detalle-row"><span class="label">Aerolínea</span><span class="value">${p.aerolinea || p.proveedor || '---'}</span></div>
         </div>
+        ${archivoHTML}
         <div class="detalle-section">
             <h4><i class="fas fa-dollar-sign"></i> Importes</h4>
             <div class="detalle-row"><span class="label">Total Ticket</span><span class="value">$${Number(p.total_ticket).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></div>
@@ -616,17 +733,146 @@ function guardarFactura() {
     });
 }
 
+// Modal Archivo
+var archivoId = null;
+var archivoFolio = null;
+
+function subirArchivo(id) {
+    archivoId = id;
+    // Obtener el folio de la papeleta actual
+    fetch('/api/papeleta/' + id)
+        .then(r => r.json())
+        .then(data => {
+            archivoFolio = data.folio;
+            document.getElementById('archivoFolio').textContent = data.folio;
+            document.getElementById('modalArchivo').classList.add('active');
+            cerrarPanel();
+        });
+}
+
+function cambiarArchivo(id) {
+    subirArchivo(id);
+}
+
+function cerrarModalArchivo() {
+    document.getElementById('modalArchivo').classList.remove('active');
+    limpiarArchivo();
+    archivoId = null;
+    archivoFolio = null;
+}
+
+function limpiarArchivo() {
+    const input = document.getElementById('archivoInput');
+    input.value = '';
+    document.querySelector('.upload-placeholder').style.display = 'block';
+    document.querySelector('.upload-selected').style.display = 'none';
+    document.getElementById('archivoUploadArea').classList.remove('has-file');
+    document.getElementById('btnGuardarArchivo').disabled = true;
+}
+
+// Manejo del input de archivo
+document.getElementById('archivoInput').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const file = this.files[0];
+        
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            alert('Solo se permiten archivos PDF');
+            limpiarArchivo();
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert('El archivo es muy grande. Máximo 10MB.');
+            limpiarArchivo();
+            return;
+        }
+        
+        document.getElementById('archivoSeleccionado').textContent = file.name;
+        document.querySelector('.upload-placeholder').style.display = 'none';
+        document.querySelector('.upload-selected').style.display = 'flex';
+        document.getElementById('archivoUploadArea').classList.add('has-file');
+        document.getElementById('btnGuardarArchivo').disabled = false;
+    }
+});
+
+// Drag and drop
+const uploadArea = document.getElementById('archivoUploadArea');
+
+uploadArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        const input = document.getElementById('archivoInput');
+        input.files = files;
+        input.dispatchEvent(new Event('change'));
+    }
+});
+
+function guardarArchivo() {
+    const input = document.getElementById('archivoInput');
+    if (!input.files || !input.files[0]) {
+        alert('Selecciona un archivo PDF');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('archivo_boleto', input.files[0]);
+    
+    document.getElementById('btnGuardarArchivo').disabled = true;
+    document.getElementById('btnGuardarArchivo').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+    
+    fetch('/api/papeleta/' + archivoId + '/archivo', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            cerrarModalArchivo();
+            // Recargar el panel con los nuevos datos
+            verDetalle(archivoId);
+            alert('Archivo subido correctamente');
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo subir el archivo'));
+            document.getElementById('btnGuardarArchivo').disabled = false;
+            document.getElementById('btnGuardarArchivo').innerHTML = '<i class="fas fa-upload"></i> Subir Archivo';
+        }
+    })
+    .catch(err => {
+        alert('Error de conexión: ' + err.message);
+        document.getElementById('btnGuardarArchivo').disabled = false;
+        document.getElementById('btnGuardarArchivo').innerHTML = '<i class="fas fa-upload"></i> Subir Archivo';
+    });
+}
+
 // Cerrar modales con Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         cerrarPanel();
         cerrarModalFactura();
+        cerrarModalArchivo();
     }
 });
 
 // Click fuera del modal
 document.getElementById('modalFactura').addEventListener('click', function(e) {
     if (e.target === this) cerrarModalFactura();
+});
+
+document.getElementById('modalArchivo').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalArchivo();
 });
 </script>
 {% endblock %}

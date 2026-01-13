@@ -30,6 +30,174 @@
 .monto-item .valor.dolares { color: #059669; }
 .monto-item .valor.total { color: #dc3545; font-size: 1.5rem; }
 
+/* === REPORTE DE VENTAS ASOCIADO === */
+.reporte-section {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-top: 1px solid #bfdbfe;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.reporte-section.sin-reporte {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-top-color: #fbbf24;
+}
+
+.reporte-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.reporte-icon {
+    width: 45px;
+    height: 45px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.reporte-section.sin-reporte .reporte-icon {
+    color: #d97706;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
+}
+
+.reporte-datos h4 {
+    margin: 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #1e40af;
+    letter-spacing: 0.5px;
+}
+
+.reporte-section.sin-reporte .reporte-datos h4 {
+    color: #92400e;
+}
+
+.reporte-datos .folio-reporte {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.reporte-datos .meta-reporte {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.btn-ver-reporte {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-ver-reporte:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* === ESTATUS DEL DINERO === */
+.estatus-dinero-section {
+    padding: 1.25rem 1.5rem;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+.estatus-dinero-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.estatus-dinero-header i {
+    color: #10b981;
+}
+
+.estatus-pasos {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+}
+
+.estatus-pasos::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 30px;
+    right: 30px;
+    height: 3px;
+    background: #e5e7eb;
+    z-index: 0;
+}
+
+.estatus-paso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.paso-circulo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+    border: 3px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.estatus-paso.completado .paso-circulo {
+    background: #10b981;
+    color: white;
+}
+
+.estatus-paso.actual .paso-circulo {
+    background: #f59e0b;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.paso-texto {
+    font-size: 0.7rem;
+    text-align: center;
+    color: #9ca3af;
+    max-width: 70px;
+}
+
+.estatus-paso.completado .paso-texto,
+.estatus-paso.actual .paso-texto {
+    color: #374151;
+    font-weight: 600;
+}
+
 .flujo-section { padding: 1.5rem; border-top: 1px solid #e5e7eb; }
 .flujo-section h3 { font-size: 1rem; margin-bottom: 1rem; }
 
@@ -71,6 +239,14 @@
 .historial-item .info .meta { font-size: 0.8rem; color: #6b7280; }
 
 .btn-imprimir { background: #6b7280; color: white; padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+
+@media (max-width: 768px) {
+    .estatus-pasos::before { display: none; }
+    .estatus-pasos { flex-wrap: wrap; gap: 0.5rem; }
+    .estatus-paso { flex: 0 0 30%; }
+    .reporte-section { flex-direction: column; text-align: center; }
+    .reporte-info { flex-direction: column; }
+}
 </style>
 {% endblock %}
 
@@ -85,10 +261,10 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="{{ url_for('entregas.imprimir_vale', id=entrega.id) }}" class="btn-imprimir" target="_blank">
+            <a href="{{ url_for('main.imprimir_vale', id=entrega.id) }}" class="btn-imprimir" target="_blank">
                 <i class="fas fa-print"></i> Imprimir
             </a>
-            <a href="{{ url_for('entregas.lista_entregas') }}" class="btn-secondary">
+            <a href="{{ url_for('main.lista_entregas') }}" class="btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -134,6 +310,79 @@
                     </div>
                 </div>
 
+                <!-- NUEVO: Reporte de Ventas Asociado -->
+                {% if entrega.reporte_venta %}
+                <div class="reporte-section">
+                    <div class="reporte-info">
+                        <div class="reporte-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="reporte-datos">
+                            <h4>Reporte de Ventas Asociado</h4>
+                            <div class="folio-reporte">{{ entrega.reporte_venta.folio }}</div>
+                            <div class="meta-reporte">
+                                {{ entrega.reporte_venta.fecha.strftime('%d/%m/%Y') if entrega.reporte_venta.fecha else '' }} 
+                                • {{ entrega.reporte_venta.usuario.nombre if entrega.reporte_venta.usuario else 'Sin agente' }}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('main.ver_reporte_venta', id=entrega.reporte_venta.id) }}" class="btn-ver-reporte">
+                        <i class="fas fa-external-link-alt"></i> Ver Reporte
+                    </a>
+                </div>
+                {% else %}
+                <div class="reporte-section sin-reporte">
+                    <div class="reporte-info">
+                        <div class="reporte-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="reporte-datos">
+                            <h4>Reporte de Ventas</h4>
+                            <div class="folio-reporte">Sin reporte asociado</div>
+                            <div class="meta-reporte">Este vale no está vinculado a ningún reporte</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- NUEVO: Estatus del Dinero (visual simplificado) -->
+                <div class="estatus-dinero-section">
+                    <div class="estatus-dinero-header">
+                        <i class="fas fa-money-bill-wave"></i> Estatus del Efectivo
+                    </div>
+                    <div class="estatus-pasos">
+                        <!-- Paso 1: Creado -->
+                        <div class="estatus-paso completado">
+                            <div class="paso-circulo"><i class="fas fa-plus"></i></div>
+                            <div class="paso-texto">Creado</div>
+                        </div>
+                        
+                        <!-- Paso 2: Recibido -->
+                        <div class="estatus-paso {{ 'completado' if entrega.fecha_recepcion else ('actual' if entrega.estatus == 'pendiente' else 'pendiente') }}">
+                            <div class="paso-circulo"><i class="fas fa-hand-paper"></i></div>
+                            <div class="paso-texto">Recibido</div>
+                        </div>
+                        
+                        <!-- Paso 3: Retirado -->
+                        <div class="estatus-paso {{ 'completado' if entrega.fecha_retiro else ('actual' if entrega.estatus == 'en_custodia' else 'pendiente') }}">
+                            <div class="paso-circulo"><i class="fas fa-walking"></i></div>
+                            <div class="paso-texto">Retirado</div>
+                        </div>
+                        
+                        <!-- Paso 4: Depositado -->
+                        <div class="estatus-paso {{ 'completado' if entrega.fecha_deposito else ('actual' if entrega.estatus == 'retirado' else 'pendiente') }}">
+                            <div class="paso-circulo"><i class="fas fa-university"></i></div>
+                            <div class="paso-texto">Depositado</div>
+                        </div>
+                        
+                        <!-- Paso 5: Revisado -->
+                        <div class="estatus-paso {{ 'completado' if entrega.fecha_revision else ('actual' if entrega.estatus == 'depositado' else 'pendiente') }}">
+                            <div class="paso-circulo"><i class="fas fa-check-double"></i></div>
+                            <div class="paso-texto">Revisado</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Flujo -->
                 <div class="flujo-section">
                     <h3><i class="fas fa-route"></i> Flujo de Entrega</h3>
@@ -141,7 +390,7 @@
                         <!-- Paso 1: Creado -->
                         <div class="timeline-item completado">
                             <div class="paso-titulo">Creado por Agente</div>
-                            <div class="paso-info">{{ entrega.agente.nombre if entrega.agente else '-' }} - {{ entrega.fecha_hora_creacion.strftime('%d/%m %H:%M') if entrega.fecha_hora_creacion else '' }}</div>
+                            <div class="paso-info">{{ entrega.agente.nombre if entrega.agente else '-' }} - {{ entrega.fecha.strftime('%d/%m %H:%M') if entrega.fecha else '' }}</div>
                         </div>
                         
                         <!-- Paso 2: Entregado -->
@@ -155,10 +404,10 @@
                         </div>
                         
                         <!-- Paso 3: Retirado -->
-                        <div class="timeline-item {{ 'completado' if entrega.fecha_retiro else ('actual' if entrega.estatus in ['entregado', 'en_custodia'] else 'pendiente') }}">
+                        <div class="timeline-item {{ 'completado' if entrega.fecha_retiro else ('actual' if entrega.estatus == 'en_custodia' else 'pendiente') }}">
                             <div class="paso-titulo">Retirado para Depósito</div>
-                            {% if entrega.encargado_retiro %}
-                            <div class="paso-info">{{ entrega.encargado_retiro.nombre }} - {{ entrega.fecha_retiro.strftime('%d/%m %H:%M') if entrega.fecha_retiro else '' }}</div>
+                            {% if entrega.fecha_retiro %}
+                            <div class="paso-info">{{ entrega.usuario_retiro.nombre if entrega.usuario_retiro else '-' }} - {{ entrega.fecha_retiro.strftime('%d/%m %H:%M') }}</div>
                             {% else %}
                             <div class="paso-info">Pendiente</div>
                             {% endif %}
@@ -168,7 +417,7 @@
                         <div class="timeline-item {{ 'completado' if entrega.fecha_deposito else ('actual' if entrega.estatus == 'retirado' else 'pendiente') }}">
                             <div class="paso-titulo">Depositado en Banco</div>
                             {% if entrega.fecha_deposito %}
-                            <div class="paso-info">{{ entrega.cuenta_deposito }} - Ref: {{ entrega.referencia_deposito }}</div>
+                            <div class="paso-info">{{ entrega.cuenta_deposito or '' }} - Ref: {{ entrega.referencia_deposito or '' }}</div>
                             {% else %}
                             <div class="paso-info">Pendiente</div>
                             {% endif %}
@@ -215,7 +464,7 @@
                     
                     {% if entrega.puede_entregar and current_user.es_admin() %}
                     <!-- Acción: Registrar Entrega -->
-                    <form class="accion-form" method="POST" action="{{ url_for('entregas.entregar_a_admin', id=entrega.id) }}">
+                    <form class="accion-form" method="POST" action="{{ url_for('main.entregar_a_admin', id=entrega.id) }}">
                         <div class="accion-titulo" style="color: #3b82f6;">
                             <i class="fas fa-hand-paper"></i> Registrar Recepción
                         </div>
@@ -240,7 +489,7 @@
 
                     {% if entrega.puede_retirar and current_user.es_admin() %}
                     <!-- Acción: Retirar para Depósito -->
-                    <form class="accion-form" method="POST" action="{{ url_for('entregas.retirar_para_deposito', id=entrega.id) }}">
+                    <form class="accion-form" method="POST" action="{{ url_for('main.retirar_para_deposito', id=entrega.id) }}">
                         <div class="accion-titulo" style="color: #8b5cf6;">
                             <i class="fas fa-walking"></i> Retirar para Depósito
                         </div>
@@ -256,7 +505,7 @@
 
                     {% if entrega.puede_depositar and current_user.es_admin() %}
                     <!-- Acción: Registrar Depósito -->
-                    <form class="accion-form" method="POST" action="{{ url_for('entregas.registrar_deposito', id=entrega.id) }}">
+                    <form class="accion-form" method="POST" action="{{ url_for('main.registrar_deposito', id=entrega.id) }}">
                         <div class="accion-titulo" style="color: #10b981;">
                             <i class="fas fa-university"></i> Registrar Depósito
                         </div>
@@ -280,7 +529,7 @@
 
                     {% if entrega.puede_revisar and current_user.es_admin() %}
                     <!-- Acción: Revisar (Director) -->
-                    <form class="accion-form" method="POST" action="{{ url_for('entregas.revisar_entrega', id=entrega.id) }}">
+                    <form class="accion-form" method="POST" action="{{ url_for('main.revisar_entrega', id=entrega.id) }}">
                         <div class="accion-titulo" style="color: #059669;">
                             <i class="fas fa-clipboard-check"></i> Revisión Final
                         </div>

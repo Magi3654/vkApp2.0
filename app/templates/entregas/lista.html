@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="{{ url_for('entregas.nueva_entrega') }}" class="btn-primary">
+            <a href="{{ url_for('main.nueva_entrega') }}" class="btn-primary">
                 <i class="fas fa-plus"></i> Nuevo Vale
             </a>
         </div>
@@ -70,7 +70,7 @@
             <i class="fas fa-filter"></i> Filtrar
         </button>
         {% if filtro_estatus or filtro_fecha %}
-        <a href="{{ url_for('entregas.lista_entregas') }}" class="btn-accion btn-ver">
+        <a href="{{ url_for('main.lista_entregas') }}" class="btn-accion btn-ver">
             <i class="fas fa-times"></i> Limpiar
         </a>
         {% endif %}
@@ -120,7 +120,7 @@
                     </td>
                     <td>{{ e.receptor.nombre if e.receptor else '-' }}</td>
                     <td class="acciones">
-                        <a href="{{ url_for('entregas.ver_entrega', id=e.id) }}" class="btn-accion btn-ver">
+                        <a href="{{ url_for('main.ver_entrega', id=e.id) }}" class="btn-accion btn-ver">
                             <i class="fas fa-eye"></i> Ver
                         </a>
                     </td>
@@ -132,7 +132,7 @@
         <div class="empty-state">
             <i class="fas fa-inbox"></i>
             <p>No hay entregas registradas</p>
-            <a href="{{ url_for('entregas.nueva_entrega') }}" class="btn-primary" style="margin-top: 1rem;">
+            <a href="{{ url_for('main.nueva_entrega') }}" class="btn-primary" style="margin-top: 1rem;">
                 <i class="fas fa-plus"></i> Crear Primer Vale
             </a>
         </div>

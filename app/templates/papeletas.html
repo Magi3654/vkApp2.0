@@ -3,6 +3,97 @@
 {% block page_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylespapeletas.css') }}">
     <style>
+        /* Sección de Archivo PDF */
+        .archivo-section {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+        .archivo-section:hover {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .archivo-section.has-file {
+            border-style: solid;
+            border-color: #10b981;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        }
+        .archivo-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .archivo-header i {
+            font-size: 1.75rem;
+            color: #3b82f6;
+        }
+        .archivo-section.has-file .archivo-header i {
+            color: #10b981;
+        }
+        .archivo-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: #1e40af;
+        }
+        .archivo-section.has-file .archivo-header h4 {
+            color: #065f46;
+        }
+        .archivo-header p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #3b82f6;
+        }
+        .archivo-section.has-file .archivo-header p {
+            color: #059669;
+        }
+        .archivo-input-wrapper {
+            position: relative;
+        }
+        .archivo-input-wrapper input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .archivo-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            color: #3b82f6;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .archivo-label:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+        .archivo-section.has-file .archivo-label {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #059669;
+        }
+        .archivo-label i {
+            font-size: 1.25rem;
+        }
+        .archivo-help {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
         .extemporanea-section {
             background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
             border: 2px solid #ec4899;
@@ -50,7 +141,7 @@
             <p>Completa la información del cargo a tarjeta de crédito.</p>
         </div>
         
-        <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form">
+        <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form" enctype="multipart/form-data">
             
             <div class="extemporanea-section" id="extemporaneaSection">
                 <div class="extemporanea-header">
@@ -269,6 +360,25 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Sección de Archivo PDF del Boleto -->
+            <div class="archivo-section">
+                <div class="archivo-header">
+                    <i class="fas fa-file-pdf"></i>
+                    <div>
+                        <h4>PDF del Boleto *</h4>
+                        <p>Adjunta el boleto electrónico en formato PDF</p>
+                    </div>
+                </div>
+                <div class="archivo-input-wrapper">
+                    <input type="file" id="archivo_boleto" name="archivo_boleto" accept=".pdf" required>
+                    <label for="archivo_boleto" class="archivo-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="archivo_nombre">Seleccionar archivo PDF...</span>
+                    </label>
+                </div>
+                <small class="archivo-help"><i class="fas fa-info-circle"></i> Máximo 10MB. Solo archivos PDF.</small>
             </div>
             
             <div class="form-actions">
@@ -626,6 +736,41 @@ document.addEventListener('DOMContentLoaded', function() {
                        String(hoy.getDate()).padStart(2, '0');
     document.getElementById('fecha_venta').value = fechaLocal;
     totalFinal.value = '0.00';
+    
+    // Manejo del archivo PDF
+    const archivoInput = document.getElementById('archivo_boleto');
+    const archivoNombre = document.getElementById('archivo_nombre');
+    const archivoSection = document.querySelector('.archivo-section');
+    
+    archivoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            
+            // Validar que sea PDF
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert('Solo se permiten archivos PDF');
+                this.value = '';
+                archivoNombre.textContent = 'Seleccionar archivo PDF...';
+                archivoSection.classList.remove('has-file');
+                return;
+            }
+            
+            // Validar tamaño (máximo 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 10MB.');
+                this.value = '';
+                archivoNombre.textContent = 'Seleccionar archivo PDF...';
+                archivoSection.classList.remove('has-file');
+                return;
+            }
+            
+            archivoNombre.textContent = file.name;
+            archivoSection.classList.add('has-file');
+        } else {
+            archivoNombre.textContent = 'Seleccionar archivo PDF...';
+            archivoSection.classList.remove('has-file');
+        }
+    });
     
     const tipoCargo = document.getElementById('tipo_cargo');
     const aerolineaGroup = document.getElementById('aerolineaGroup');
