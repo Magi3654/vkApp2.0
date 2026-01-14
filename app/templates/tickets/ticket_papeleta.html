@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papeleta {{ papeleta.folio }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* ============================================
+           PAPELETA TÉRMICA 80mm - VIAJES KINESSIA
+           Sin header - Listo para impresora térmica
+           ============================================ */
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Noto Sans Display', Arial, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+        }
+        
+        /* Layout principal */
+        .print-layout {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        /* Panel de controles */
+        .print-panel {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e8e8e8;
+            width: 200px;
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+        
+        .print-panel h4 {
+            color: #333;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .print-panel h4 i { color: #990100; }
+        
+        .print-panel .btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        
+        .print-panel .btn-primary {
+            background: linear-gradient(135deg, #990100 0%, #b90504 100%);
+            color: #fff;
+        }
+        .print-panel .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(153,1,0,0.3);
+        }
+        
+        .print-panel .btn-secondary {
+            background: #f6f6f6;
+            color: #333;
+            border: 1px solid #e8e8e8;
+        }
+        .print-panel .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        
+        .print-panel .shortcuts {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e8e8e8;
+            font-size: 0.75rem;
+            color: #666;
+        }
+        .print-panel .shortcuts kbd {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+        
+        /* Contenedor del ticket */
+        .ticket-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Ticket */
+        .ticket {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            width: 72mm;
+            background: #fff;
+            color: #333;
+            padding: 4mm;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid #ddd;
+        }
+        
+        /* Header con logo */
+        .t-header {
+            text-align: center;
+            padding-bottom: 3mm;
+            margin-bottom: 3mm;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        /* === LOGO ESTILIZADO === */
+        .t-logo-img {
+            max-width: 35mm;
+            height: auto;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+        }
+        
+        @media print {
+            .t-logo-img {
+                filter: none;
+                max-width: 32mm;
+            }
+        }
+        
+        /* Fecha */
+        .t-fecha-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 2mm;
+        }
+        .t-fecha-box {
+            text-align: right;
+        }
+        .t-fecha-label {
+            font-size: 8px;
+            font-weight: bold;
+        }
+        .t-fecha-value {
+            font-size: 10px;
+            border-bottom: 1px solid #999;
+            padding: 0 2mm;
+        }
+        
+        /* Campos estilo formulario */
+        .t-field {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 2mm;
+            font-size: 10px;
+        }
+        .t-field .label {
+            font-weight: bold;
+            min-width: 32mm;
+            color: #333;
+        }
+        .t-field .value {
+            flex: 1;
+            border-bottom: 1px solid #999;
+            padding-bottom: 0.5mm;
+            min-height: 4mm;
+            color: #000;
+        }
+        
+        /* Sección de montos */
+        .t-montos {
+            background: #f9f9f9;
+            padding: 2mm;
+            margin: 3mm 0;
+            border: 1px solid #eee;
+        }
+        .t-monto-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            padding: 0.5mm 0;
+        }
+        .t-monto-row.total {
+            font-weight: bold;
+            font-size: 12px;
+            border-top: 1px solid #ccc;
+            margin-top: 1mm;
+            padding-top: 1mm;
+        }
+        
+        /* Folio lateral - DESACTIVADO */
+        /*
+        .t-body {
+            position: relative;
+            padding-left: 10mm;
+        }
+        .t-folio-lateral {
+            position: absolute;
+            left: 0;
+            top: 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ddd;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            height: 100%;
+            line-height: 1;
+        }
+        */
+        
+        /* Footer */
+        .t-footer {
+            margin-top: 3mm;
+            padding-top: 2mm;
+            border-top: 1px dashed #ccc;
+        }
+        .t-admin-note {
+            font-size: 7px;
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            margin-top: 2mm;
+        }
+        .t-year {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ddd;
+            text-align: center;
+            margin-top: 1mm;
+        }
+        
+        /* === ESTILOS DE IMPRESIÓN === */
+        @page { 
+            size: 72mm auto; 
+            margin: 0; 
+        }
+        
+        @media print {
+            body {
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .print-layout {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .print-panel {
+                display: none !important;
+            }
+            
+            .ticket-container {
+                justify-content: flex-start !important;
+            }
+            
+            .ticket {
+                box-shadow: none !important;
+                border: none !important;
+                width: 72mm !important;
+                padding: 2mm !important;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .print-layout {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .print-panel {
+                width: 100%;
+                position: relative;
+                top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-layout">
+        <!-- Panel de controles -->
+        <div class="print-panel">
+            <h4><i class="fas fa-print"></i> {{ papeleta.folio }}</h4>
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <a href="{{ url_for('main.consulta_papeletas') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <div class="shortcuts">
+                <kbd>Ctrl</kbd>+<kbd>P</kbd> Imprimir<br>
+                <kbd>Esc</kbd> Volver
+            </div>
+        </div>
+        
+        <!-- Ticket -->
+        <div class="ticket-container">
+            <div class="ticket">
+                <!-- Header con logo -->
+                <div class="t-header">
+                    <img src="{{ url_for('static', filename='img/Logo-kinessia.png') }}" alt="Viajes Kinessia" class="t-logo-img">
+                </div>
+                
+                <!-- Fecha -->
+                <div class="t-fecha-row">
+                    <div class="t-fecha-box">
+                        <div class="t-fecha-label">Fecha de venta:</div>
+                        <div class="t-fecha-value">{{ papeleta.fecha_venta.strftime('%d / %m / %Y') if papeleta.fecha_venta else '__ / __ / ____' }}</div>
+                    </div>
+                </div>
+                
+                <!-- Cuerpo -->
+                <div class="t-body">
+                    <!-- Aerolínea -->
+                    <div class="t-field">
+                        <span class="label">Aerolínea:</span>
+                        <span class="value">{{ aerolinea_nombre or papeleta.proveedor or '' }}</span>
+                    </div>
+                    
+                    <!-- Forma de pago TKT (nombre de la tarjeta) -->
+                    <div class="t-field">
+                        <span class="label">FORMA DE PAGO TKT:</span>
+                        <span class="value">{{ tarjeta_nombre or papeleta.forma_pago or '' }}</span>
+                    </div>
+                    
+                    <!-- Agente -->
+                    <div class="t-field">
+                        <span class="label">AGENTE:</span>
+                        <span class="value">{{ papeleta.usuario.nombre if papeleta.usuario else '' }}</span>
+                    </div>
+                    
+                    <!-- Montos -->
+                    <div class="t-montos">
+                        <div class="t-monto-row">
+                            <span>TOTAL TKT:</span>
+                            <span>${{ "%.2f"|format(papeleta.total_ticket|default(0)|float) }}</span>
+                        </div>
+                        <div class="t-monto-row">
+                            <span>10%:</span>
+                            <span>${{ "%.2f"|format(papeleta.diez_porciento|default(0)|float) }}</span>
+                        </div>
+                        <div class="t-monto-row">
+                            <span>CARGO:</span>
+                            <span>${{ "%.2f"|format(papeleta.cargo|default(0)|float) }}</span>
+                        </div>
+                        <div class="t-monto-row total">
+                            <span>TOTAL:</span>
+                            <span>${{ "%.2f"|format(papeleta.total|default(0)|float) }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Facturar a -->
+                    <div class="t-field">
+                        <span class="label">FACTURAR A:</span>
+                        <span class="value">{{ papeleta.facturar_a or 'MOSTRADOR' }}</span>
+                    </div>
+                    
+                    <!-- Solicitó -->
+                    <div class="t-field">
+                        <span class="label">SOLICITÓ:</span>
+                        <span class="value">{{ papeleta.solicito or '' }}</span>
+                    </div>
+                    
+                    <!-- Clave SABRE -->
+                    <div class="t-field">
+                        <span class="label">CLAVE DE SABRE:</span>
+                        <span class="value">{{ papeleta.clave_sabre or '' }}</span>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div class="t-footer">
+                    <div class="t-field">
+                        <span class="label">FORMA PAGO CLIENTE:</span>
+                        <span class="value">{{ papeleta.forma_pago or '' }}</span>
+                    </div>
+                    <div class="t-admin-note">(Llenado por administración)</div>
+                    <div class="t-year">{{ now.year }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') { 
+            e.preventDefault(); 
+            window.print(); 
+        }
+        if (e.key === 'Escape') {
+            window.location.href = '{{ url_for("main.consulta_papeletas") }}';
+        }
+    });
+    
+    {% if request.args.get('autoprint') == '1' %}
+    window.onload = () => setTimeout(() => window.print(), 300);
+    {% endif %}
+    </script>
+</body>
+</html>

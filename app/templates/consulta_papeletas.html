@@ -3,6 +3,17 @@
 {% block page_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_consulta_papeletas.css') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+/* Botón de impresión de ticket */
+.btn-action.btn-print {
+    background: linear-gradient(135deg, var(--color-purple, #8b5cf6) 0%, var(--color-purple-dark, #7c3aed) 100%);
+    color: var(--white, #ffffff);
+}
+.btn-action.btn-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -155,6 +166,8 @@
                         <td class="acciones-cell no-print">
                             <button type="button" class="btn-action btn-view" title="Ver detalle" 
                                     onclick="verPapeleta({{ papeleta.id }})"><i class="fas fa-eye"></i></button>
+                            <button type="button" class="btn-action btn-print" title="Imprimir ticket"
+                                    onclick="imprimirTicket({{ papeleta.id }})"><i class="fas fa-print"></i></button>
                             {% if current_user.es_admin() %}
                             <button type="button" class="btn-action btn-edit" title="Editar factura"
                                     onclick="editarFactura({{ papeleta.id }}, '{{ papeleta.folio }}', '{{ papeleta.numero_factura or '' }}')"><i class="fas fa-edit"></i></button>
@@ -711,6 +724,11 @@ function guardarFactura(e) {
     .catch(error => {
         alert('Error de conexión: ' + error.message);
     });
+}
+
+// === IMPRESIÓN DE TICKET ===
+function imprimirTicket(papeletaId) {
+    window.open(`/papeleta/${papeletaId}/ticket`, '_blank', 'width=350,height=550,scrollbars=yes');
 }
 </script>
 

@@ -1403,6 +1403,62 @@ def eliminar_papeleta(id):
 
 
 # =============================================================================
+# IMPRESIÓN DE TICKETS TÉRMICOS
+# =============================================================================
+
+@main.route('/papeleta/<int:id>/ticket')
+@login_required
+def imprimir_ticket_papeleta(id):
+    """
+    Genera ticket térmico 80mm para uso interno.
+    Parámetros URL opcionales:
+    - autoprint=1 : Imprime automáticamente al cargar
+    """
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    # Verificar permisos: solo el dueño o admin pueden imprimir
+    if papeleta.usuario_id != current_user.id and not current_user.es_admin():
+        flash('No tienes permiso para imprimir esta papeleta.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Obtener nombre de aerolínea
+    aerolinea_nombre = None
+    if papeleta.aerolinea_id:
+        aerolinea = Aerolinea.query.get(papeleta.aerolinea_id)
+        if aerolinea:
+            aerolinea_nombre = aerolinea.nombre
+    
+    # Obtener nombre de tarjeta (usando relación o búsqueda)
+    tarjeta_nombre = None
+    if hasattr(papeleta, 'tarjeta_rel') and papeleta.tarjeta_rel:
+        tarjeta_nombre = papeleta.tarjeta_rel.nombre_tarjeta
+    elif hasattr(papeleta, 'tarjeta_id') and papeleta.tarjeta_id:
+        tarjeta_obj = TarjetaCorporativa.query.get(papeleta.tarjeta_id)
+        if tarjeta_obj:
+            tarjeta_nombre = tarjeta_obj.nombre_tarjeta
+    elif papeleta.tarjeta:
+        tarjeta_obj = TarjetaCorporativa.query.filter_by(numero_tarjeta=papeleta.tarjeta).first()
+        if tarjeta_obj:
+            tarjeta_nombre = tarjeta_obj.nombre_tarjeta
+    
+    # Obtener nombre de sucursal
+    sucursal_nombre = None
+    if papeleta.sucursal_id:
+        sucursal = Sucursal.query.get(papeleta.sucursal_id)
+        if sucursal:
+            sucursal_nombre = sucursal.nombre
+    elif current_user.sucursal:
+        sucursal_nombre = current_user.sucursal.nombre
+    
+    return render_template('tickets/ticket_papeleta.html',
+        papeleta=papeleta,
+        aerolinea_nombre=aerolinea_nombre,
+        tarjeta_nombre=tarjeta_nombre,
+        sucursal_nombre=sucursal_nombre,
+        now=datetime.now(TIMEZONE_MX)
+    )
+
+# =============================================================================
 # RUTAS DE DESGLOSES
 # =============================================================================
 
