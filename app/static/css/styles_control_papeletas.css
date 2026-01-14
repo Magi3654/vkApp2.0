@@ -417,8 +417,8 @@
     color: #991b1b; 
 }
 .badge-estado.reportada { 
-    background: var(--cp-warning-light); 
-    color: #92400e; 
+    background: #d1fae5; 
+    color: #065f46; 
 }
 .badge-estado.facturada { 
     background: var(--cp-success-light); 

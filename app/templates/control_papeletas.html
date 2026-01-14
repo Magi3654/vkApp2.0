@@ -151,8 +151,10 @@
                         <td>{{ p.facturar_a or (p.empresa.nombre_empresa if p.empresa else '-') }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
                         <td>
-                            {% if p.numero_factura %}
+                            {% if p.numero_factura and p.numero_factura|upper != 'N/A' %}
                             <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
+                            {% elif p.reporte_venta_id or p.numero_factura|upper == 'N/A' %}
+                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
                             {% else %}
                             <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
                             {% endif %}
@@ -402,8 +404,10 @@
                         <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
                         <td>{{ p.forma_pago or '-' }}</td>
                         <td>
-                            {% if p.numero_factura %}
+                            {% if p.numero_factura and p.numero_factura|upper != 'N/A' %}
                             <span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>
+                            {% elif p.reporte_venta_id or p.numero_factura|upper == 'N/A' %}
+                            <span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>
                             {% else %}
                             <span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>
                             {% endif %}
@@ -614,8 +618,10 @@ function verDetalle(id) {
 
 function renderDetalle(p) {
     let estatusHTML = '';
-    if (p.numero_factura) {
+    if (p.numero_factura && p.numero_factura.toUpperCase() !== 'N/A') {
         estatusHTML = '<span class="badge-estado facturada"><i class="fas fa-check"></i> Facturada</span>';
+    } else if (p.reporte_venta_id || (p.numero_factura && p.numero_factura.toUpperCase() === 'N/A')) {
+        estatusHTML = '<span class="badge-estado reportada"><i class="fas fa-chart-bar"></i> Reportada</span>';
     } else {
         estatusHTML = '<span class="badge-estado sin-reportar"><i class="fas fa-times"></i> Sin reportar</span>';
     }

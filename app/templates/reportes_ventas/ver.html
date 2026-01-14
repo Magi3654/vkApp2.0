@@ -4,7 +4,416 @@
 
 {% block page_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_reportes_ventas.css') }}">
+<style>
+/* === ESTILOS PARA REVISIÓN === */
+.revision-header {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.revision-header .info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.revision-header .info i {
+    font-size: 1.5rem;
+    color: #d97706;
+}
+
+.revision-header .info span {
+    font-weight: 600;
+    color: #92400e;
+}
+
+.revision-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.revision-progress .count {
+    color: #059669;
+}
+
+.revision-progress .total {
+    color: #6b7280;
+}
+
+/* Checkbox de revisión en tabla */
+.col-revision {
+    width: 40px;
+    text-align: center;
+}
+
+.check-revision {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: #059669;
+}
+
+.check-revision:checked + .check-label {
+    color: #059669;
+}
+
+/* Botón ver papeleta */
+.btn-ver-papeleta {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-ver-papeleta:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+
+/* Fila revisada */
+tr.revisada {
+    background: #f0fdf4 !important;
+}
+
+tr.revisada td {
+    color: #065f46;
+}
+
+/* === MODAL LADO A LADO === */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-revision {
+    background: white;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 1400px;
+    max-height: 95vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-revision-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+}
+
+.modal-revision-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: white
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.modal-revision-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.panel-papeleta, .panel-boleto {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.panel-header {
+    background: #f3f4f6;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.panel-header i {
+    color: #dc2626;
+}
+
+.panel-content {
+    padding: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.panel-boleto .panel-content {
+    padding: 0;
+    background: #f9fafb;
+}
+
+.panel-boleto iframe, .panel-boleto embed {
+    width: 100%;
+    height: 60vh;
+    border: none;
+}
+
+/* Datos de papeleta en modal */
+.papeleta-datos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.dato-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.dato-item .label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.dato-item .value {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dato-item.destacado .value {
+    font-size: 1.25rem;
+    color: #059669;
+}
+
+.montos-comparacion {
+    margin-top: 1.5rem;
+    background: #f0fdf4;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 2px solid #10b981;
+}
+
+.montos-comparacion h4 {
+    margin: 0 0 1rem 0;
+    color: #065f46;
+    font-size: 0.875rem;
+}
+
+.monto-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #d1d5db;
+}
+
+.monto-row:last-child {
+    border-bottom: none;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #10b981;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Footer del modal */
+.modal-revision-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-marcar-revisado {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-marcar-revisado:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.btn-marcar-revisado:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.navegacion-modal {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-nav {
+    padding: 0.5rem 1rem;
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-nav:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+.btn-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* === SECCIÓN DE APROBACIÓN MEJORADA === */
+.admin-actions {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.admin-actions h3 {
+    margin: 0 0 1rem 0;
+    color: #374151;
+}
+
+.acciones-aprobacion {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-success {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.btn-success:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-danger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.alerta-revision {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .modal-revision-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    .revision-header, .col-revision, .btn-ver-papeleta, .admin-actions {
+        display: none !important;
+    }
+}
+</style>
 {% endblock %}
+
 {% block content %}
 {# Calcular equivalente en pesos de dólares #}
 {% set dolares = reporte.deposito_dolares_efectivo|float or 0 %}
@@ -40,6 +449,23 @@
         </div>
     </div>
 
+    <!-- Barra de Revisión (solo para admin y estatus enviado) -->
+    {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+    <div class="revision-header no-print">
+        <div class="info">
+            <i class="fas fa-clipboard-check"></i>
+            <span>Revisión de Reporte - Verifica cada línea antes de aprobar</span>
+        </div>
+        <div class="revision-progress">
+            <i class="fas fa-check-circle" style="color: #059669;"></i>
+            <span class="count" id="revisados">0</span>
+            <span>/</span>
+            <span class="total" id="totalLineas">{{ detalles|length }}</span>
+            <span>revisados</span>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Reporte Estilo PDF -->
     <div class="reporte-pdf">
         <!-- Encabezado del Reporte -->
@@ -68,11 +494,17 @@
             <table class="tabla-reporte">
                 <thead>
                     <tr class="header-group">
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+                        <th rowspan="2" class="col-revision no-print">✓</th>
+                        {% endif %}
                         <th colspan="5" class="grupo-concepto">CONCEPTO</th>
                         <th colspan="4" class="grupo-costo">COSTO BOLETO</th>
                         <th colspan="5" class="grupo-otros">OTROS</th>
                         <th colspan="3" class="grupo-pago">FORMA DE PAGO</th>
                         <th rowspan="2" class="total-header">TOTAL</th>
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+                        <th rowspan="2" class="col-revision no-print">VER</th>
+                        {% endif %}
                     </tr>
                     <tr class="header-cols">
                         <th>CLAVE</th>
@@ -96,7 +528,14 @@
                 </thead>
                 <tbody>
                     {% for d in detalles %}
-                    <tr>
+                    <tr id="fila-{{ loop.index }}" data-index="{{ loop.index }}" data-papeleta-id="{{ d.papeleta_id or '' }}">
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+                        <td class="col-revision no-print">
+                            <input type="checkbox" class="check-revision" 
+                                   id="check-{{ loop.index }}" 
+                                   onchange="actualizarRevision({{ loop.index }})">
+                        </td>
+                        {% endif %}
                         <td><strong>{{ d.clave_aerolinea }}</strong></td>
                         <td>{{ d.num_boletos }}</td>
                         <td>{{ d.reserva }}</td>
@@ -115,19 +554,34 @@
                         <td class="monto">{{ '${:,.2f}'.format(d.voucher_tc|float) if d.voucher_tc else '' }}</td>
                         <td class="monto">{{ '${:,.2f}'.format(d.efectivo|float) if d.efectivo else '' }}</td>
                         <td class="monto total-col">${{ '{:,.2f}'.format(d.total_linea|float) }}</td>
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
+                        <td class="col-revision no-print">
+                            {% if d.papeleta_id %}
+                            <button type="button" class="btn-ver-papeleta" 
+                                    onclick="abrirModalRevision({{ loop.index }}, {{ d.papeleta_id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% else %}
+                            <span style="color: #9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                     {% for i in range(10 - detalles|length) %}
                     {% if i >= 0 %}
                     <tr class="empty-row">
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}<td class="no-print"></td>{% endif %}
                         <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                         <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}<td class="no-print"></td>{% endif %}
                     </tr>
                     {% endif %}
                     {% endfor %}
                 </tbody>
                 <tfoot>
                     <tr class="totales-row">
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}<td class="no-print"></td>{% endif %}
                         <td><strong>TOTAL</strong></td>
                         <td><strong>{{ reporte.total_boletos }}</strong></td>
                         <td colspan="3"></td>
@@ -144,175 +598,83 @@
                         <td class="monto">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</td>
                         <td class="monto total-col"><strong>${{ '{:,.2f}'.format(reporte.total_general|float) }}</strong></td>
+                        {% if reporte.estatus == 'enviado' and current_user.es_admin() %}<td class="no-print"></td>{% endif %}
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <!-- Sección Inferior -->
+
+        <!-- Sección Inferior - Estilo Excel -->
         <div class="reporte-footer-section">
-            <div class="footer-left">
-                <!-- Totales con lógica de dólares -->
-                <div class="totales-box">
-                    <div class="total-row">
-                        <span class="label">TOTAL EFECTIVO</span>
-                        <span class="value">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</span>
-                    </div>
-                    
-                    {% if dolares > 0 and tipo_cambio > 0 %}
-                    <div class="total-row sub" style="color: #dc3545;">
-                        <span class="label">(-) DÓLARES EN PESOS</span>
-                        <span class="value">-${{ '{:,.2f}'.format(equivalente_pesos) }}</span>
-                    </div>
-                    <div class="total-row highlight">
-                        <span class="label">EFECTIVO PESOS NETO</span>
-                        <span class="value">${{ '{:,.2f}'.format(efectivo_menos_dolares) }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="total-row sub">
-                        <span class="label">DEPOSITO EFECTIVO PESOS</span>
-                        <span class="value">${{ '{:,.2f}'.format(reporte.deposito_pesos_efectivo|float) }}</span>
-                    </div>
-                    <div class="total-row sub">
-                        <span class="label">DEPOSITO CHEQUES</span>
-                        <span class="value">${{ '{:,.2f}'.format(reporte.deposito_pesos_cheques|float) }}</span>
-                    </div>
-                    <div class="total-row sub">
-                        <span class="label">VOUCHER T.C.</span>
-                        <span class="value">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</span>
-                    </div>
-                    
-                    <div class="total-row grand-total">
-                        <span class="label">TOTAL GENERAL</span>
-                        <span class="value">${{ '{:,.2f}'.format(reporte.total_general|float) }}</span>
-                    </div>
+            <!-- Caja Total Efectivo -->
+            {% set dolares_en_pesos = dolares * tipo_cambio %}
+            {% set deposito_pesos = reporte.total_efectivo|float - dolares_en_pesos - (reporte.deposito_pesos_cheques|float or 0) %}
+            <div class="totales-box">
+                <div class="totales-header">TOTAL EFECTIVO</div>
+                <div class="total-row grand-total" style="border-top: none;">
+                    <span class="label">TOTAL EFECTIVO</span>
+                    <span class="value">${{ '{:,.2f}'.format(reporte.total_efectivo|float) }}</span>
                 </div>
-
-                <!-- Dólares -->
-                {% if dolares > 0 %}
-                <div class="dolares-box">
-                    <span class="label">💵 DÓLARES</span>
-                    <div class="dolar-row">
-                        <span>CANTIDAD USD</span>
-                        <span><strong>${{ '{:,.2f}'.format(dolares) }}</strong></span>
-                    </div>
-                    <div class="dolar-row">
-                        <span>TIPO DE CAMBIO</span>
-                        <span>${{ '{:,.4f}'.format(tipo_cambio) }}</span>
-                    </div>
-                    <div class="dolar-row equivalente">
-                        <span>EQUIVALENTE MXN</span>
-                        <span>${{ '{:,.2f}'.format(equivalente_pesos) }}</span>
-                    </div>
+                <div class="total-row">
+                    <span class="label">DEPÓSITO PESOS EFECTIVO</span>
+                    <span class="value">${{ '{:,.2f}'.format(deposito_pesos if deposito_pesos > 0 else 0) }}</span>
                 </div>
-                {% endif %}
-            </div>
-
-            <div class="footer-center">
-                <!-- Boletos por aerolínea -->
-                <div class="aerolineas-box">
-                    <div class="aerolineas-header">
-                        <span>CONCEPTO</span>
-                        <span>CLAVE</span>
-                        <span>BOLETOS</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Volaris</span>
-                        <span>Y4</span>
-                        <span>{{ boletos_aerolinea.get('Y4', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Viva Aerobus</span>
-                        <span>VI</span>
-                        <span>{{ boletos_aerolinea.get('VI', 0) + boletos_aerolinea.get('VB', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Aeroméxico</span>
-                        <span>AM</span>
-                        <span>{{ boletos_aerolinea.get('AM', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Internacionales</span>
-                        <span>INT</span>
-                        <span>{{ boletos_aerolinea.get('INT', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Hotel</span>
-                        <span>HT</span>
-                        <span>{{ boletos_aerolinea.get('HT', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Paquete</span>
-                        <span>PK</span>
-                        <span>{{ boletos_aerolinea.get('PK', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row">
-                        <span>Seguro</span>
-                        <span>SG</span>
-                        <span>{{ boletos_aerolinea.get('SG', 0) }}</span>
-                    </div>
-                    <div class="aerolinea-row total">
-                        <span><strong>TOTAL BOLETOS</strong></span>
-                        <span></span>
-                        <span><strong>{{ reporte.total_boletos }}</strong></span>
-                    </div>
-                    <div class="aerolinea-row total">
-                        <span><strong>TOTAL RECIBOS</strong></span>
-                        <span></span>
-                        <span><strong>{{ reporte.total_recibos }}</strong></span>
-                    </div>
+                <div class="total-row">
+                    <span class="label">DÓLARES</span>
+                    <span class="value">${{ '{:,.2f}'.format(dolares) }} USD</span>
+                </div>
+                <div class="total-row sub-row">
+                    <span class="label">TIPO DE CAMBIO</span>
+                    <span class="value">{{ '{:,.2f}'.format(tipo_cambio) }}</span>
+                </div>
+                <div class="total-row sub-row">
+                    <span class="label">EQUIVALENTE MXN</span>
+                    <span class="value">${{ '{:,.2f}'.format(dolares_en_pesos) }}</span>
+                </div>
+                <div class="total-row">
+                    <span class="label">DEPÓSITO CHEQUES</span>
+                    <span class="value">${{ '{:,.2f}'.format(reporte.deposito_pesos_cheques|float) }}</span>
+                </div>
+                <div class="total-row">
+                    <span class="label">VOUCHER T.C.</span>
+                    <span class="value">${{ '{:,.2f}'.format(reporte.total_voucher_tc|float) }}</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span class="label">TOTAL GENERAL</span>
+                    <span class="value">${{ '{:,.2f}'.format(reporte.total_general|float) }}</span>
                 </div>
             </div>
 
-            <div class="footer-right">
-                <!-- Datos de depósito -->
-                <div class="deposito-box">
-                    <h4>DEPÓSITOS</h4>
-                    
-                    <div class="deposito-row">
-                        <span>BANCO</span>
-                        <span>SANTANDER</span>
-                    </div>
-                    <div class="deposito-row">
-                        <span>CUENTA</span>
-                        <span>{{ reporte.cuenta_deposito or 'Suc. 0002 cta 7568815' }}</span>
-                    </div>
-                    <div class="deposito-row">
-                        <span>NOMBRE</span>
-                        <span style="font-size: 0.7rem;">VIAJES INTERNACIONALES MONARCA, S.A. DE C.V.</span>
-                    </div>
-                    
-                    <hr style="margin: 0.75rem 0; border: none; border-top: 1px dashed #ccc;">
-                    
-                    <div class="deposito-row">
-                        <span>PESOS EFECTIVO</span>
-                        <span><strong>${{ '{:,.2f}'.format(reporte.deposito_pesos_efectivo|float) }}</strong></span>
-                    </div>
-                    {% if dolares > 0 %}
-                    <div class="deposito-row">
-                        <span>DÓLARES</span>
-                        <span><strong>${{ '{:,.2f}'.format(dolares) }} USD</strong></span>
-                    </div>
-                    {% endif %}
-                    <div class="deposito-row">
-                        <span>CHEQUES</span>
-                        <span><strong>${{ '{:,.2f}'.format(reporte.deposito_pesos_cheques|float) }}</strong></span>
-                    </div>
-                    
-                    <hr style="margin: 0.75rem 0; border: none; border-top: 1px dashed #ccc;">
-                    
-                    <div class="deposito-row">
-                        <span>FECHA</span>
-                        <span>{{ reporte.fecha.strftime('%d-%b-%Y')|upper }}</span>
-                    </div>
-                    <div class="deposito-row">
-                        <span>AGENTE</span>
-                        <span>{{ reporte.usuario.nombre|upper if reporte.usuario else '---' }}</span>
-                    </div>
-                </div>
+            <!-- Caja Concepto/Boletos -->
+            <div class="conceptos-box">
+                <table class="conceptos-table">
+                    <thead>
+                        <tr>
+                            <th>CONCEPTO</th>
+                            <th>CLAVE</th>
+                            <th>BOLETOS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Volaris</td><td>Y4</td><td>{{ boletos_aerolinea.get('Y4', 0) }}</td></tr>
+                        <tr><td>Viva Aerobus</td><td>VI</td><td>{{ boletos_aerolinea.get('VI', 0) + boletos_aerolinea.get('VB', 0) }}</td></tr>
+                        <tr><td>Aeroméxico</td><td>AM</td><td>{{ boletos_aerolinea.get('AM', 0) }}</td></tr>
+                        <tr><td>Internacionales</td><td>INT</td><td>{{ boletos_aerolinea.get('INT', 0) }}</td></tr>
+                        <tr><td>Viva Smart</td><td>VS</td><td>{{ boletos_aerolinea.get('VS', 0) }}</td></tr>
+                        <tr><td>Seguros</td><td>SE</td><td>{{ boletos_aerolinea.get('SE', 0) + boletos_aerolinea.get('SG', 0) }}</td></tr>
+                        <tr><td>Cruceros</td><td>CR</td><td>{{ boletos_aerolinea.get('CR', 0) }}</td></tr>
+                        <tr><td>Transporte terrestre</td><td>TT</td><td>{{ boletos_aerolinea.get('TT', 0) }}</td></tr>
+                        <tr><td>Operadoras</td><td>OP</td><td>{{ boletos_aerolinea.get('OP', 0) }}</td></tr>
+                        <tr><td>Hotel</td><td>HT</td><td>{{ boletos_aerolinea.get('HT', 0) }}</td></tr>
+                        <tr><td>PKT Avion</td><td>PK</td><td>{{ boletos_aerolinea.get('PK', 0) }}</td></tr>
+                        <tr class="total-row-table"><td colspan="2"><strong>TOTAL BOLETOS</strong></td><td><strong>{{ reporte.total_boletos }}</strong></td></tr>
+                        <tr class="total-row-table"><td colspan="2"><strong>TOTAL RECIBOS</strong></td><td><strong>{{ reporte.total_recibos }}</strong></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+
 
         <!-- Notas -->
         {% if reporte.notas %}
@@ -331,31 +693,319 @@
         {% endif %}
     </div>
 
-    <!-- Acciones Admin -->
+    <!-- Acciones Admin - Mejorado con validación -->
     {% if reporte.estatus == 'enviado' and current_user.es_admin() %}
     <div class="admin-actions no-print">
         <h3><i class="fas fa-user-shield"></i> Acciones de Administrador</h3>
-        <div class="actions-row">
-            <form action="{{ url_for('main.aprobar_reporte_venta', id=reporte.id) }}" method="POST" style="display:inline;">
-                <button type="submit" class="btn-success">
+        
+        <div class="acciones-aprobacion">
+            <form action="{{ url_for('main.aprobar_reporte_venta', id=reporte.id) }}" method="POST" 
+                  id="formAprobar" onsubmit="return validarAprobacion()">
+                <button type="submit" class="btn-success" id="btnAprobar" disabled>
                     <i class="fas fa-check"></i> Aprobar Reporte
                 </button>
             </form>
+            
             <form action="{{ url_for('main.rechazar_reporte_venta', id=reporte.id) }}" method="POST" 
-                  style="display:inline;" onsubmit="return confirmarRechazo(this)">
+                  onsubmit="return confirmarRechazo(this)">
                 <input type="hidden" name="motivo" id="motivoRechazo">
                 <button type="submit" class="btn-danger">
                     <i class="fas fa-times"></i> Rechazar
                 </button>
             </form>
+            
+            <div class="alerta-revision" id="alertaRevision">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Debes revisar todas las líneas antes de aprobar</span>
+            </div>
         </div>
     </div>
     {% endif %}
 </div>
-{% endblock %}
 
-{% block page_scripts %}
+<!-- Modal de Revisión Lado a Lado -->
+<div class="modal-overlay" id="modalRevision">
+    <div class="modal-revision">
+        <div class="modal-revision-header">
+            <h3><i class="fas fa-search"></i> Revisión de Papeleta - <span id="modalTitulo"></span></h3>
+            <button class="modal-close" onclick="cerrarModalRevision()">&times;</button>
+        </div>
+        
+        <div class="modal-revision-body">
+            <!-- Panel Izquierdo: Papeleta -->
+            <div class="panel-papeleta">
+                <div class="panel-header">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Datos de la Papeleta</span>
+                </div>
+                <div class="panel-content" id="panelPapeleta">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Cargando...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel Derecho: PDF del Boleto -->
+            <div class="panel-boleto">
+                <div class="panel-header">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Boleto / Documento</span>
+                </div>
+                <div class="panel-content" id="panelBoleto">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Cargando PDF...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-revision-footer">
+            <div class="navegacion-modal">
+                <button class="btn-nav" id="btnAnterior" onclick="navegarPapeleta(-1)">
+                    <i class="fas fa-chevron-left"></i> Anterior
+                </button>
+                <button class="btn-nav" id="btnSiguiente" onclick="navegarPapeleta(1)">
+                    Siguiente <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <button class="btn-marcar-revisado" id="btnMarcarRevisado" onclick="marcarRevisadoYCerrar()">
+                <i class="fas fa-check"></i> Marcar como Revisado
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Script de Revisión -->
 <script>
+// Variables globales
+const totalLineas = {{ detalles|length }};
+let lineasRevisadas = new Set();
+let indiceActual = 0;
+
+// Datos de detalles para navegación
+const detallesData = [
+    {% for d in detalles %}
+    {
+        index: {{ loop.index }},
+        papeletaId: {{ d.papeleta_id or 'null' }},
+        numPapeleta: '{{ d.num_papeleta or "" }}',
+        clave: '{{ d.clave_aerolinea or "" }}',
+        total: {{ d.total_linea|float }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
+
+// Actualizar conteo de revisados
+function actualizarConteoRevisados() {
+    const revisadosEl = document.getElementById('revisados');
+    const btnAprobar = document.getElementById('btnAprobar');
+    const alerta = document.getElementById('alertaRevision');
+    
+    if (revisadosEl) {
+        revisadosEl.textContent = lineasRevisadas.size;
+    }
+    
+    if (btnAprobar && alerta) {
+        if (lineasRevisadas.size >= totalLineas) {
+            btnAprobar.disabled = false;
+            alerta.style.display = 'none';
+        } else {
+            btnAprobar.disabled = true;
+            alerta.style.display = 'flex';
+        }
+    }
+}
+
+// Manejar cambio de checkbox
+function actualizarRevision(index) {
+    const checkbox = document.getElementById('check-' + index);
+    const fila = document.getElementById('fila-' + index);
+    
+    if (checkbox && checkbox.checked) {
+        lineasRevisadas.add(index);
+        if (fila) fila.classList.add('revisada');
+    } else {
+        lineasRevisadas.delete(index);
+        if (fila) fila.classList.remove('revisada');
+    }
+    
+    actualizarConteoRevisados();
+}
+
+// Abrir modal de revisión
+function abrirModalRevision(index, papeletaId) {
+    indiceActual = index;
+    const detalle = detallesData.find(d => d.index === index);
+    
+    document.getElementById('modalTitulo').textContent = detalle ? (detalle.numPapeleta || 'Línea ' + index) : 'Línea ' + index;
+    document.getElementById('modalRevision').classList.add('active');
+    
+    // Cargar datos de papeleta
+    cargarPapeleta(papeletaId);
+    
+    // Actualizar navegación
+    actualizarNavegacion();
+}
+
+// Cerrar modal
+function cerrarModalRevision() {
+    document.getElementById('modalRevision').classList.remove('active');
+}
+
+// Cargar datos de papeleta
+function cargarPapeleta(papeletaId) {
+    const panelPapeleta = document.getElementById('panelPapeleta');
+    const panelBoleto = document.getElementById('panelBoleto');
+    
+    // Mostrar loading
+    panelPapeleta.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Cargando...</p></div>';
+    panelBoleto.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Cargando PDF...</p></div>';
+    
+    fetch(`/api/papeleta/${papeletaId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Renderizar datos de papeleta
+            panelPapeleta.innerHTML = `
+                <div class="papeleta-datos">
+                    <div class="dato-item">
+                        <span class="label">Folio</span>
+                        <span class="value">${data.folio}</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="label">Fecha Venta</span>
+                        <span class="value">${data.fecha_venta}</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="label">Cliente / Facturar a</span>
+                        <span class="value">${data.facturar_a || '---'}</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="label">Aerolínea</span>
+                        <span class="value">${data.aerolinea || data.proveedor || '---'}</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="label">No. Recibo</span>
+                        <span class="value">${data.num_recibo || '---'}</span>
+                    </div>
+                    <div class="dato-item">
+                        <span class="label">Reserva</span>
+                        <span class="value">${data.reserva || '---'}</span>
+                    </div>
+                </div>
+                
+                <div class="montos-comparacion">
+                    <h4><i class="fas fa-calculator"></i> Desglose de Montos</h4>
+                    <div class="monto-row">
+                        <span>Total Ticket</span>
+                        <span>$${Number(data.total_ticket || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>10%</span>
+                        <span>$${Number(data.diez_porciento || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Cargo Expedición</span>
+                        <span>$${Number(data.cargo || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span><strong>TOTAL PAPELETA</strong></span>
+                        <span><strong>$${Number(data.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></span>
+                    </div>
+                </div>
+            `;
+            
+            // Cargar PDF del boleto
+            if (data.archivo_boleto) {
+                panelBoleto.innerHTML = `
+                    <iframe src="/static/uploads/boletos/${data.archivo_boleto}" 
+                            type="application/pdf"
+                            title="Boleto PDF">
+                    </iframe>
+                `;
+            } else {
+                panelBoleto.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; color: #9ca3af;">
+                        <i class="fas fa-file-pdf" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>No hay PDF adjunto para esta papeleta</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            panelPapeleta.innerHTML = `<p style="color: #dc2626; padding: 1rem;">Error al cargar: ${error.message}</p>`;
+        });
+}
+
+// Navegación entre papeletas
+function navegarPapeleta(direccion) {
+    const papeletasConId = detallesData.filter(d => d.papeletaId);
+    const indiceEnLista = papeletasConId.findIndex(d => d.index === indiceActual);
+    const nuevoIndice = indiceEnLista + direccion;
+    
+    if (nuevoIndice >= 0 && nuevoIndice < papeletasConId.length) {
+        const nuevaPapeleta = papeletasConId[nuevoIndice];
+        abrirModalRevision(nuevaPapeleta.index, nuevaPapeleta.papeletaId);
+    }
+}
+
+// Actualizar botones de navegación
+function actualizarNavegacion() {
+    const papeletasConId = detallesData.filter(d => d.papeletaId);
+    const indiceEnLista = papeletasConId.findIndex(d => d.index === indiceActual);
+    
+    const btnAnterior = document.getElementById('btnAnterior');
+    const btnSiguiente = document.getElementById('btnSiguiente');
+    
+    if (btnAnterior) btnAnterior.disabled = indiceEnLista <= 0;
+    if (btnSiguiente) btnSiguiente.disabled = indiceEnLista >= papeletasConId.length - 1;
+    
+    // Actualizar estado del botón revisar
+    const yaRevisado = lineasRevisadas.has(indiceActual);
+    const btnMarcar = document.getElementById('btnMarcarRevisado');
+    if (btnMarcar) {
+        if (yaRevisado) {
+            btnMarcar.innerHTML = '<i class="fas fa-check-double"></i> Ya Revisado';
+            btnMarcar.disabled = true;
+        } else {
+            btnMarcar.innerHTML = '<i class="fas fa-check"></i> Marcar como Revisado';
+            btnMarcar.disabled = false;
+        }
+    }
+}
+
+// Marcar como revisado y cerrar/siguiente
+function marcarRevisadoYCerrar() {
+    // Marcar checkbox
+    const checkbox = document.getElementById('check-' + indiceActual);
+    if (checkbox && !checkbox.checked) {
+        checkbox.checked = true;
+        actualizarRevision(indiceActual);
+    }
+    
+    // Ir a siguiente o cerrar
+    const papeletasConId = detallesData.filter(d => d.papeletaId);
+    const indiceEnLista = papeletasConId.findIndex(d => d.index === indiceActual);
+    
+    if (indiceEnLista < papeletasConId.length - 1) {
+        navegarPapeleta(1);
+    } else {
+        cerrarModalRevision();
+    }
+}
+
+// Validar antes de aprobar
+function validarAprobacion() {
+    if (lineasRevisadas.size < totalLineas) {
+        alert('Debes revisar todas las líneas antes de aprobar el reporte.');
+        return false;
+    }
+    return confirm('¿Estás seguro de aprobar este reporte?');
+}
+
+// Confirmar rechazo
 function confirmarRechazo(form) {
     var motivo = prompt('Ingresa el motivo del rechazo:');
     if (motivo && motivo.trim().length > 0) {
@@ -364,5 +1014,24 @@ function confirmarRechazo(form) {
     }
     return false;
 }
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarModalRevision();
+    }
+});
+
+// Cerrar modal clickeando fuera
+document.getElementById('modalRevision')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalRevision();
+    }
+});
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarConteoRevisados();
+});
 </script>
 {% endblock %}

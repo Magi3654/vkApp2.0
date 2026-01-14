@@ -1866,9 +1866,16 @@ def nuevo_reporte_venta():
                 usuario_id=current_user.id
             ).first()
             
+            # Si existe pero YA TIENE VALE, permitir crear uno nuevo
+            # Si existe y NO tiene vale, redirigir al existente para editarlo
             if existente:
-                flash(f'Ya existe un reporte para el {fecha.strftime("%d/%m/%Y")}. Folio: {existente.folio}', 'warning')
-                return redirect(url_for('main.editar_reporte_venta', id=existente.id))
+                if existente.entrega_corte:
+                    # Ya tiene vale, permitir crear otro reporte
+                    pass  # Continúa con la creación
+                else:
+                    # No tiene vale, redirigir a editar el existente
+                    flash(f'Ya existe un reporte para el {fecha.strftime("%d/%m/%Y")}. Folio: {existente.folio}', 'warning')
+                    return redirect(url_for('main.editar_reporte_venta', id=existente.id))
             
             reporte = ReporteVenta(
                 fecha=fecha,
@@ -3172,3 +3179,73 @@ En tu ruta de dashboard, agrega esto para pasar datos de papeletas pendientes:
 Y pásalo al template:
     papeletas_pendientes=papeletas_pendientes
 """
+
+# ============================================================
+# RECEPCIÓN DE VALES (Vista para Admin)
+# ============================================================
+
+@main.route('/entregas/recepcion')
+@login_required
+@admin_required
+def recepcion_vales():
+    """Panel para que administración reciba vales pendientes"""
+    from datetime import datetime
+    
+    # Vales pendientes de recibir
+    vales_pendientes = EntregaCorte.query.filter_by(estatus='pendiente').order_by(
+        EntregaCorte.fecha_hora_creacion.asc()
+    ).all()
+    
+    # Total pendiente
+    total_pendiente = sum([float(v.total_fisico or 0) for v in vales_pendientes])
+    
+    # Vales en custodia del usuario actual
+    en_custodia = EntregaCorte.query.filter_by(
+        estatus='en_custodia',
+        recibido_por_id=current_user.id
+    ).count()
+    
+    return render_template('entregas/recepcion_vales.html',
+        vales_pendientes=vales_pendientes,
+        total_pendiente=total_pendiente,
+        en_custodia=en_custodia,
+        now=datetime.now()
+    )
+
+
+@main.route('/entregas/<int:id>/recibir', methods=['POST'])
+@login_required
+@admin_required
+def recibir_vale(id):
+    """Admin confirma recepción física del vale"""
+    entrega = EntregaCorte.query.get_or_404(id)
+    
+    if entrega.estatus != 'pendiente':
+        flash('Este vale ya fue procesado', 'error')
+        return redirect(url_for('main.recepcion_vales'))
+    
+    notas = request.form.get('notas', '')
+    
+    try:
+        # Actualizar estatus
+        entrega.estatus = 'en_custodia'
+        entrega.recibido_por_id = current_user.id
+        entrega.fecha_recepcion = datetime.now()
+        entrega.firma_receptor = 'CONFIRMADO'
+        
+        # Registrar en historial
+        entrega.registrar_historial(
+            'en_custodia', 
+            current_user.id, 
+            'pendiente', 
+            f'Recibido por {current_user.nombre}. {notas}'.strip()
+        )
+        
+        db.session.commit()
+        flash(f'Vale {entrega.folio} recibido exitosamente', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'error')
+    
+    return redirect(url_for('main.recepcion_vales'))
