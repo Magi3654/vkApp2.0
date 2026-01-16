@@ -13,7 +13,7 @@ class Config:
 
     # SUPABASE (Principal) - Session Pooler IPv4 compatible
     SUPABASE_DB_URI = os.environ.get('SUPABASE_DB_URI') or \
-        'postgresql://postgres.fosbnyihupueithcogfe:kinessia2025@aws-0-us-west-1.pooler.supabase.com:5432/postgres'
+    'postgresql://postgres.fosbnyihupueithcogfe:kinessia2025@aws-1-us-west-1.pooler.supabase.com:5432/postgres'
 
     # PostgreSQL Local (Respaldo) - Windows
     LOCAL_DB_URI = os.environ.get('LOCAL_DB_URI') or \
