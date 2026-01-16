@@ -17,7 +17,7 @@ class Config:
     # SUPABASE (Principal) - Reemplaza con tus credenciales
     # Puedes encontrar estos valores en: Project Settings > Database > Connection String
     SUPABASE_DB_URI = os.environ.get('SUPABASE_DB_URI') or \
-        'postgresql://postgres:kinessia2025@db.fosbnyihupueithcogfe.supabase.co:5432/postgres'
+    'postgresql://postgres:kinessia2025@db.fosbnyihupueithcogfe.supabase.co:5432/postgres'
 
     # PostgreSQL Local (Respaldo)
     LOCAL_DB_URI = 'postgresql://ilse:vkinessia2@localhost:5432/vkapp_db'
