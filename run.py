@@ -4,10 +4,17 @@ import os
 # Configurar path del proyecto
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Cargar variables de entorno desde app/.env
+# Cargar variables de entorno desde .env en la raíz del proyecto
 from dotenv import load_dotenv
 env_path = os.path.join(os.path.dirname(__file__), 'app', '.env')
 load_dotenv(env_path)
+
+# Debug: verificar que se cargaron las variables de email
+print(f"=== Variables de Email ===")
+print(f"EMAIL_SENDER: {os.environ.get('EMAIL_SENDER', 'NO CONFIGURADO')}")
+print(f"EMAIL_PASSWORD: {'****' if os.environ.get('EMAIL_PASSWORD') else 'NO CONFIGURADO'}")
+print(f"EMAIL_DIRECTOR: {os.environ.get('EMAIL_DIRECTOR', 'NO CONFIGURADO')}")
+print(f"SMTP_SERVER: {os.environ.get('SMTP_SERVER', 'NO CONFIGURADO')}")
 
 from app import create_app
 

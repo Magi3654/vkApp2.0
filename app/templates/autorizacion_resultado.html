@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado de Autorización{% endblock %}
+
+{% block content %}
+<div class="auth-result-container">
+    <div class="auth-result-card {{ 'success' if exito else 'error' }}">
+        {% if exito %}
+            <div class="auth-icon success">
+                {% if 'APROBADA' in mensaje %}
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                {% else %}
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="auth-icon error">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            </div>
+        {% endif %}
+        
+        <h1 class="auth-title">{{ mensaje }}</h1>
+        
+        {% if autorizacion %}
+        <div class="auth-details">
+            <div class="detail-row">
+                <span class="label">Solicitante:</span>
+                <span class="value">{{ autorizacion.solicitante.nombre }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Tarjeta:</span>
+                <span class="value">{{ autorizacion.tarjeta.nombre_tarjeta }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Motivo:</span>
+                <span class="value">{{ autorizacion.motivo }}</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        <p class="auth-note">
+            {% if exito %}
+                Se ha notificado al agente sobre esta decisión.
+            {% else %}
+                Si crees que esto es un error, por favor ingresa al sistema.
+            {% endif %}
+        </p>
+        
+        <a href="{{ url_for('auth.login') }}" class="btn-primary">Ir al Sistema</a>
+    </div>
+</div>
+
+<style>
+.auth-result-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+}
+
+.auth-result-card {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.auth-result-card.success .auth-icon.success {
+    color: #198754;
+}
+
+.auth-result-card .auth-icon.error {
+    color: #dc3545;
+}
+
+.auth-icon {
+    margin-bottom: 1.5rem;
+}
+
+.auth-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.auth-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    color: #666;
+}
+
+.detail-row .value {
+    color: #333;
+}
+
+.auth-note {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #990100 0%, #b90504 100%);
+    color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
+    color: white;
+}
+</style>
+{% endblock %}

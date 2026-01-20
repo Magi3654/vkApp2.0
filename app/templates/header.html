@@ -7,21 +7,125 @@
 
     <div class="nav-right">
         <ul class="nav-links">
-            <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-            <li><a href="{{ url_for('main.desgloses') }}">Consultar Desgloses</a></li>
-            <li><a href="{{ url_for('main.consulta_papeletas') }}">Consultar Papeletas</a></li>
+            <!-- Inicio -->
+            <li><a href="{{ url_for('main.dashboard') }}">Inicio</a></li>
             
+            <!-- Dropdown Crear -->
+            <li class="nav-dropdown">
+                <a href="#" class="dropdown-toggle">
+                    Crear
+                    <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('main.nueva_papeleta_form') }}">Nueva Papeleta</a></li>
+                    <li><a href="{{ url_for('main.nuevo_reporte_venta') }}">Nuevo Reporte</a></li>
+                    <li><a href="{{ url_for('main.nueva_entrega') }}">Nuevo Vale</a></li>
+                </ul>
+            </li>
+            
+            <!-- Dropdown Mis Consultas -->
+            <li class="nav-dropdown">
+                <a href="#" class="dropdown-toggle">
+                    Mis Consultas
+                    <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('main.consulta_papeletas') }}">Mis Papeletas</a></li>
+                    <li><a href="{{ url_for('main.reportes_ventas') }}">Mis Reportes</a></li>
+                    <li><a href="{{ url_for('main.lista_entregas') }}">Mis Vales</a></li>
+                    <li class="dropdown-divider"></li>
+                    <li><a href="{{ url_for('main.empresas') }}">Empresas</a></li>
+                </ul>
+            </li>
+            
+            <!-- Dropdown Administración (solo admin/director) -->
             {% if current_user.is_authenticated and current_user.es_admin() %}
-                <li><a href="{{ url_for('main.empresas') }}">Empresas</a></li>
-                <li><a href="{{ url_for('main.usuarios') }}">Gestión Usuarios</a></li>
+            <li class="nav-dropdown">
+                <a href="#" class="dropdown-toggle">
+                    Administración
+                    {% if autorizaciones_pendientes and autorizaciones_pendientes > 0 %}
+                    <span class="nav-badge">{{ autorizaciones_pendientes }}</span>
+                    {% endif %}
+                    <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a href="{{ url_for('main.autorizaciones') }}">
+                            Autorizaciones
+                            {% if autorizaciones_pendientes and autorizaciones_pendientes > 0 %}
+                            <span class="menu-badge">{{ autorizaciones_pendientes }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li><a href="{{ url_for('main.control_papeletas') }}">Control Papeletas</a></li>
+                    <li><a href="{{ url_for('main.recepcion_vales') }}">Recepción Vales</a></li>
+                    <li class="dropdown-divider"></li>
+                    <li><a href="{{ url_for('main.empresas') }}">Gestión Empresas</a></li>
+                    <li><a href="{{ url_for('main.usuarios') }}">Usuarios</a></li>
+                    <li><a href="{{ url_for('main.tarjetas') }}">Tarjetas</a></li>
+                </ul>
+            </li>
             {% endif %}
         </ul>
 
         <div class="nav-user">
             {% if current_user.is_authenticated %}
-                <span>Hola, {{ current_user.nombre }}</span>
-                <a href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>
+                <span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    {{ current_user.nombre }}
+                </span>
+                <a href="{{ url_for('auth.logout') }}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Salir
+                </a>
             {% endif %}
         </div>
     </div>
 </nav>
+
+<script>
+// Dropdown functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdowns = document.querySelectorAll('.nav-dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Cerrar otros dropdowns
+            dropdowns.forEach(other => {
+                if (other !== dropdown) {
+                    other.classList.remove('active');
+                }
+            });
+            
+            // Toggle este dropdown
+            dropdown.classList.toggle('active');
+        });
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.nav-dropdown')) {
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+        }
+    });
+});
+</script>

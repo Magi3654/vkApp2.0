@@ -7,12 +7,19 @@ from .models import (
     db, Usuario, Rol, Papeleta, Desglose, Empresa, Aerolinea, EmpresaBooking, 
     CargoServicio, Descuento, TarifaFija, Sucursal, TarjetaCorporativa, Autorizacion,
     TarjetaUsuario, AuditLog, ReporteVenta, DetalleReporteVenta, EntregaCorte, 
-    DetalleArqueo, HistorialEntrega, crear_entrega_desde_reporte
+    DetalleArqueo, HistorialEntrega, crear_entrega_desde_reporte, Notificacion
 )
 from datetime import datetime, timedelta, date
 from sqlalchemy import func
 from collections import OrderedDict
 from functools import wraps
+
+# Importar servicio de notificaciones (con manejo de error si no existe aún)
+try:
+    from app.services.notificaciones import NotificacionService, obtener_notificaciones_pendientes
+except ImportError:
+    NotificacionService = None
+    obtener_notificaciones_pendientes = None
 
 # Zona horaria de México (Tijuana/Ensenada)
 from zoneinfo import ZoneInfo
@@ -25,6 +32,18 @@ def fecha_mexico():
 
 main = Blueprint('main', __name__)
 
+
+# Context processor para inyectar notificaciones a todos los templates
+@main.app_context_processor
+def inject_notificaciones():
+    """Inyecta el conteo de autorizaciones pendientes a todos los templates"""
+    if current_user.is_authenticated and current_user.rol in ['director', 'administrador', 'admin']:
+        try:
+            pendientes = Autorizacion.query.filter_by(estatus='pendiente').count()
+            return {'autorizaciones_pendientes': pendientes}
+        except:
+            return {'autorizaciones_pendientes': 0}
+    return {'autorizaciones_pendientes': 0}
 
 # =============================================================================
 # RUTAS PRINCIPALES
@@ -950,20 +969,42 @@ def solicitar_autorizacion():
             return redirect(url_for('main.nueva_papeleta_form'))
         
         tarjeta = TarjetaCorporativa.query.get_or_404(tarjeta_id)
-        existente = Autorizacion.query.filter_by(tarjeta_id=tarjeta_id, solicitante_id=current_user.id, estatus='pendiente').first()
+        existente = Autorizacion.query.filter_by(
+            tarjeta_id=tarjeta_id, 
+            solicitante_id=current_user.id, 
+            estatus='pendiente'
+        ).first()
         
         if existente:
             flash('Ya tienes una solicitud pendiente para esta tarjeta.', 'warning')
             return redirect(url_for('main.autorizaciones'))
         
+        # Crear la autorización
         nueva_auth = Autorizacion(
-            tipo='uso_tarjeta', solicitante_id=current_user.id,
-            tarjeta_id=tarjeta_id, motivo=motivo,
+            tipo='uso_tarjeta',
+            solicitante_id=current_user.id,
+            tarjeta_id=tarjeta_id,
+            motivo=motivo,
             sucursal_id=current_user.sucursal_id or 1
         )
         db.session.add(nueva_auth)
         db.session.commit()
-        flash(f'Solicitud de autorización enviada para tarjeta {tarjeta.nombre_tarjeta}.', 'success')
+        
+        # Enviar notificaciones (sistema + email)
+        try:
+            resultado = NotificacionService.notificar_autorizacion_solicitada(
+                nueva_auth, db, Notificacion
+            )
+            if resultado['email']:
+                flash(f'Solicitud enviada. Se notificó a Dirección por correo.', 'success')
+            else:
+                flash(f'Solicitud enviada para tarjeta {tarjeta.nombre_tarjeta}.', 'success')
+                if resultado['errores']:
+                    print(f"Errores de notificación: {resultado['errores']}")
+        except Exception as notif_error:
+            # Si falla la notificación, no afecta la solicitud
+            print(f"Error enviando notificación: {notif_error}")
+            flash(f'Solicitud enviada para tarjeta {tarjeta.nombre_tarjeta}.', 'success')
         
     except Exception as e:
         db.session.rollback()
@@ -997,13 +1038,102 @@ def responder_autorizacion(id):
         else:
             flash('Acción no válida.', 'warning')
             return redirect(url_for('main.autorizaciones'))
+        
         db.session.commit()
+        
+        # Notificar al agente
+        try:
+            NotificacionService.notificar_autorizacion_respondida(
+                autorizacion, db, Notificacion
+            )
+        except Exception as notif_error:
+            print(f"Error enviando notificación de respuesta: {notif_error}")
+            
     except Exception as e:
         db.session.rollback()
         flash(f'Error: {str(e)}', 'danger')
     
     return redirect(url_for('main.autorizaciones'))
 
+
+@main.route('/autorizacion/aprobar/<token>')
+def aprobar_por_email(token):
+    """Aprueba una autorización via link de email (sin login requerido)"""
+    autorizacion = Autorizacion.query.filter_by(token=token).first()
+    
+    if not autorizacion:
+        flash('Enlace de autorización inválido o expirado.', 'danger')
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje='Enlace inválido o expirado')
+    
+    if autorizacion.estatus != 'pendiente':
+        flash(f'Esta autorización ya fue {autorizacion.estatus}.', 'warning')
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje=f'Esta autorización ya fue {autorizacion.estatus}')
+    
+    try:
+        director = Usuario.query.filter_by(rol='director').first()
+        autorizacion.aprobar_por_token(director.id if director else None)
+        autorizacion.token = None
+        db.session.commit()
+        
+        try:
+            if NotificacionService:
+                NotificacionService.notificar_autorizacion_respondida(autorizacion, db, Notificacion)
+        except:
+            pass
+        
+        return render_template('autorizacion_resultado.html', 
+                               exito=True, 
+                               mensaje='Autorización APROBADA',
+                               autorizacion=autorizacion)
+    except Exception as e:
+        db.session.rollback()
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje=f'Error: {str(e)}')
+
+
+@main.route('/autorizacion/rechazar/<token>')
+def rechazar_por_email(token):
+    """Rechaza una autorización via link de email (sin login requerido)"""
+    autorizacion = Autorizacion.query.filter_by(token=token).first()
+    
+    if not autorizacion:
+        flash('Enlace de autorización inválido o expirado.', 'danger')
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje='Enlace inválido o expirado')
+    
+    if autorizacion.estatus != 'pendiente':
+        flash(f'Esta autorización ya fue {autorizacion.estatus}.', 'warning')
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje=f'Esta autorización ya fue {autorizacion.estatus}')
+    
+    try:
+        director = Usuario.query.filter_by(rol='director').first()
+        autorizacion.rechazar_por_token(director.id if director else None)
+        autorizacion.token = None
+        db.session.commit()
+        
+        try:
+            if NotificacionService:
+                NotificacionService.notificar_autorizacion_respondida(autorizacion, db, Notificacion)
+        except:
+            pass
+        
+        return render_template('autorizacion_resultado.html', 
+                               exito=True, 
+                               mensaje='Autorización RECHAZADA',
+                               autorizacion=autorizacion)
+    except Exception as e:
+        db.session.rollback()
+        return render_template('autorizacion_resultado.html', 
+                               exito=False, 
+                               mensaje=f'Error: {str(e)}')
 
 # =============================================================================
 # RUTAS DE PAPELETAS

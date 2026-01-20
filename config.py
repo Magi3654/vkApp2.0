@@ -17,7 +17,7 @@ class Config:
         'postgresql://postgres:kinessialinx@127.0.0.1:5432/vkapp_db'
 
     # Conexion activa - Usa Supabase por defecto, o local si USE_LOCAL_DB esta en True
-    USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'False').lower() == 'true'
+    USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'True').lower() == 'true'
 
     SQLALCHEMY_DATABASE_URI = LOCAL_DB_URI if USE_LOCAL_DB else SUPABASE_DB_URI
 

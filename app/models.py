@@ -319,6 +319,7 @@ class Autorizacion(db.Model):
     comentario_respuesta = db.Column(db.Text)
     
     notificado_google_chat = db.Column(db.Boolean, default=False)
+    token = db.Column(db.String(64))  # Token para autorización por email
     sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
     updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())
@@ -342,6 +343,27 @@ class Autorizacion(db.Model):
         self.autorizador_id = autorizador.id
         self.fecha_respuesta = datetime.utcnow()
         self.comentario_respuesta = comentario
+    
+    
+    @staticmethod
+    def generar_token():
+        """Genera un token único para autorización por email"""
+        import secrets
+        return secrets.token_urlsafe(32)
+    
+    def aprobar_por_token(self, usuario_id=None):
+        """Aprueba la autorización usando token"""
+        self.estatus = 'aprobada'
+        self.autorizador_id = usuario_id
+        self.fecha_respuesta = datetime.utcnow()
+        self.comentario_respuesta = 'Aprobado via email'
+    
+    def rechazar_por_token(self, usuario_id=None):
+        """Rechaza la autorización usando token"""
+        self.estatus = 'rechazada'
+        self.autorizador_id = usuario_id
+        self.fecha_respuesta = datetime.utcnow()
+        self.comentario_respuesta = 'Rechazado via email'
     
     def esta_vigente(self, horas=24):
         """Verifica si la autorización sigue vigente"""
