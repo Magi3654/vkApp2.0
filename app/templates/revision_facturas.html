@@ -1,0 +1,892 @@
+{% extends "base.html" %}
+
+{% block title %}Revisión de Facturas - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+.revision-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h2 {
+    color: var(--graphite);
+    font-size: 1.75rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-card .number.warning { color: #ffc107; }
+.stat-card .number.success { color: #198754; }
+.stat-card .number.danger { color: #dc3545; }
+.stat-card .number.primary { color: var(--brick-ember); }
+
+.stat-card .label {
+    color: #666;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.section-title {
+    font-size: 1.25rem;
+    color: var(--graphite);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--brick-ember);
+}
+
+/* Tabla de facturas */
+.facturas-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.facturas-table th {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.facturas-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.facturas-table tr:last-child td {
+    border-bottom: none;
+}
+
+.facturas-table tr:hover {
+    background: #f8f9fa;
+}
+
+.folio-link {
+    font-weight: 700;
+    color: var(--brick-ember);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.folio-link:hover {
+    text-decoration: underline;
+}
+
+.monto-cell {
+    font-weight: 600;
+}
+
+.validacion-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.validacion-icon {
+    font-size: 1.25rem;
+}
+
+.validacion-icon.match { color: #198754; }
+.validacion-icon.mismatch { color: #dc3545; }
+
+.diferencia {
+    font-size: 0.75rem;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-success { background: #d4edda; color: #155724; }
+.badge-danger { background: #f8d7da; color: #721c24; }
+
+.acciones-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-revisar {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: transform 0.2s;
+}
+
+.btn-revisar:hover {
+    transform: translateY(-1px);
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+@media (max-width: 900px) {
+    .modal-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.modal-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--graphite);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--brick-ember);
+}
+
+.papeleta-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+.detail-item .value {
+    font-weight: 600;
+    color: var(--graphite);
+    font-size: 0.95rem;
+}
+
+/* Comparación de montos */
+.comparacion-box {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    margin-top: 1rem;
+}
+
+.comparacion-box.match {
+    border-color: #198754;
+    background: #f8fff8;
+}
+
+.comparacion-box.mismatch {
+    border-color: #dc3545;
+    background: #fff8f8;
+}
+
+.comparacion-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.comparacion-title.match { color: #198754; }
+.comparacion-title.mismatch { color: #dc3545; }
+
+.comparacion-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.comparacion-row:last-child {
+    border-bottom: none;
+}
+
+.comparacion-row.total {
+    font-weight: 700;
+    font-size: 1rem;
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #ddd;
+}
+
+.comparacion-row .diferencia {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+.pdf-viewer-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 400px;
+    border: 1px solid #e0e0e0;
+}
+
+.pdf-viewer-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.no-pdf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    text-align: center;
+    padding: 2rem;
+}
+
+.no-pdf .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Footer con acciones */
+.modal-footer {
+    background: #f8f9fa;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.footer-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.comentario-group {
+    flex: 1;
+    min-width: 300px;
+}
+
+.comentario-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.375rem;
+}
+
+.comentario-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.comentario-group input:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
+}
+
+.btn-aprobar {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.btn-aprobar:hover {
+    transform: translateY(-1px);
+}
+
+.btn-rechazar {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.btn-rechazar:hover {
+    transform: translateY(-1px);
+}
+
+/* Historial */
+.historial-section {
+    margin-top: 3rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+    background: white;
+    border-radius: 12px;
+}
+
+.empty-state .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: #e9ecef;
+    color: #666;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--brick-ember);
+    color: white;
+}
+
+.tab-btn:hover:not(.active) {
+    background: #dee2e6;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="revision-container">
+    <div class="page-header">
+        <h2>📋 Revisión de Facturas</h2>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="number warning">{{ pendientes|length }}</div>
+            <div class="label">Pendientes de Revisar</div>
+        </div>
+        <div class="stat-card">
+            <div class="number success">{{ aprobadas_hoy }}</div>
+            <div class="label">Aprobadas Hoy</div>
+        </div>
+        <div class="stat-card">
+            <div class="number danger">{{ rechazadas_hoy }}</div>
+            <div class="label">Rechazadas Hoy</div>
+        </div>
+        <div class="stat-card">
+            <div class="number primary">${{ "%.2f"|format(monto_pendiente) }}</div>
+            <div class="label">Monto Pendiente</div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('pendientes')">
+            ⏳ Pendientes ({{ pendientes|length }})
+        </button>
+        <button class="tab-btn" onclick="showTab('historial')">
+            📜 Historial
+        </button>
+    </div>
+    
+    <!-- Tab: Pendientes -->
+    <div class="tab-content active" id="tab-pendientes">
+        <h3 class="section-title">Facturas Pendientes de Revisión</h3>
+        
+        {% if pendientes %}
+        <table class="facturas-table">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Empresa</th>
+                    <th># Factura</th>
+                    <th>Monto Papeleta</th>
+                    <th>Monto Factura</th>
+                    <th>Validación</th>
+                    <th>Facturó</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pendientes %}
+                {% set montos_coinciden = (p.total|float - p.monto_factura|float)|abs < 0.01 %}
+                <tr>
+                    <td>
+                        <span class="folio-link" onclick="abrirModalRevision({{ p.id }})">
+                            {{ p.folio }}
+                        </span>
+                    </td>
+                    <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
+                    <td><strong>{{ p.numero_factura }}</strong></td>
+                    <td class="monto-cell">${{ "%.2f"|format(p.total) }}</td>
+                    <td class="monto-cell">${{ "%.2f"|format(p.monto_factura or 0) }}</td>
+                    <td>
+                        <div class="validacion-cell">
+                            {% if montos_coinciden %}
+                                <span class="validacion-icon match">✅</span>
+                                <span style="color: #198754; font-weight: 600;">Coincide</span>
+                            {% else %}
+                                <span class="validacion-icon mismatch">⚠️</span>
+                                <span class="diferencia">
+                                    Dif: ${{ "%.2f"|format((p.total|float - p.monto_factura|float)|abs) }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}</td>
+                    <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y') if p.fecha_facturacion else '-' }}</td>
+                    <td>
+                        <button class="btn-revisar" onclick="abrirModalRevision({{ p.id }})">
+                            🔍 Revisar
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">✅</div>
+            <p>No hay facturas pendientes de revisión.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Tab: Historial -->
+    <div class="tab-content" id="tab-historial">
+        <h3 class="section-title">Historial de Revisiones</h3>
+        
+        {% if historial %}
+        <table class="facturas-table">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Empresa</th>
+                    <th># Factura</th>
+                    <th>Monto</th>
+                    <th>Estatus</th>
+                    <th>Revisó</th>
+                    <th>Fecha Revisión</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in historial %}
+                <tr>
+                    <td><strong>{{ p.folio }}</strong></td>
+                    <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
+                    <td>{{ p.numero_factura }}</td>
+                    <td>${{ "%.2f"|format(p.monto_factura or 0) }}</td>
+                    <td>
+                        {% if p.estatus_facturacion == 'aprobada' %}
+                            <span class="badge badge-success">✓ Aprobada</span>
+                        {% elif p.estatus_facturacion == 'rechazada' %}
+                            <span class="badge badge-danger">✗ Rechazada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.aprobada_por.nombre if p.aprobada_por else 'N/A' }}</td>
+                    <td>{{ p.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') if p.fecha_aprobacion else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📜</div>
+            <p>No hay historial de revisiones.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Revisión -->
+<div class="modal-overlay" id="modalRevision">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>🔍 Revisión de Factura - <span id="modalFolio"></span></h3>
+            <button class="modal-close" onclick="cerrarModalRevision()">✕</button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Datos de la Papeleta y Factura -->
+            <div class="modal-section">
+                <div class="modal-section-title">
+                    <span class="icon">📋</span> Datos de la Papeleta
+                </div>
+                
+                <div class="papeleta-detail-grid">
+                    <div class="detail-item">
+                        <span class="label">Folio</span>
+                        <span class="value" id="detalleFolio">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Fecha Venta</span>
+                        <span class="value" id="detalleFecha">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Cliente / Facturar A</span>
+                        <span class="value" id="detalleCliente">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Aerolínea</span>
+                        <span class="value" id="detalleAerolinea">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label"># Factura</span>
+                        <span class="value" id="detalleNumeroFactura" style="color: var(--brick-ember);">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Facturó</span>
+                        <span class="value" id="detalleFacturoPor">---</span>
+                    </div>
+                </div>
+                
+                <!-- Comparación de montos -->
+                <div class="comparacion-box" id="comparacionBox">
+                    <div class="comparacion-title" id="comparacionTitle">
+                        <span id="comparacionIcon">✅</span>
+                        <span id="comparacionTexto">Montos Coinciden</span>
+                    </div>
+                    <div class="comparacion-row">
+                        <span>Total Papeleta</span>
+                        <span id="comparacionPapeleta">$0.00</span>
+                    </div>
+                    <div class="comparacion-row">
+                        <span>Monto Facturado</span>
+                        <span id="comparacionFactura">$0.00</span>
+                    </div>
+                    <div class="comparacion-row total" id="comparacionDiferencia" style="display: none;">
+                        <span>Diferencia</span>
+                        <span class="diferencia" id="comparacionDifMonto">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Boleto / Documento -->
+            <div class="modal-section">
+                <div class="modal-section-title">
+                    <span class="icon">🎫</span> Boleto / Documento
+                </div>
+                
+                <div class="pdf-viewer-container" id="pdfContainer">
+                    <div class="no-pdf" id="noPdfMessage">
+                        <div class="icon">📄</div>
+                        <p>No hay documento adjunto</p>
+                    </div>
+                    <iframe id="pdfViewer" style="display: none;"></iframe>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <div class="footer-actions">
+                <div class="comentario-group">
+                    <label for="comentario_revision">Comentario (opcional para aprobar, requerido para rechazar)</label>
+                    <input type="text" id="comentario_revision" placeholder="Ej: Verificado contra estado de cuenta">
+                </div>
+                <form id="formAprobar" method="POST" style="display: inline;">
+                    <input type="hidden" name="comentario" id="inputComentarioAprobar">
+                    <button type="submit" class="btn-aprobar">
+                        ✓ Aprobar
+                    </button>
+                </form>
+                <form id="formRechazar" method="POST" style="display: inline;">
+                    <input type="hidden" name="comentario" id="inputComentarioRechazar">
+                    <button type="submit" class="btn-rechazar">
+                        ✗ Rechazar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Datos de papeletas para JavaScript -->
+<script>
+const papeletasData = {
+    {% for p in pendientes %}
+    {{ p.id }}: {
+        id: {{ p.id }},
+        folio: "{{ p.folio }}",
+        fecha: "{{ p.fecha_venta.strftime('%d/%m/%Y') }}",
+        cliente: "{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}",
+        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '---' }}",
+        numeroFactura: "{{ p.numero_factura or '---' }}",
+        facturoPor: "{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}",
+        totalPapeleta: {{ p.total or 0 }},
+        montoFactura: {{ p.monto_factura or 0 }},
+        archivoBoleto: "{{ p.archivo_boleto or '' }}",
+        urlAprobar: "{{ url_for('main.aprobar_factura', id=p.id) }}",
+        urlRechazar: "{{ url_for('main.rechazar_factura', id=p.id) }}"
+    },
+    {% endfor %}
+};
+
+function showTab(tabName) {
+    // Ocultar todos los tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar tab seleccionado
+    document.getElementById('tab-' + tabName).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function abrirModalRevision(papeletaId) {
+    const p = papeletasData[papeletaId];
+    if (!p) return;
+    
+    // Llenar datos
+    document.getElementById('modalFolio').textContent = p.folio;
+    document.getElementById('detalleFolio').textContent = p.folio;
+    document.getElementById('detalleFecha').textContent = p.fecha;
+    document.getElementById('detalleCliente').textContent = p.cliente;
+    document.getElementById('detalleAerolinea').textContent = p.aerolinea;
+    document.getElementById('detalleNumeroFactura').textContent = p.numeroFactura;
+    document.getElementById('detalleFacturoPor').textContent = p.facturoPor;
+    
+    // Comparación de montos
+    const diferencia = Math.abs(p.totalPapeleta - p.montoFactura);
+    const coinciden = diferencia < 0.01;
+    
+    document.getElementById('comparacionPapeleta').textContent = '$' + p.totalPapeleta.toFixed(2);
+    document.getElementById('comparacionFactura').textContent = '$' + p.montoFactura.toFixed(2);
+    
+    const comparacionBox = document.getElementById('comparacionBox');
+    const comparacionTitle = document.getElementById('comparacionTitle');
+    const comparacionIcon = document.getElementById('comparacionIcon');
+    const comparacionTexto = document.getElementById('comparacionTexto');
+    const comparacionDiferencia = document.getElementById('comparacionDiferencia');
+    
+    if (coinciden) {
+        comparacionBox.className = 'comparacion-box match';
+        comparacionTitle.className = 'comparacion-title match';
+        comparacionIcon.textContent = '✅';
+        comparacionTexto.textContent = 'Montos Coinciden';
+        comparacionDiferencia.style.display = 'none';
+    } else {
+        comparacionBox.className = 'comparacion-box mismatch';
+        comparacionTitle.className = 'comparacion-title mismatch';
+        comparacionIcon.textContent = '⚠️';
+        comparacionTexto.textContent = 'Montos NO Coinciden';
+        comparacionDiferencia.style.display = 'flex';
+        document.getElementById('comparacionDifMonto').textContent = '$' + diferencia.toFixed(2);
+    }
+    
+    // PDF
+    const pdfViewer = document.getElementById('pdfViewer');
+    const noPdfMessage = document.getElementById('noPdfMessage');
+    
+    if (p.archivoBoleto) {
+        pdfViewer.src = '/static/uploads/boletos/' + p.archivoBoleto;
+        pdfViewer.style.display = 'block';
+        noPdfMessage.style.display = 'none';
+    } else {
+        pdfViewer.style.display = 'none';
+        noPdfMessage.style.display = 'flex';
+    }
+    
+    // Forms
+    document.getElementById('formAprobar').action = p.urlAprobar;
+    document.getElementById('formRechazar').action = p.urlRechazar;
+    document.getElementById('comentario_revision').value = '';
+    
+    // Mostrar modal
+    document.getElementById('modalRevision').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalRevision() {
+    document.getElementById('modalRevision').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('pdfViewer').src = '';
+}
+
+// Validar comentario en formularios
+document.getElementById('formAprobar').addEventListener('submit', function(e) {
+    const comentario = document.getElementById('comentario_revision').value;
+    document.getElementById('inputComentarioAprobar').value = comentario;
+});
+
+document.getElementById('formRechazar').addEventListener('submit', function(e) {
+    const comentario = document.getElementById('comentario_revision').value;
+    if (!comentario.trim()) {
+        e.preventDefault();
+        alert('Debe ingresar un comentario para rechazar la factura.');
+        return false;
+    }
+    document.getElementById('inputComentarioRechazar').value = comentario;
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarModalRevision();
+    }
+});
+
+// Cerrar al hacer clic fuera del modal
+document.getElementById('modalRevision').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalRevision();
+    }
+});
+</script>
+{% endblock %}

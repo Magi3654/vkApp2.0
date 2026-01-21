@@ -42,6 +42,24 @@
                 </ul>
             </li>
             
+            <!-- Dropdown Facturación (facturación, admin, gerente, director) -->
+            {% if current_user.is_authenticated and current_user.rol in ['facturacion', 'administrador', 'admin', 'gerente', 'director'] %}
+            <li class="nav-dropdown">
+                <a href="#" class="dropdown-toggle">
+                    Facturación
+                    <svg class="dropdown-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('main.facturacion') }}">Registrar Facturas</a></li>
+                    {% if current_user.rol in ['gerente', 'director', 'administrador', 'admin'] %}
+                    <li><a href="{{ url_for('main.revision_facturas') }}">Revisión Facturas</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+            {% endif %}
+            
             <!-- Dropdown Administración (solo admin/director) -->
             {% if current_user.is_authenticated and current_user.es_admin() %}
             <li class="nav-dropdown">

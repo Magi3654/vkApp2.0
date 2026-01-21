@@ -14,6 +14,7 @@ from sqlalchemy import func
 from collections import OrderedDict
 from functools import wraps
 
+
 # Importar servicio de notificaciones (con manejo de error si no existe aún)
 try:
     from app.services.notificaciones import NotificacionService, obtener_notificaciones_pendientes
@@ -1134,6 +1135,176 @@ def rechazar_por_email(token):
         return render_template('autorizacion_resultado.html', 
                                exito=False, 
                                mensaje=f'Error: {str(e)}')
+
+# =============================================================================
+# RUTAS DE FACTURACIÓN
+# =============================================================================
+
+@main.route('/facturacion')
+@login_required
+def facturacion():
+    """Vista principal de facturación - muestra papeletas pendientes de facturar"""
+    # Solo facturación, admin y gerente pueden acceder
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        flash('No tienes permiso para acceder a este módulo.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Papeletas pendientes de facturar (tienen empresa = crédito/facturación)
+    papeletas_pendientes = Papeleta.query.filter(
+        Papeleta.estatus_facturacion == 'pendiente',
+        Papeleta.empresa_id.isnot(None)  # Solo las que tienen empresa (crédito)
+    ).order_by(Papeleta.fecha_venta.desc()).all()
+    
+    # Papeletas ya facturadas (para historial)
+    papeletas_facturadas = Papeleta.query.filter(
+        Papeleta.estatus_facturacion.in_(['facturada', 'aprobada', 'rechazada'])
+    ).order_by(Papeleta.fecha_facturacion.desc()).limit(50).all()
+    
+    return render_template('facturacion.html',
+                           papeletas_pendientes=papeletas_pendientes,
+                           papeletas_facturadas=papeletas_facturadas)
+
+
+@main.route('/facturacion/registrar/<int:id>', methods=['POST'])
+@login_required
+def registrar_factura(id):
+    """Registra la factura para una papeleta"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        flash('No tienes permiso para esta acción.', 'danger')
+        return redirect(url_for('main.facturacion'))
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    numero_factura = request.form.get('numero_factura', '').strip()
+    monto_factura = request.form.get('monto_factura', '').strip()
+    
+    if not numero_factura or not monto_factura:
+        flash('Debe ingresar el número y monto de la factura.', 'warning')
+        return redirect(url_for('main.facturacion'))
+    
+    try:
+        papeleta.numero_factura = numero_factura
+        papeleta.monto_factura = float(monto_factura)
+        papeleta.estatus_facturacion = 'facturada'
+        papeleta.facturada_por_id = current_user.id
+        papeleta.fecha_facturacion = datetime.utcnow()
+        
+        db.session.commit()
+        flash(f'Factura {numero_factura} registrada para papeleta {papeleta.folio}.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar factura: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.facturacion'))
+
+
+@main.route('/revision-facturas')
+@login_required
+def revision_facturas():
+    """Vista para que el gerente revise facturas registradas"""
+    if current_user.rol not in ['gerente', 'director', 'administrador', 'admin']:
+        flash('Solo gerentes pueden revisar facturas.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Facturas pendientes de revisión (estatus = 'facturada')
+    pendientes = Papeleta.query.filter(
+        Papeleta.estatus_facturacion == 'facturada'
+    ).order_by(Papeleta.fecha_facturacion.desc()).all()
+    
+    # Calcular monto total pendiente
+    monto_pendiente = sum(float(p.monto_factura or 0) for p in pendientes)
+    
+    # Historial de revisiones (aprobadas y rechazadas)
+    historial = Papeleta.query.filter(
+        Papeleta.estatus_facturacion.in_(['aprobada', 'rechazada'])
+    ).order_by(Papeleta.fecha_aprobacion.desc()).limit(50).all()
+    
+    # Estadísticas del día
+    hoy_inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    aprobadas_hoy = Papeleta.query.filter(
+        Papeleta.estatus_facturacion == 'aprobada',
+        Papeleta.fecha_aprobacion >= hoy_inicio
+    ).count()
+    
+    rechazadas_hoy = Papeleta.query.filter(
+        Papeleta.estatus_facturacion == 'rechazada',
+        Papeleta.fecha_aprobacion >= hoy_inicio
+    ).count()
+    
+    return render_template('revision_facturas.html',
+                           pendientes=pendientes,
+                           historial=historial,
+                           monto_pendiente=monto_pendiente,
+                           aprobadas_hoy=aprobadas_hoy,
+                           rechazadas_hoy=rechazadas_hoy)
+
+
+@main.route('/revision-facturas/aprobar/<int:id>', methods=['POST'])
+@login_required
+def aprobar_factura(id):
+    """Aprueba una factura - montos coinciden"""
+    if current_user.rol not in ['gerente', 'director', 'administrador', 'admin']:
+        flash('Solo gerentes pueden aprobar facturas.', 'danger')
+        return redirect(url_for('main.revision_facturas'))
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    
+    if papeleta.estatus_facturacion != 'facturada':
+        flash('Esta papeleta no está lista para aprobación.', 'warning')
+        return redirect(url_for('main.revision_facturas'))
+    
+    try:
+        papeleta.estatus_facturacion = 'aprobada'
+        papeleta.aprobada_por_id = current_user.id
+        papeleta.fecha_aprobacion = datetime.utcnow()
+        
+        db.session.commit()
+        flash(f'Factura {papeleta.numero_factura} APROBADA.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.revision_facturas'))
+
+
+@main.route('/revision-facturas/rechazar/<int:id>', methods=['POST'])
+@login_required
+def rechazar_factura(id):
+    """Rechaza una factura - montos no coinciden o hay error"""
+    if current_user.rol not in ['gerente', 'director', 'administrador', 'admin']:
+        flash('Solo gerentes pueden rechazar facturas.', 'danger')
+        return redirect(url_for('main.revision_facturas'))
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    comentario = request.form.get('comentario', '').strip()
+    
+    if papeleta.estatus_facturacion != 'facturada':
+        flash('Esta papeleta no está lista para revisión.', 'warning')
+        return redirect(url_for('main.revision_facturas'))
+    
+    if not comentario:
+        flash('Debe proporcionar un motivo para rechazar la factura.', 'warning')
+        return redirect(url_for('main.revision_facturas'))
+    
+    try:
+        papeleta.estatus_facturacion = 'rechazada'
+        papeleta.aprobada_por_id = current_user.id
+        papeleta.fecha_aprobacion = datetime.utcnow()
+        # Guardar motivo en justificacion_pendiente
+        papeleta.justificacion_pendiente = f'Factura rechazada: {comentario}'
+        
+        db.session.commit()
+        flash(f'Factura {papeleta.numero_factura} RECHAZADA. Motivo: {comentario}', 'warning')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.revision_facturas'))
+
 
 # =============================================================================
 # RUTAS DE PAPELETAS
