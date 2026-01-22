@@ -226,6 +226,37 @@ class Empresa(db.Model):
 
     credito_activo = db.Column(db.Boolean, default=False)
 
+    # ===========================================
+    # CAMPOS DE ESQUEMA DE FACTURACIÓN
+    # ===========================================
+    
+    # Tipo de esquema: 'tarifa_fija', 'cargo_servicio', 'bonificacion', 'desglose_especial', 'mixto'
+    esquema_facturacion = db.Column(db.String(50), default='cargo_servicio')
+    
+    # Porcentaje de bonificación (si aplica) - Ej: 0.2575 = 25.75%
+    bonificacion_porcentaje = db.Column(db.Numeric(6, 4))
+    
+    # Sobre qué se aplica la bonificación: 'tarifa_base', 'tarifa_base_sin_qs', 'total'
+    bonificacion_aplica_sobre = db.Column(db.String(50), default='tarifa_base')
+    
+    # Requiere desglose especial (Q's, YR, TUA separados)
+    requiere_desglose = db.Column(db.Boolean, default=False)
+    
+    # Tipo de desglose: 'standard', 'imss_tml', 'issfam', 'custom'
+    tipo_desglose = db.Column(db.String(50), default='standard')
+    
+    # Cómo se cotiza y emite (instrucciones especiales)
+    instrucciones_cotizacion = db.Column(db.Text)
+    
+    # Notas de emisión
+    notas_emision = db.Column(db.Text)
+    
+    # Persona(s) autorizada(s) para compra de boletos
+    personas_autorizadas = db.Column(db.Text)
+    
+    # Encargado de la cuenta en Adiona
+    encargado_cuenta = db.Column(db.String(100))
+
     # Especificaciones técnicas para licitaciones (JSONB)
 
     especificaciones_tecnicas = db.Column(db.JSON, default={})
@@ -294,11 +325,22 @@ class CargoServicio(db.Model):
 
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'), nullable=False)
 
+    # Tipo de cargo: 'visible' (facturado), 'oculto' (agregado en tarifa), 'mixto'
     tipo = db.Column(db.String, nullable=False)  # 'visible', 'oculto', 'mixto'
 
+    # Tipo de servicio: 'nacional', 'internacional', 'paquete', 'hotel', 'auto', 'otro'
     tipo_servicio = db.Column(db.String)  # 'nacional', 'internacional', 'hotel', 'auto', 'otro'
 
     monto = db.Column(db.Numeric(10, 2), nullable=False)
+    
+    # Si es porcentaje en lugar de monto fijo
+    es_porcentaje = db.Column(db.Boolean, default=False)
+    
+    # Sobre qué se calcula el porcentaje: 'total', 'tarifa_base'
+    porcentaje_sobre = db.Column(db.String(50))
+    
+    # Si incluye IVA
+    incluye_iva = db.Column(db.Boolean, default=True)
 
     descripcion = db.Column(db.String)
 
@@ -312,7 +354,7 @@ class CargoServicio(db.Model):
 
 class Descuento(db.Model):
 
-    """Descuentos por empresa"""
+    """Descuentos/Bonificaciones por empresa"""
 
     __tablename__ = 'descuentos'
 
@@ -320,15 +362,33 @@ class Descuento(db.Model):
 
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'), nullable=False)
 
+    # Tipo de descuento: 'fijo', 'porcentaje', 'por_boleto'
     tipo = db.Column(db.String, nullable=False)
-
-    valor = db.Column(db.Numeric(10, 2), nullable=False)
+    
+    # Valor del descuento (monto fijo o porcentaje según tipo)
+    valor = db.Column(db.Numeric(10, 4), nullable=False)
+    
+    # Sobre qué se aplica: 'tarifa_base', 'tarifa_base_sin_qs', 'total', 'por_boleto'
+    aplica_sobre = db.Column(db.String(50), default='tarifa_base')
+    
+    # Tipo de servicio: 'nacional', 'internacional', 'todos'
+    tipo_servicio = db.Column(db.String(50), default='todos')
+    
+    # Descripción/notas
+    descripcion = db.Column(db.String)
+    
+    # Si incluye IVA
+    incluye_iva = db.Column(db.Boolean, default=True)
+    
+    activo = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime(timezone=True), default=func.now())
 
     empresa = db.relationship('Empresa', back_populates='descuentos')
 
 class TarifaFija(db.Model):
 
-    """Tarifas fijas por empresa"""
+    """Tarifas fijas por empresa y ruta"""
 
     __tablename__ = 'tarifas_fijas'
 
@@ -337,6 +397,16 @@ class TarifaFija(db.Model):
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'), nullable=False)
 
     tipo = db.Column(db.String, default='nacional')  # 'nacional', 'internacional', 'hotel', 'auto', 'otro'
+    
+    # Ruta específica (opcional) - Ej: 'CUN-MEX', 'MTY-MEX', 'CPE-MEX'
+    ruta_origen = db.Column(db.String(10))
+    ruta_destino = db.Column(db.String(10))
+    
+    # Si es para "otras rutas" no especificadas
+    es_ruta_default = db.Column(db.Boolean, default=False)
+    
+    # Tipo de viaje: 'sencillo', 'redondo'
+    tipo_viaje = db.Column(db.String(20), default='sencillo')
 
     monto = db.Column(db.Numeric(10, 2), nullable=False)
 

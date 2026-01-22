@@ -192,8 +192,7 @@
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-    color: white;
+    background: linear-gradient(135deg, #dc3545 0%, #dc3545 100%);
     padding: 1.25rem 1.5rem;
     display: flex;
     justify-content: space-between;
@@ -202,6 +201,7 @@
 
 .modal-header h3 {
     margin: 0;
+    color: white;
     font-size: 1.25rem;
     display: flex;
     align-items: center;
@@ -290,7 +290,7 @@
 .comparacion-box {
     background: white;
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1.25rem;
     border: 2px solid #e0e0e0;
     margin-top: 1rem;
 }
@@ -306,27 +306,61 @@
 }
 
 .comparacion-title {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid currentColor;
 }
 
 .comparacion-title.match { color: #198754; }
 .comparacion-title.mismatch { color: #dc3545; }
 
+.desglose-section {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.desglose-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.desglose-header {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .comparacion-row {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #e0e0e0;
+    padding: 0.4rem 0;
     font-size: 0.9rem;
+    color: #555;
 }
 
-.comparacion-row:last-child {
-    border-bottom: none;
+.comparacion-row.subtotal {
+    font-weight: 700;
+    color: var(--graphite);
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    border-top: 1px dashed #ccc;
+}
+
+.comparacion-row.factura-monto {
+    font-weight: 700;
+    color: var(--brick-ember);
+    font-size: 1rem;
 }
 
 .comparacion-row.total {
@@ -346,7 +380,8 @@
     background: white;
     border-radius: 8px;
     overflow: hidden;
-    height: 400px;
+    height: 500px;
+    min-height: 450px;
     border: 1px solid #e0e0e0;
 }
 
@@ -354,6 +389,18 @@
     width: 100%;
     height: 100%;
     border: none;
+}
+
+/* Ajustar modal-section para que el PDF ocupe más espacio */
+.modal-section:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-section:last-child .pdf-viewer-container {
+    flex: 1;
+    height: auto;
+    min-height: 450px;
 }
 
 .no-pdf {
@@ -527,7 +574,7 @@
             <div class="label">Rechazadas Hoy</div>
         </div>
         <div class="stat-card">
-            <div class="number primary">${{ "%.2f"|format(monto_pendiente) }}</div>
+            <div class="number primary">${{ "{:,.2f}".format(monto_pendiente) }}</div>
             <div class="label">Monto Pendiente</div>
         </div>
     </div>
@@ -572,8 +619,8 @@
                     </td>
                     <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
                     <td><strong>{{ p.numero_factura }}</strong></td>
-                    <td class="monto-cell">${{ "%.2f"|format(p.total) }}</td>
-                    <td class="monto-cell">${{ "%.2f"|format(p.monto_factura or 0) }}</td>
+                    <td class="monto-cell">${{ "{:,.2f}".format(p.total) }}</td>
+                    <td class="monto-cell">${{ "{:,.2f}".format(p.monto_factura or 0) }}</td>
                     <td>
                         <div class="validacion-cell">
                             {% if montos_coinciden %}
@@ -582,7 +629,7 @@
                             {% else %}
                                 <span class="validacion-icon mismatch">⚠️</span>
                                 <span class="diferencia">
-                                    Dif: ${{ "%.2f"|format((p.total|float - p.monto_factura|float)|abs) }}
+                                    Dif: ${{ "{:,.2f}".format((p.total|float - p.monto_factura|float)|abs) }}
                                 </span>
                             {% endif %}
                         </div>
@@ -591,7 +638,7 @@
                     <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y') if p.fecha_facturacion else '-' }}</td>
                     <td>
                         <button class="btn-revisar" onclick="abrirModalRevision({{ p.id }})">
-                            🔍 Revisar
+                             Revisar
                         </button>
                     </td>
                 </tr>
@@ -629,7 +676,7 @@
                     <td><strong>{{ p.folio }}</strong></td>
                     <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
                     <td>{{ p.numero_factura }}</td>
-                    <td>${{ "%.2f"|format(p.monto_factura or 0) }}</td>
+                    <td>${{ "{:,.2f}".format(p.monto_factura or 0) }}</td>
                     <td>
                         {% if p.estatus_facturacion == 'aprobada' %}
                             <span class="badge badge-success">✓ Aprobada</span>
@@ -656,7 +703,7 @@
 <div class="modal-overlay" id="modalRevision">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>🔍 Revisión de Factura - <span id="modalFolio"></span></h3>
+            <h3> Revisión de Factura - <span id="modalFolio"></span></h3>
             <button class="modal-close" onclick="cerrarModalRevision()">✕</button>
         </div>
         
@@ -700,16 +747,40 @@
                         <span id="comparacionIcon">✅</span>
                         <span id="comparacionTexto">Montos Coinciden</span>
                     </div>
-                    <div class="comparacion-row">
-                        <span>Total Papeleta</span>
-                        <span id="comparacionPapeleta">$0.00</span>
+                    
+                    <!-- Desglose de la Papeleta -->
+                    <div class="desglose-section">
+                        <div class="desglose-header">📋 Desglose Papeleta</div>
+                        <div class="comparacion-row">
+                            <span>Total Ticket</span>
+                            <span id="detalleTotalTicket">$0.00</span>
+                        </div>
+                        <div class="comparacion-row">
+                            <span>Comision Ajustable</span>
+                            <span id="detalleDiezPorciento">$0.00</span>
+                        </div>
+                        <div class="comparacion-row">
+                            <span>Cargo Expedición</span>
+                            <span id="detalleCargo">$0.00</span>
+                        </div>
+                        <div class="comparacion-row subtotal">
+                            <span>Total Papeleta</span>
+                            <span id="comparacionPapeleta">$0.00</span>
+                        </div>
                     </div>
-                    <div class="comparacion-row">
-                        <span>Monto Facturado</span>
-                        <span id="comparacionFactura">$0.00</span>
+                    
+                    <!-- Monto Facturado -->
+                    <div class="desglose-section">
+                        <div class="desglose-header">🧾 Factura</div>
+                        <div class="comparacion-row factura-monto">
+                            <span>Monto Facturado</span>
+                            <span id="comparacionFactura">$0.00</span>
+                        </div>
                     </div>
+                    
+                    <!-- Diferencia (si existe) -->
                     <div class="comparacion-row total" id="comparacionDiferencia" style="display: none;">
-                        <span>Diferencia</span>
+                        <span>⚠️ Diferencia</span>
                         <span class="diferencia" id="comparacionDifMonto">$0.00</span>
                     </div>
                 </div>
@@ -756,6 +827,14 @@
 
 <!-- Datos de papeletas para JavaScript -->
 <script>
+// Función para formatear moneda con comas
+function formatMoney(amount) {
+    return '$' + amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
 const papeletasData = {
     {% for p in pendientes %}
     {{ p.id }}: {
@@ -766,6 +845,9 @@ const papeletasData = {
         aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '---' }}",
         numeroFactura: "{{ p.numero_factura or '---' }}",
         facturoPor: "{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}",
+        totalTicket: {{ p.total_ticket or 0 }},
+        diezPorciento: {{ p.diez_porciento or 0 }},
+        cargo: {{ p.cargo or 0 }},
         totalPapeleta: {{ p.total or 0 }},
         montoFactura: {{ p.monto_factura or 0 }},
         archivoBoleto: "{{ p.archivo_boleto or '' }}",
@@ -802,12 +884,17 @@ function abrirModalRevision(papeletaId) {
     document.getElementById('detalleNumeroFactura').textContent = p.numeroFactura;
     document.getElementById('detalleFacturoPor').textContent = p.facturoPor;
     
+    // Desglose de montos con formato
+    document.getElementById('detalleTotalTicket').textContent = formatMoney(p.totalTicket);
+    document.getElementById('detalleDiezPorciento').textContent = formatMoney(p.diezPorciento);
+    document.getElementById('detalleCargo').textContent = formatMoney(p.cargo);
+    
     // Comparación de montos
     const diferencia = Math.abs(p.totalPapeleta - p.montoFactura);
     const coinciden = diferencia < 0.01;
     
-    document.getElementById('comparacionPapeleta').textContent = '$' + p.totalPapeleta.toFixed(2);
-    document.getElementById('comparacionFactura').textContent = '$' + p.montoFactura.toFixed(2);
+    document.getElementById('comparacionPapeleta').textContent = formatMoney(p.totalPapeleta);
+    document.getElementById('comparacionFactura').textContent = formatMoney(p.montoFactura);
     
     const comparacionBox = document.getElementById('comparacionBox');
     const comparacionTitle = document.getElementById('comparacionTitle');
@@ -827,7 +914,7 @@ function abrirModalRevision(papeletaId) {
         comparacionIcon.textContent = '⚠️';
         comparacionTexto.textContent = 'Montos NO Coinciden';
         comparacionDiferencia.style.display = 'flex';
-        document.getElementById('comparacionDifMonto').textContent = '$' + diferencia.toFixed(2);
+        document.getElementById('comparacionDifMonto').textContent = formatMoney(diferencia);
     }
     
     // PDF

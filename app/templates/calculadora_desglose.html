@@ -1,0 +1,1292 @@
+{% extends "base.html" %}
+
+{% block title %}Calculadora de Desglose - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+/* ========================================
+   CALCULADORA DE DESGLOSE - Kinessia Hub
+   Diseño moderno con cálculos en tiempo real
+   ======================================== */
+
+:root {
+    --calc-primary: #2563eb;
+    --calc-success: #059669;
+    --calc-warning: #d97706;
+    --calc-danger: #dc2626;
+    --calc-bg: #f8fafc;
+    --calc-card: #ffffff;
+    --calc-border: #e2e8f0;
+    --calc-text: #1e293b;
+    --calc-muted: #64748b;
+    --calc-highlight: #dbeafe;
+}
+
+.calc-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.calc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--calc-primary);
+}
+
+.calc-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--calc-text);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.calc-header h1::before {
+    content: '🧮';
+    font-size: 1.5rem;
+}
+
+.empresa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, var(--calc-primary), #1d4ed8);
+    color: white;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Layout Principal - 3 columnas */
+.calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .calc-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .calc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.calc-card {
+    background: var(--calc-card);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.calc-card-header {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border-bottom: 1px solid var(--calc-border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calc-card-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--calc-text);
+    margin: 0;
+}
+
+.calc-card-header .icon {
+    font-size: 1.25rem;
+}
+
+.calc-card-body {
+    padding: 1.25rem;
+}
+
+/* Card de Entrada - Amarillo (como Excel) */
+.card-input .calc-card-header {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-bottom-color: #f59e0b;
+}
+
+.card-input .calc-card-header h3 {
+    color: #92400e;
+}
+
+/* Card de Resultado - Verde */
+.card-result .calc-card-header {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-bottom-color: #059669;
+}
+
+.card-result .calc-card-header h3 {
+    color: #065f46;
+}
+
+/* Card de Info Empresa - Azul */
+.card-info .calc-card-header {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    border-bottom-color: #2563eb;
+}
+
+.card-info .calc-card-header h3 {
+    color: #1e40af;
+}
+
+/* Form Groups */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row.single {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--calc-muted);
+    margin-bottom: 0.375rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+    border: 2px solid var(--calc-border);
+    border-radius: 0.5rem;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--calc-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Inputs de entrada (amarillos como Excel) */
+.input-entry {
+    background: #fffbeb !important;
+    border-color: #f59e0b !important;
+    font-weight: 600;
+}
+
+.input-entry:focus {
+    border-color: #d97706 !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+/* Inputs calculados (solo lectura) */
+.input-calculated {
+    background: #f0fdf4 !important;
+    border-color: #22c55e !important;
+    font-weight: 700;
+    color: #166534 !important;
+}
+
+/* Filas de resultado */
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed var(--calc-border);
+}
+
+.result-row:last-child {
+    border-bottom: none;
+}
+
+.result-row.total {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    margin: 1rem -1.25rem -1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0 0 1rem 1rem;
+}
+
+.result-label {
+    font-size: 0.875rem;
+    color: var(--calc-muted);
+}
+
+.result-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--calc-text);
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.result-row.total .result-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #166534;
+}
+
+.result-row.total .result-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #166534;
+}
+
+/* Info de Esquema */
+.esquema-info {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.esquema-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.esquema-badge.bonificacion {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.esquema-badge.tarifa-fija {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.esquema-badge.cargo-servicio {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.esquema-badge.desglose {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.esquema-detail {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--calc-muted);
+}
+
+.esquema-detail strong {
+    color: var(--calc-text);
+}
+
+/* Instrucciones */
+.instrucciones-box {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    color: #92400e;
+    margin-top: 1rem;
+}
+
+.instrucciones-box::before {
+    content: '💡 ';
+}
+
+/* Botones */
+.calc-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-calc {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--calc-primary), #1d4ed8);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--calc-success), #047857);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: var(--calc-text);
+}
+
+.btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+/* Preview para ANT */
+.ant-preview {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.8125rem;
+    margin-top: 1rem;
+}
+
+.ant-preview-header {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ant-preview-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+}
+
+.ant-preview-row.highlight {
+    color: #4ade80;
+    font-weight: 600;
+}
+
+/* Mensaje cuando no hay empresa seleccionada */
+.no-empresa-msg {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--calc-muted);
+}
+
+.no-empresa-msg .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Loading */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+}
+
+.spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid var(--calc-border);
+    border-top-color: var(--calc-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Notificaciones */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--calc-success);
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.error {
+    background: var(--calc-danger);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calc-container">
+    <div class="calc-header">
+        <h1>Calculadora de Desglose</h1>
+        <div id="empresaBadge" class="empresa-badge" style="display: none;">
+            <span id="empresaNombreBadge"></span>
+        </div>
+    </div>
+
+    <form id="desgloseForm" method="POST">
+        <div class="calc-grid">
+            <!-- COLUMNA 1: Selección y Datos de Entrada -->
+            <div class="calc-card card-input">
+                <div class="calc-card-header">
+                    <span class="icon">📝</span>
+                    <h3>Datos del Boleto</h3>
+                </div>
+                <div class="calc-card-body">
+                    <!-- Selección de Empresa -->
+                    <div class="form-group">
+                        <label>Empresa Cliente</label>
+                        <select id="empresa_id" name="empresa_id" required onchange="cargarEsquemaEmpresa()">
+                            <option value="">Selecciona una empresa...</option>
+                            {% for empresa in empresas %}
+                            <option value="{{ empresa.id }}" 
+                                    data-esquema="{{ empresa.esquema_facturacion }}"
+                                    data-bonificacion="{{ empresa.bonificacion_porcentaje or 0 }}"
+                                    data-requiere-desglose="{{ empresa.requiere_desglose|lower }}"
+                                    data-tipo-desglose="{{ empresa.tipo_desglose }}">
+                                {{ empresa.nombre_empresa }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Aerolínea</label>
+                            <select id="aerolinea_id" name="aerolinea_id" required>
+                                <option value="">Selecciona...</option>
+                                {% for aerolinea in aerolineas %}
+                                <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Clave Reservación</label>
+                            <input type="text" id="clave_reserva" name="clave_reserva" 
+                                   class="input-entry" placeholder="XXXXXX" maxlength="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pasajero</label>
+                            <input type="text" id="pasajero_nombre" name="pasajero_nombre" 
+                                   placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label>Ruta</label>
+                            <input type="text" id="ruta" name="ruta" 
+                                   placeholder="TIJ-MEX-TIJ">
+                        </div>
+                    </div>
+
+                    <hr style="margin: 1rem 0; border: none; border-top: 2px dashed #f59e0b;">
+                    
+                    <p style="font-size: 0.8125rem; color: #92400e; margin-bottom: 1rem;">
+                        <strong>⚡ Ingresa los datos del boleto:</strong>
+                    </p>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>T. Base (con bonificación)</label>
+                            <input type="number" step="0.01" id="tarifa_base_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                        <div class="form-group">
+                            <label>IVA</label>
+                            <input type="number" step="0.01" id="iva_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>YR (Combustible)</label>
+                            <input type="number" step="0.01" id="yr_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                        <div class="form-group">
+                            <label>TUA</label>
+                            <input type="number" step="0.01" id="tua_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Otros Cargos</label>
+                            <input type="number" step="0.01" id="otros_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                        <div class="form-group">
+                            <label>Cargo por Emisión</label>
+                            <input type="number" step="0.01" id="cargo_emision_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- COLUMNA 2: Resultado del Cálculo (Desglose para Facturación) -->
+            <div class="calc-card card-result">
+                <div class="calc-card-header">
+                    <span class="icon">📊</span>
+                    <h3>Desglose para Facturación</h3>
+                </div>
+                <div class="calc-card-body">
+                    <div id="resultadoContainer">
+                        <div class="no-empresa-msg">
+                            <div class="icon">🏢</div>
+                            <p>Selecciona una empresa para ver<br>el esquema de facturación aplicable</p>
+                        </div>
+                    </div>
+
+                    <!-- Resultados calculados (se muestra al seleccionar empresa) -->
+                    <div id="resultadosCalculo" style="display: none;">
+                        <div class="result-row">
+                            <span class="result-label">T. Base (sin bonificación)</span>
+                            <span class="result-value" id="res_tarifa_sin_bonif">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">T. Base (con bonificación)</span>
+                            <span class="result-value" id="res_tarifa_con_bonif">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Bonificación aplicada</span>
+                            <span class="result-value" id="res_bonificacion">0%</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">IVA + YR</span>
+                            <span class="result-value" id="res_iva_yr">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">YR</span>
+                            <span class="result-value" id="res_yr">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">TUA</span>
+                            <span class="result-value" id="res_tua">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Otros Cargos</span>
+                            <span class="result-value" id="res_otros">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Total sin cargo emisión</span>
+                            <span class="result-value" id="res_total_sin_cargo">$0.00</span>
+                        </div>
+                        <div class="result-row">
+                            <span class="result-label">Cargo por Emisión</span>
+                            <span class="result-value" id="res_cargo_emision">$0.00</span>
+                        </div>
+                        <div class="result-row total">
+                            <span class="result-label">TOTAL BOLETO</span>
+                            <span class="result-value" id="res_total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Preview para ANT -->
+                    <div id="antPreview" class="ant-preview" style="display: none;">
+                        <div class="ant-preview-header">📋 Para capturar en ANT:</div>
+                        <div class="ant-preview-row">
+                            <span>Nueva Tarifa Base:</span>
+                            <span id="ant_tarifa">$0.00</span>
+                        </div>
+                        <div class="ant-preview-row">
+                            <span>Nuevo IVA (16%):</span>
+                            <span id="ant_iva">$0.00</span>
+                        </div>
+                        <div class="ant-preview-row highlight">
+                            <span>Total:</span>
+                            <span id="ant_total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Campos ocultos para el form -->
+                    <input type="hidden" name="tarifa_base" id="tarifa_base_final">
+                    <input type="hidden" name="iva" id="iva_final">
+                    <input type="hidden" name="tua" id="tua_final">
+                    <input type="hidden" name="yr" id="yr_final">
+                    <input type="hidden" name="otros_cargos" id="otros_final">
+                    <input type="hidden" name="cargo_por_servicio" id="cargo_final">
+                    <input type="hidden" name="total" id="total_final">
+                </div>
+            </div>
+
+            <!-- COLUMNA 3: Info de la Empresa y Acciones -->
+            <div class="calc-card card-info">
+                <div class="calc-card-header">
+                    <span class="icon">🏢</span>
+                    <h3>Esquema de Facturación</h3>
+                </div>
+                <div class="calc-card-body">
+                    <div id="empresaInfo">
+                        <div class="no-empresa-msg">
+                            <div class="icon">📋</div>
+                            <p>La información del esquema<br>aparecerá aquí</p>
+                        </div>
+                    </div>
+
+                    <div id="esquemaDetalle" style="display: none;">
+                        <div class="esquema-info">
+                            <span id="esquemaBadge" class="esquema-badge">-</span>
+                            <div class="esquema-detail" id="esquemaDescripcion">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+
+                        <div id="instruccionesBox" class="instrucciones-box" style="display: none;">
+                            <span id="instruccionesTexto"></span>
+                        </div>
+
+                        <!-- Cargo por servicio de la empresa -->
+                        <div id="cargoEmpresaInfo" style="margin-top: 1rem; display: none;">
+                            <label style="font-size: 0.75rem; color: var(--calc-muted); text-transform: uppercase;">
+                                Cargo por servicio configurado:
+                            </label>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--calc-primary);">
+                                $<span id="cargoEmpresaMonto">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="calc-actions" style="flex-direction: column;">
+                        <button type="submit" class="btn-calc btn-success" id="btnGuardar" disabled>
+                            💾 Guardar Desglose
+                        </button>
+                        <button type="button" class="btn-calc btn-secondary" onclick="limpiarFormulario()">
+                            🗑️ Limpiar
+                        </button>
+                        <a href="{{ url_for('main.consulta_desgloses') }}" class="btn-calc btn-secondary" style="text-decoration: none; text-align: center;">
+                            📋 Ver Desgloses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Toast de notificación -->
+<div id="toast" class="toast"></div>
+
+<!-- Modal de Desglose Guardado -->
+<div id="modalDesglose" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✅ Desglose Guardado</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-folio">
+                <span class="folio-label">Folio</span>
+                <span class="folio-number" id="modalFolio">#1</span>
+            </div>
+            
+            <div class="modal-info-grid">
+                <div class="modal-info-item">
+                    <span class="info-label">Empresa</span>
+                    <span class="info-value" id="modalEmpresa">-</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="info-label">Pasajero</span>
+                    <span class="info-value" id="modalPasajero">-</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="info-label">Clave Reservación</span>
+                    <span class="info-value" id="modalClave">-</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="info-label">Aerolínea</span>
+                    <span class="info-value" id="modalAerolinea">-</span>
+                </div>
+            </div>
+            
+            <div class="modal-desglose">
+                <div class="desglose-row">
+                    <span>T. Base (sin bonificación)</span>
+                    <span id="modalTarifaSinBonif">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>T. Base (con bonificación)</span>
+                    <span id="modalTarifaConBonif">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>Bonificación</span>
+                    <span id="modalBonificacion">0%</span>
+                </div>
+                <div class="desglose-row">
+                    <span>IVA</span>
+                    <span id="modalIva">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>YR</span>
+                    <span id="modalYr">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>TUA</span>
+                    <span id="modalTua">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>Otros Cargos</span>
+                    <span id="modalOtros">$0.00</span>
+                </div>
+                <div class="desglose-row">
+                    <span>Cargo por Emisión</span>
+                    <span id="modalCargo">$0.00</span>
+                </div>
+                <div class="desglose-row total">
+                    <span>TOTAL</span>
+                    <span id="modalTotal">$0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-calc btn-primary" onclick="nuevoDesglose()">
+                ➕ Nuevo Desglose
+            </button>
+            <button type="button" class="btn-calc btn-secondary" onclick="cerrarModal()">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 1rem;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.modal-close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-folio {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-radius: 0.75rem;
+}
+
+.folio-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #059669;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+}
+
+.folio-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #047857;
+}
+
+.modal-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-info-item {
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.info-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.modal-desglose {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.desglose-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+}
+
+.desglose-row:last-child {
+    border-bottom: none;
+}
+
+.desglose-row span:first-child {
+    color: #64748b;
+}
+
+.desglose-row span:last-child {
+    font-weight: 600;
+    color: #1e293b;
+    font-family: 'Consolas', monospace;
+}
+
+.desglose-row.total {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+}
+
+.desglose-row.total span:first-child,
+.desglose-row.total span:last-child {
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-radius: 0 0 1rem 1rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.modal-footer .btn-calc {
+    flex: 1;
+}
+</style>
+
+<script>
+// Variables globales para el esquema actual
+let esquemaActual = {
+    tipo: null,
+    bonificacion: 0,
+    requiereDesglose: false,
+    tipoDesglose: 'standard',
+    cargoServicio: 0
+};
+
+// Cargar esquema cuando se selecciona empresa
+function cargarEsquemaEmpresa() {
+    const select = document.getElementById('empresa_id');
+    const option = select.options[select.selectedIndex];
+    
+    if (!option.value) {
+        document.getElementById('resultadoContainer').style.display = 'block';
+        document.getElementById('resultadosCalculo').style.display = 'none';
+        document.getElementById('antPreview').style.display = 'none';
+        document.getElementById('empresaInfo').style.display = 'block';
+        document.getElementById('esquemaDetalle').style.display = 'none';
+        document.getElementById('empresaBadge').style.display = 'none';
+        document.getElementById('btnGuardar').disabled = true;
+        return;
+    }
+
+    // Obtener datos del option
+    esquemaActual.tipo = option.dataset.esquema || 'cargo_servicio';
+    esquemaActual.bonificacion = parseFloat(option.dataset.bonificacion) || 0;
+    esquemaActual.requiereDesglose = option.dataset.requiereDesglose === 'true';
+    esquemaActual.tipoDesglose = option.dataset.tipoDesglose || 'standard';
+
+    // Mostrar nombre en badge
+    document.getElementById('empresaNombreBadge').textContent = option.text;
+    document.getElementById('empresaBadge').style.display = 'flex';
+
+    // Mostrar secciones
+    document.getElementById('resultadoContainer').style.display = 'none';
+    document.getElementById('resultadosCalculo').style.display = 'block';
+    document.getElementById('empresaInfo').style.display = 'none';
+    document.getElementById('esquemaDetalle').style.display = 'block';
+    document.getElementById('btnGuardar').disabled = false;
+
+    // Actualizar badge de esquema
+    const badge = document.getElementById('esquemaBadge');
+    const descripcion = document.getElementById('esquemaDescripcion');
+    
+    switch(esquemaActual.tipo) {
+        case 'bonificacion':
+            badge.textContent = 'BONIFICACIÓN';
+            badge.className = 'esquema-badge bonificacion';
+            const porcBonif = (esquemaActual.bonificacion * 100).toFixed(2);
+            descripcion.innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
+            break;
+        case 'tarifa_fija':
+            badge.textContent = 'TARIFA FIJA';
+            badge.className = 'esquema-badge tarifa-fija';
+            descripcion.innerHTML = 'Tarifa fija por ruta configurada';
+            break;
+        case 'cargo_servicio':
+            badge.textContent = 'CARGO POR SERVICIO';
+            badge.className = 'esquema-badge cargo-servicio';
+            descripcion.innerHTML = 'Cargo fijo + tarifa del boleto';
+            break;
+        case 'desglose_especial':
+            badge.textContent = 'DESGLOSE ESPECIAL';
+            badge.className = 'esquema-badge desglose';
+            descripcion.innerHTML = 'Requiere desglose detallado (TML/ISSFAM)';
+            break;
+        default:
+            badge.textContent = esquemaActual.tipo.toUpperCase();
+            badge.className = 'esquema-badge';
+    }
+
+    // Cargar cargo por servicio de la empresa
+    fetch(`/api/empresa/${option.value}/cargos`)
+        .then(r => r.json())
+        .then(data => {
+            console.log('Datos empresa:', data);
+            
+            // Actualizar cargo
+            if (data.cargo_oculto) {
+                esquemaActual.cargoServicio = data.cargo_oculto;
+                document.getElementById('cargoEmpresaMonto').textContent = data.cargo_oculto.toFixed(2);
+                document.getElementById('cargoEmpresaInfo').style.display = 'block';
+                document.getElementById('cargo_emision_input').value = data.cargo_oculto.toFixed(2);
+            } else if (data.cargo_visible) {
+                esquemaActual.cargoServicio = data.cargo_visible;
+                document.getElementById('cargoEmpresaMonto').textContent = data.cargo_visible.toFixed(2);
+                document.getElementById('cargoEmpresaInfo').style.display = 'block';
+                document.getElementById('cargo_emision_input').value = data.cargo_visible.toFixed(2);
+            } else {
+                document.getElementById('cargoEmpresaInfo').style.display = 'none';
+            }
+            
+            // Actualizar bonificación y esquema
+            if (data.bonificacion && data.bonificacion > 0) {
+                esquemaActual.bonificacion = data.bonificacion;
+                esquemaActual.tipo = 'bonificacion';
+                const porcBonif = (data.bonificacion * 100).toFixed(2);
+                document.getElementById('esquemaBadge').textContent = 'BONIFICACIÓN';
+                document.getElementById('esquemaBadge').className = 'esquema-badge bonificacion';
+                document.getElementById('esquemaDescripcion').innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
+            } else if (data.esquema) {
+                esquemaActual.tipo = data.esquema;
+                esquemaActual.bonificacion = 0;
+            }
+            
+            calcular();
+        })
+        .catch(e => console.log('No se pudo cargar cargo:', e));
+
+    // Cargar instrucciones si existen
+    fetch(`/api/empresa/${option.value}/instrucciones`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.notas_emision) {
+                document.getElementById('instruccionesTexto').textContent = data.notas_emision;
+                document.getElementById('instruccionesBox').style.display = 'block';
+            } else {
+                document.getElementById('instruccionesBox').style.display = 'none';
+            }
+        })
+        .catch(e => {
+            document.getElementById('instruccionesBox').style.display = 'none';
+        });
+
+    // Recalcular
+    calcular();
+}
+
+// Función principal de cálculo
+function calcular() {
+    // Obtener valores de entrada
+    const tarifaBase = parseFloat(document.getElementById('tarifa_base_input').value) || 0;
+    const iva = parseFloat(document.getElementById('iva_input').value) || 0;
+    const yr = parseFloat(document.getElementById('yr_input').value) || 0;
+    const tua = parseFloat(document.getElementById('tua_input').value) || 0;
+    const otros = parseFloat(document.getElementById('otros_input').value) || 0;
+    const cargoEmision = parseFloat(document.getElementById('cargo_emision_input').value) || 0;
+
+    // Variables de resultado
+    let tarifaSinBonif = tarifaBase;
+    let tarifaConBonif = tarifaBase;
+    let bonificacionAplicada = esquemaActual.bonificacion || 0;
+    let ivaYR = iva;
+    let totalSinCargo = 0;
+    let total = 0;
+
+    // Cálculo según tipo de esquema
+    if (esquemaActual.tipo === 'bonificacion' && bonificacionAplicada > 0) {
+        // La bonificación es un descuento sobre la tarifa original
+        // T. Base con bonif = T. Base sin bonif * (1 - bonificacion)
+        // Por lo tanto: T. Base sin bonif = T. Base con bonif / (1 - bonificacion)
+        tarifaConBonif = tarifaBase;
+        tarifaSinBonif = tarifaBase / (1 - bonificacionAplicada);
+    } else if (esquemaActual.tipo === 'desglose_especial') {
+        // Fórmula IMSS TML: Todo se suma y divide entre 1.16
+        const sumaTML = tarifaBase + iva + cargoEmision;
+        tarifaSinBonif = sumaTML / 1.16;
+        tarifaConBonif = tarifaSinBonif;
+        ivaYR = tarifaSinBonif * 0.16;
+        bonificacionAplicada = 0;
+    } else {
+        // Cargo por servicio estándar - sin bonificación
+        tarifaSinBonif = tarifaBase;
+        tarifaConBonif = tarifaBase;
+        bonificacionAplicada = 0;
+    }
+
+    // Calcular totales
+    totalSinCargo = tarifaConBonif + ivaYR + yr + tua + otros;
+    total = totalSinCargo + cargoEmision;
+
+    // Cálculo para ANT (simplificado: todo / 1.16)
+    const totalBoleto = tarifaBase + iva + yr + tua + otros + cargoEmision;
+    const antTarifa = totalBoleto / 1.16;
+    const antIva = antTarifa * 0.16;
+
+    // Actualizar UI
+    document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
+    document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
+    document.getElementById('res_bonificacion').textContent = (bonificacionAplicada * 100).toFixed(2) + '%';
+    document.getElementById('res_iva_yr').textContent = '$' + ivaYR.toFixed(2);
+    document.getElementById('res_yr').textContent = '$' + yr.toFixed(2);
+    document.getElementById('res_tua').textContent = '$' + tua.toFixed(2);
+    document.getElementById('res_otros').textContent = '$' + otros.toFixed(2);
+    document.getElementById('res_total_sin_cargo').textContent = '$' + totalSinCargo.toFixed(2);
+    document.getElementById('res_cargo_emision').textContent = '$' + cargoEmision.toFixed(2);
+    document.getElementById('res_total').textContent = '$' + total.toFixed(2);
+
+    // ANT Preview
+    document.getElementById('ant_tarifa').textContent = '$' + antTarifa.toFixed(2);
+    document.getElementById('ant_iva').textContent = '$' + antIva.toFixed(2);
+    document.getElementById('ant_total').textContent = '$' + totalBoleto.toFixed(2);
+    
+    if (totalBoleto > 0) {
+        document.getElementById('antPreview').style.display = 'block';
+    }
+
+    // Actualizar campos ocultos para el form
+    document.getElementById('tarifa_base_final').value = tarifaSinBonif.toFixed(2);
+    document.getElementById('iva_final').value = ivaYR.toFixed(2);
+    document.getElementById('tua_final').value = tua.toFixed(2);
+    document.getElementById('yr_final').value = yr.toFixed(2);
+    document.getElementById('otros_final').value = otros.toFixed(2);
+    document.getElementById('cargo_final').value = cargoEmision.toFixed(2);
+    document.getElementById('total_final').value = total.toFixed(2);
+}
+
+// Limpiar formulario
+function limpiarFormulario() {
+    document.getElementById('desgloseForm').reset();
+    document.getElementById('resultadoContainer').style.display = 'block';
+    document.getElementById('resultadosCalculo').style.display = 'none';
+    document.getElementById('antPreview').style.display = 'none';
+    document.getElementById('empresaInfo').style.display = 'block';
+    document.getElementById('esquemaDetalle').style.display = 'none';
+    document.getElementById('empresaBadge').style.display = 'none';
+    document.getElementById('btnGuardar').disabled = true;
+    
+    esquemaActual = {
+        tipo: null,
+        bonificacion: 0,
+        requiereDesglose: false,
+        tipoDesglose: 'standard',
+        cargoServicio: 0
+    };
+}
+
+// Mostrar toast
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Mostrar modal con datos del desglose guardado
+function mostrarModalDesglose(folio) {
+    // Obtener datos del formulario
+    const empresaSelect = document.getElementById('empresa_id');
+    const aerolineaSelect = document.getElementById('aerolinea_id');
+    
+    document.getElementById('modalFolio').textContent = '#' + folio;
+    document.getElementById('modalEmpresa').textContent = empresaSelect.options[empresaSelect.selectedIndex].text;
+    document.getElementById('modalPasajero').textContent = document.getElementById('pasajero_nombre').value || '-';
+    document.getElementById('modalClave').textContent = document.getElementById('clave_reserva').value || '-';
+    document.getElementById('modalAerolinea').textContent = aerolineaSelect.options[aerolineaSelect.selectedIndex].text;
+    
+    // Datos del desglose
+    document.getElementById('modalTarifaSinBonif').textContent = document.getElementById('res_tarifa_sin_bonif').textContent;
+    document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_con_bonif').textContent;
+    document.getElementById('modalBonificacion').textContent = document.getElementById('res_bonificacion').textContent;
+    document.getElementById('modalIva').textContent = document.getElementById('res_iva_yr').textContent;
+    document.getElementById('modalYr').textContent = document.getElementById('res_yr').textContent;
+    document.getElementById('modalTua').textContent = document.getElementById('res_tua').textContent;
+    document.getElementById('modalOtros').textContent = document.getElementById('res_otros').textContent;
+    document.getElementById('modalCargo').textContent = document.getElementById('res_cargo_emision').textContent;
+    document.getElementById('modalTotal').textContent = document.getElementById('res_total').textContent;
+    
+    // Mostrar modal
+    document.getElementById('modalDesglose').style.display = 'flex';
+}
+
+// Cerrar modal
+function cerrarModal() {
+    document.getElementById('modalDesglose').style.display = 'none';
+}
+
+// Nuevo desglose (limpiar y cerrar modal)
+function nuevoDesglose() {
+    cerrarModal();
+    limpiarFormulario();
+}
+
+// Manejar submit del formulario
+document.getElementById('desgloseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const btnGuardar = document.getElementById('btnGuardar');
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = '⏳ Guardando...';
+    
+    fetch('{{ url_for("main.guardar_desglose_calculadora") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '💾 Guardar Desglose';
+        
+        if (data.success) {
+            showToast('✅ Desglose guardado correctamente');
+            mostrarModalDesglose(data.folio);
+        } else {
+            showToast('❌ Error: ' + data.error, true);
+        }
+    })
+    .catch(err => {
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '💾 Guardar Desglose';
+        showToast('❌ Error al guardar: ' + err, true);
+    });
+});
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('modalDesglose').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModal();
+    }
+});
+</script>
+{% endblock %}

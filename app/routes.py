@@ -1766,11 +1766,62 @@ def imprimir_ticket_papeleta(id):
 @main.route('/desgloses', methods=['GET'])
 @login_required
 def desgloses():
+    return redirect(url_for('main.consulta_desgloses'))
+
+
+@main.route('/desgloses/consulta', methods=['GET'])
+@login_required
+def consulta_desgloses():
+    """Vista de consulta de desgloses con filtros"""
+    from datetime import date
+    
+    # Base query - cada agente ve sus desgloses, admin ve todos
     if current_user.es_admin():
-        desgloses_list = Desglose.query.order_by(Desglose.folio.desc()).all()
+        query = Desglose.query
     else:
-        desgloses_list = Desglose.query.filter_by(usuario_id=current_user.id).order_by(Desglose.folio.desc()).all()
-    return render_template('consulta_desgloses.html', desgloses_registrados=desgloses_list)
+        query = Desglose.query.filter_by(usuario_id=current_user.id)
+    
+    # Aplicar filtros
+    folio = request.args.get('folio', '').strip()
+    empresa_id = request.args.get('empresa_id', type=int)
+    clave = request.args.get('clave', '').strip()
+    estatus = request.args.get('estatus', '').strip()
+    
+    if folio:
+        query = query.filter(Desglose.folio == int(folio))
+    if empresa_id:
+        query = query.filter(Desglose.empresa_id == empresa_id)
+    if clave:
+        query = query.filter(Desglose.clave_reserva.ilike(f'%{clave}%'))
+    if estatus:
+        query = query.filter(Desglose.estatus == estatus)
+    
+    # Ordenar por folio descendente (más recientes primero)
+    desgloses_list = query.order_by(Desglose.folio.desc()).limit(100).all()
+    
+    # Estadísticas
+    total_desgloses = query.count()
+    suma_total = sum(float(d.total or 0) for d in desgloses_list)
+    
+    # Desgloses de hoy
+    hoy = fecha_mexico()
+    if current_user.es_admin():
+        desgloses_hoy = Desglose.query.filter(Desglose.fecha_emision == hoy).count()
+    else:
+        desgloses_hoy = Desglose.query.filter(
+            Desglose.usuario_id == current_user.id,
+            Desglose.fecha_emision == hoy
+        ).count()
+    
+    # Lista de empresas para el filtro
+    empresas_list = Empresa.query.filter_by(activa=True).order_by(Empresa.nombre_empresa).all()
+    
+    return render_template('consulta_desgloses.html',
+                           desgloses=desgloses_list,
+                           empresas=empresas_list,
+                           total_desgloses=total_desgloses,
+                           suma_total=suma_total,
+                           desgloses_hoy=desgloses_hoy)
 
 
 @main.route('/desgloses/nuevo', methods=['GET'])
@@ -1862,33 +1913,93 @@ def empresas():
     return render_template('empresas.html', empresas_registradas=lista_empresas)
 
 
-@main.route('/empresas/nueva', methods=['POST'])
+@main.route('/empresas/nueva', methods=['GET', 'POST'])
 @login_required
 def nueva_empresa():
     if current_user.rol_relacion.nombre not in ['administrador', 'admin', 'director']:
         return redirect(url_for('main.dashboard'))
+    
+    # Si es GET, mostrar formulario vacío
+    if request.method == 'GET':
+        return render_template('empresa_edit.html', empresa=None)
+    
+    # Si es POST, procesar el formulario
     try:
         nombre = request.form.get('nombre_empresa')
         if not nombre:
             flash('El nombre de la empresa no puede estar vacío.', 'warning')
             return redirect(url_for('main.empresas'))
         
-        nueva = Empresa(nombre_empresa=nombre, sucursal_id=current_user.sucursal_id)
+        # Crear empresa con campos básicos y de esquema
+        nueva = Empresa(
+            nombre_empresa=nombre,
+            sucursal_id=current_user.sucursal_id,
+            tipo_cliente=request.form.get('tipo_cliente', 'corporativo'),
+            rfc=request.form.get('rfc') or None,
+            razon_social=request.form.get('razon_social') or None,
+            contacto_nombre=request.form.get('contacto_nombre') or None,
+            contacto_email=request.form.get('contacto_email') or None,
+            contacto_telefono=request.form.get('contacto_telefono') or None,
+            # Campos de esquema de facturación
+            esquema_facturacion=request.form.get('esquema_facturacion', 'cargo_servicio'),
+            bonificacion_porcentaje=float(request.form.get('bonificacion_porcentaje', 0)) / 100 if request.form.get('bonificacion_porcentaje') else None,
+            bonificacion_aplica_sobre=request.form.get('bonificacion_aplica_sobre', 'tarifa_base'),
+            requiere_desglose=request.form.get('requiere_desglose') == 'on',
+            tipo_desglose=request.form.get('tipo_desglose', 'standard'),
+            instrucciones_cotizacion=request.form.get('instrucciones_cotizacion') or None,
+            notas_emision=request.form.get('notas_emision') or None,
+            personas_autorizadas=request.form.get('personas_autorizadas') or None,
+            encargado_cuenta=request.form.get('encargado_cuenta') or None,
+        )
         db.session.add(nueva)
         db.session.flush()
 
+        # Agregar cargos por servicio
         cargo_facturado = request.form.get('cargoServicioFacturado')
         if cargo_facturado:
-            db.session.add(CargoServicio(empresa_id=nueva.id, tipo='visible', monto=float(cargo_facturado)))
+            db.session.add(CargoServicio(
+                empresa_id=nueva.id, 
+                tipo='visible', 
+                monto=float(cargo_facturado),
+                tipo_servicio=request.form.get('cargo_tipo_servicio', 'todos')
+            ))
         cargo_oculto = request.form.get('cargoServicioOculto')
         if cargo_oculto:
-            db.session.add(CargoServicio(empresa_id=nueva.id, tipo='oculto', monto=float(cargo_oculto)))
+            db.session.add(CargoServicio(
+                empresa_id=nueva.id, 
+                tipo='oculto', 
+                monto=float(cargo_oculto),
+                tipo_servicio=request.form.get('cargo_tipo_servicio', 'todos')
+            ))
+        
+        # Agregar descuento
         monto_descuento = request.form.get('montoDescuento')
         if monto_descuento:
-            db.session.add(Descuento(empresa_id=nueva.id, tipo='monto', valor=float(monto_descuento)))
-        tarifa_fija = request.form.get('tarifaFija')
-        if tarifa_fija:
-            db.session.add(TarifaFija(empresa_id=nueva.id, monto=float(tarifa_fija)))
+            db.session.add(Descuento(
+                empresa_id=nueva.id, 
+                tipo=request.form.get('descuento_tipo', 'fijo'),
+                valor=float(monto_descuento),
+                aplica_sobre=request.form.get('descuento_aplica_sobre', 'tarifa_base'),
+                incluye_iva=request.form.get('descuento_incluye_iva') == 'on'
+            ))
+        
+        # Agregar tarifas fijas
+        tarifa_origenes = request.form.getlist('tarifa_origen[]')
+        tarifa_destinos = request.form.getlist('tarifa_destino[]')
+        tarifa_montos = request.form.getlist('tarifa_monto[]')
+        tarifa_tipos = request.form.getlist('tarifa_tipo_viaje[]')
+        
+        for i, monto in enumerate(tarifa_montos):
+            if monto:
+                es_default = request.form.get(f'tarifa_default_{i}') == '1'
+                db.session.add(TarifaFija(
+                    empresa_id=nueva.id,
+                    ruta_origen=tarifa_origenes[i].upper() if i < len(tarifa_origenes) and tarifa_origenes[i] else None,
+                    ruta_destino=tarifa_destinos[i].upper() if i < len(tarifa_destinos) and tarifa_destinos[i] else None,
+                    monto=float(monto),
+                    tipo_viaje=tarifa_tipos[i] if i < len(tarifa_tipos) else 'sencillo',
+                    es_ruta_default=es_default
+                ))
 
         db.session.commit()
         flash(f'Empresa "{nombre}" registrada con éxito.', 'success')
@@ -1907,23 +2018,78 @@ def editar_empresa(id):
     empresa = Empresa.query.get_or_404(id)
     if request.method == 'POST':
         try:
+            # Actualizar campos básicos
             empresa.nombre_empresa = request.form.get('nombre_empresa')
+            empresa.tipo_cliente = request.form.get('tipo_cliente', 'corporativo')
+            empresa.rfc = request.form.get('rfc') or None
+            empresa.razon_social = request.form.get('razon_social') or None
+            empresa.contacto_nombre = request.form.get('contacto_nombre') or None
+            empresa.contacto_email = request.form.get('contacto_email') or None
+            empresa.contacto_telefono = request.form.get('contacto_telefono') or None
+            
+            # Actualizar campos de esquema de facturación
+            empresa.esquema_facturacion = request.form.get('esquema_facturacion', 'cargo_servicio')
+            bonif_pct = request.form.get('bonificacion_porcentaje')
+            empresa.bonificacion_porcentaje = float(bonif_pct) / 100 if bonif_pct else None
+            empresa.bonificacion_aplica_sobre = request.form.get('bonificacion_aplica_sobre', 'tarifa_base')
+            empresa.requiere_desglose = request.form.get('requiere_desglose') == 'on'
+            empresa.tipo_desglose = request.form.get('tipo_desglose', 'standard')
+            empresa.instrucciones_cotizacion = request.form.get('instrucciones_cotizacion') or None
+            empresa.notas_emision = request.form.get('notas_emision') or None
+            empresa.personas_autorizadas = request.form.get('personas_autorizadas') or None
+            empresa.encargado_cuenta = request.form.get('encargado_cuenta') or None
+            
+            # Eliminar cargos, descuentos y tarifas existentes
             CargoServicio.query.filter_by(empresa_id=id).delete()
             Descuento.query.filter_by(empresa_id=id).delete()
             TarifaFija.query.filter_by(empresa_id=id).delete()
 
+            # Agregar nuevos cargos por servicio
             cargo_facturado = request.form.get('cargoServicioFacturado')
             if cargo_facturado:
-                db.session.add(CargoServicio(empresa_id=id, tipo='visible', monto=float(cargo_facturado)))
+                db.session.add(CargoServicio(
+                    empresa_id=id, 
+                    tipo='visible', 
+                    monto=float(cargo_facturado),
+                    tipo_servicio=request.form.get('cargo_tipo_servicio', 'todos')
+                ))
             cargo_oculto = request.form.get('cargoServicioOculto')
             if cargo_oculto:
-                db.session.add(CargoServicio(empresa_id=id, tipo='oculto', monto=float(cargo_oculto)))
+                db.session.add(CargoServicio(
+                    empresa_id=id, 
+                    tipo='oculto', 
+                    monto=float(cargo_oculto),
+                    tipo_servicio=request.form.get('cargo_tipo_servicio', 'todos')
+                ))
+            
+            # Agregar nuevo descuento
             monto_descuento = request.form.get('montoDescuento')
             if monto_descuento:
-                db.session.add(Descuento(empresa_id=id, tipo='monto', valor=float(monto_descuento)))
-            tarifa_fija = request.form.get('tarifaFija')
-            if tarifa_fija:
-                db.session.add(TarifaFija(empresa_id=id, monto=float(tarifa_fija)))
+                db.session.add(Descuento(
+                    empresa_id=id, 
+                    tipo=request.form.get('descuento_tipo', 'fijo'),
+                    valor=float(monto_descuento),
+                    aplica_sobre=request.form.get('descuento_aplica_sobre', 'tarifa_base'),
+                    incluye_iva=request.form.get('descuento_incluye_iva') == 'on'
+                ))
+            
+            # Agregar nuevas tarifas fijas
+            tarifa_origenes = request.form.getlist('tarifa_origen[]')
+            tarifa_destinos = request.form.getlist('tarifa_destino[]')
+            tarifa_montos = request.form.getlist('tarifa_monto[]')
+            tarifa_tipos = request.form.getlist('tarifa_tipo_viaje[]')
+            
+            for i, monto in enumerate(tarifa_montos):
+                if monto:
+                    es_default = request.form.get(f'tarifa_default_{i}') == '1'
+                    db.session.add(TarifaFija(
+                        empresa_id=id,
+                        ruta_origen=tarifa_origenes[i].upper() if i < len(tarifa_origenes) and tarifa_origenes[i] else None,
+                        ruta_destino=tarifa_destinos[i].upper() if i < len(tarifa_destinos) and tarifa_destinos[i] else None,
+                        monto=float(monto),
+                        tipo_viaje=tarifa_tipos[i] if i < len(tarifa_tipos) else 'sencillo',
+                        es_ruta_default=es_default
+                    ))
 
             db.session.commit()
             flash(f'Empresa "{empresa.nombre_empresa}" actualizada.', 'success')
@@ -3606,3 +3772,222 @@ def recibir_vale(id):
         flash(f'Error: {str(e)}', 'error')
     
     return redirect(url_for('main.recepcion_vales'))
+
+
+# =============================================================================
+# CALCULADORA DE DESGLOSE
+# =============================================================================
+
+@main.route('/calculadora-desglose')
+@login_required
+def calculadora_desglose():
+    """Calculadora de desglose con fórmulas automáticas por empresa"""
+    empresas_list = Empresa.query.filter_by(activa=True).order_by(Empresa.nombre_empresa).all()
+    aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
+    empresas_booking_list = EmpresaBooking.query.order_by(EmpresaBooking.nombre).all()
+    return render_template('calculadora_desglose.html', 
+                           empresas=empresas_list, 
+                           aerolineas=aerolineas_list,
+                           empresas_booking=empresas_booking_list)
+
+
+@main.route('/api/empresa/<int:id>/cargos')
+@login_required
+def api_empresa_cargos(id):
+    """Obtiene los cargos por servicio y bonificación de una empresa"""
+    try:
+        empresa = Empresa.query.get_or_404(id)
+        
+        cargo_visible = None
+        cargo_oculto = None
+        
+        for cargo in empresa.cargos_servicio:
+            if cargo.activo:
+                if cargo.tipo == 'visible':
+                    cargo_visible = float(cargo.monto) if cargo.monto else None
+                elif cargo.tipo == 'oculto':
+                    cargo_oculto = float(cargo.monto) if cargo.monto else None
+        
+        # Buscar bonificación - primero en empresa, luego en descuentos
+        bonificacion = float(empresa.bonificacion_porcentaje) if empresa.bonificacion_porcentaje else 0
+        
+        # Si no hay bonificación en empresa, buscar en tabla descuentos
+        if bonificacion == 0:
+            for desc in empresa.descuentos:
+                if desc.activo and desc.tipo == 'porcentaje':
+                    # El valor viene como porcentaje (ej: 41.75), convertir a decimal
+                    bonificacion = float(desc.valor) / 100 if desc.valor else 0
+                    break
+        
+        # Determinar esquema basado en datos
+        esquema = empresa.esquema_facturacion or 'cargo_servicio'
+        if bonificacion > 0:
+            esquema = 'bonificacion'
+        
+        return jsonify({
+            'success': True,
+            'cargo_visible': cargo_visible,
+            'cargo_oculto': cargo_oculto,
+            'esquema': esquema,
+            'bonificacion': bonificacion
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/empresa/<int:id>/instrucciones')
+@login_required
+def api_empresa_instrucciones(id):
+    """Obtiene las instrucciones de facturación de una empresa"""
+    try:
+        empresa = Empresa.query.get_or_404(id)
+        
+        return jsonify({
+            'success': True,
+            'instrucciones_cotizacion': empresa.instrucciones_cotizacion,
+            'notas_emision': empresa.notas_emision,
+            'personas_autorizadas': empresa.personas_autorizadas,
+            'encargado_cuenta': empresa.encargado_cuenta
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/api/empresa/<int:id>/esquema')
+@login_required
+def api_empresa_esquema(id):
+    """Obtiene el esquema de facturación completo de una empresa"""
+    try:
+        empresa = Empresa.query.get_or_404(id)
+        
+        tarifas_fijas = []
+        for tarifa in empresa.tarifas_fijas:
+            if tarifa.activa:
+                tarifas_fijas.append({
+                    'ruta_origen': tarifa.ruta_origen,
+                    'ruta_destino': tarifa.ruta_destino,
+                    'monto': float(tarifa.monto) if tarifa.monto else 0,
+                    'tipo_viaje': tarifa.tipo_viaje,
+                    'es_default': tarifa.es_ruta_default
+                })
+        
+        descuentos = []
+        for desc in empresa.descuentos:
+            if desc.activo:
+                descuentos.append({
+                    'tipo': desc.tipo,
+                    'valor': float(desc.valor) if desc.valor else 0,
+                    'aplica_sobre': desc.aplica_sobre,
+                    'descripcion': desc.descripcion,
+                    'incluye_iva': desc.incluye_iva
+                })
+        
+        return jsonify({
+            'success': True,
+            'empresa': {
+                'id': empresa.id,
+                'nombre': empresa.nombre_empresa,
+                'esquema_facturacion': empresa.esquema_facturacion,
+                'bonificacion_porcentaje': float(empresa.bonificacion_porcentaje) if empresa.bonificacion_porcentaje else 0,
+                'bonificacion_aplica_sobre': empresa.bonificacion_aplica_sobre,
+                'requiere_desglose': empresa.requiere_desglose,
+                'tipo_desglose': empresa.tipo_desglose,
+                'instrucciones_cotizacion': empresa.instrucciones_cotizacion,
+                'notas_emision': empresa.notas_emision
+            },
+            'tarifas_fijas': tarifas_fijas,
+            'descuentos': descuentos
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main.route('/desgloses/calculadora/guardar', methods=['POST'])
+@login_required
+def guardar_desglose_calculadora():
+    """Guarda un desglose desde la calculadora"""
+    from flask import current_app
+    import sys
+    
+    # Debug: imprimir datos recibidos
+    current_app.logger.info("=== DATOS DEL FORMULARIO ===")
+    print("=== DATOS DEL FORMULARIO ===", file=sys.stderr)
+    for key, value in request.form.items():
+        current_app.logger.info(f"{key}: {value}")
+        print(f"{key}: {value}", file=sys.stderr)
+    print("============================", file=sys.stderr)
+    
+    try:
+        ultimo_folio = db.session.query(func.max(Desglose.folio)).scalar() or 0
+        nuevo_folio = ultimo_folio + 1
+        print(f"Nuevo folio: {nuevo_folio}", file=sys.stderr)
+        
+        # Validar campos requeridos
+        empresa_id = request.form.get('empresa_id')
+        aerolinea_id = request.form.get('aerolinea_id')
+        clave_reserva = request.form.get('clave_reserva', '').strip()
+        
+        if not empresa_id:
+            return jsonify({'success': False, 'error': 'Empresa es requerida'}), 400
+        if not aerolinea_id:
+            return jsonify({'success': False, 'error': 'Aerolínea es requerida'}), 400
+        if not clave_reserva:
+            return jsonify({'success': False, 'error': 'Clave de reservación es requerida'}), 400
+        
+        # Obtener empresa_booking_id automáticamente (usar el primero disponible)
+        empresa_booking = EmpresaBooking.query.first()
+        if not empresa_booking:
+            return jsonify({'success': False, 'error': 'No hay Empresa Booking configurada'}), 400
+        
+        print(f"Creando desglose...", file=sys.stderr)
+        
+        nuevo = Desglose(
+            folio=nuevo_folio,
+            empresa_id=int(empresa_id),
+            aerolinea_id=int(aerolinea_id),
+            empresa_booking_id=empresa_booking.id,
+            tarifa_base=float(request.form.get('tarifa_base') or 0),
+            iva=float(request.form.get('iva') or 0),
+            tua=float(request.form.get('tua') or 0),
+            yr=float(request.form.get('yr') or 0),
+            otros_cargos=float(request.form.get('otros_cargos') or 0),
+            cargo_por_servicio=float(request.form.get('cargo_por_servicio') or 0),
+            total=float(request.form.get('total') or 0),
+            clave_reserva=clave_reserva,
+            pasajero_nombre=request.form.get('pasajero_nombre') or None,
+            ruta=request.form.get('ruta') or None,
+            usuario_id=current_user.id,
+            sucursal_id=current_user.sucursal_id,
+            estatus='pendiente',
+            fecha_emision=fecha_mexico()
+        )
+        
+        print(f"Agregando a sesión...", file=sys.stderr)
+        db.session.add(nuevo)
+        print(f"Haciendo commit...", file=sys.stderr)
+        db.session.commit()
+        print(f"¡Éxito! Folio: {nuevo_folio}", file=sys.stderr)
+        
+        return jsonify({
+            'success': True,
+            'folio': nuevo_folio,
+            'message': f'Desglose {nuevo_folio} guardado correctamente'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"ERROR: {str(e)}", file=sys.stderr)
+        print(f"DETALLE: {error_detail}", file=sys.stderr)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

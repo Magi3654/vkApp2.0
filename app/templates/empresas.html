@@ -1,114 +1,355 @@
 {% extends "base.html" %}
 
+{% block title %}Empresas - Kinessia Hub{% endblock %}
+
 {% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesempresas.css') }}">
+<style>
+.empresas-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+    color: var(--graphite);
+    font-size: 1.75rem;
+}
+
+.btn-nueva {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    text-decoration: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-nueva:hover {
+    transform: translateY(-1px);
+}
+
+/* Stats */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brick-ember);
+}
+
+.stat-card .label {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+/* Filtros */
+.filtros-bar {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filtro-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filtro-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.filtro-group select,
+.filtro-group input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.filtro-group input[type="search"] {
+    min-width: 200px;
+}
+
+/* Tabla */
+.empresas-table {
+    width: 100%;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.empresas-table th {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.empresas-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+.empresas-table tr:last-child td {
+    border-bottom: none;
+}
+
+.empresas-table tr:hover {
+    background: #f8f9fa;
+}
+
+.empresa-nombre {
+    font-weight: 600;
+    color: var(--graphite);
+}
+
+.empresa-tipo {
+    font-size: 0.7rem;
+    color: #888;
+}
+
+/* Badges */
+.esquema-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.esquema-badge.tarifa_fija { background: #d4edda; color: #155724; }
+.esquema-badge.cargo_servicio { background: #cce5ff; color: #004085; }
+.esquema-badge.bonificacion { background: #fff3cd; color: #856404; }
+.esquema-badge.desglose_especial { background: #f8d7da; color: #721c24; }
+.esquema-badge.mixto { background: #e2e3e5; color: #383d41; }
+
+/* Montos */
+.monto {
+    font-family: 'Consolas', monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.monto-na {
+    color: #bbb;
+}
+
+/* Acciones */
+.acciones {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.btn-action {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    text-decoration: none;
+}
+
+.btn-edit { background: #0d6efd; color: white; }
+.btn-edit:hover { background: #0b5ed7; }
+.btn-delete { background: #dc3545; color: white; }
+.btn-delete:hover { background: #c82333; }
+
+/* Empty */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+}
+
+@media (max-width: 1200px) {
+    .empresas-table { display: block; overflow-x: auto; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="crud-container">
-    <!-- Columna del Formulario para CREAR una nueva empresa -->
-    <div class="form-section">
-        <div class="form-header">
-            <h2>Registrar Nueva Empresa</h2>
-            <p>Añade una nueva empresa y sus reglas de negocio.</p>
-        </div>
-        
-        <form action="{{ url_for('main.nueva_empresa') }}" method="POST" class="crud-form">
-            <div class="form-group">
-                <label for="nombre_empresa">Nombre de la Empresa</label>
-                <input type="text" id="nombre_empresa" name="nombre_empresa" required>
-            </div>
-
-            <fieldset>
-                <legend>Cargos por Servicio</legend>
-                 <div class="form-group">
-                    <label for="cargoServicioFacturado">Monto del Cargo (Visible/Facturado)</label>
-                    <input type="number" step="0.01" id="cargoServicioFacturado" name="cargoServicioFacturado" placeholder="Ej: 58.00">
-                </div>
-                 <div class="form-group">
-                    <label for="cargoServicioOculto">Monto del Cargo (Oculto/Agregado)</label>
-                    <input type="number" step="0.01" id="cargoServicioOculto" name="cargoServicioOculto" placeholder="Ej: 348.00">
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Descuentos</legend>
-                <div class="form-group">
-                    <label for="montoDescuento">Monto Fijo de Descuento</label>
-                    <input type="number" step="0.01" id="montoDescuento" name="montoDescuento" placeholder="Ej: 50.00">
-                </div>
-            </fieldset>
-            
-            <fieldset>
-                <legend>Tarifas</legend>
-                 <div class="form-group">
-                    <label for="tarifaFija">Tarifa Fija</label>
-                    <input type="number" step="0.01" id="tarifaFija" name="tarifaFija" placeholder="Ej: 1200.00">
-                </div>
-            </fieldset>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn-submit">Guardar Empresa</button>
-            </div>
-        </form>
+<div class="empresas-container">
+    <div class="page-header">
+        <h2>🏢 Empresas</h2>
+        <a href="{{ url_for('main.nueva_empresa') }}" class="btn-nueva">➕ Nueva Empresa</a>
     </div>
-
-    <!-- Columna de la Tabla para LEER las empresas existentes -->
-    <div class="table-section">
-        <div class="table-header">
-            <h2>Empresas Registradas</h2>
+    
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="number">{{ empresas_registradas|length }}</div>
+            <div class="label">Total</div>
         </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th class="currency">Cargo Facturado</th>
-                    <th class="currency">Cargo Oculto</th>
-                    <th>Descuento</th>
-                    <th class="currency">Tarifa Fija</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for empresa in empresas_registradas %}
-                <tr>
-                    <td>{{ empresa.nombre_empresa }}</td>
-                    
-                    <!-- Lógica Robusta para Cargos -->
-                    <td class="currency">
-                        {% set cargo_visible = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'visible')|first %}
-                        ${{ '%.2f'|format(cargo_visible.monto) if cargo_visible and cargo_visible.monto is not none else '---' }}
-                    </td>
-                    <td class="currency">
-                        {% set cargo_oculto = empresa.cargos_servicio|selectattr('tipo', 'equalto', 'oculto')|first %}
-                        ${{ '%.2f'|format(cargo_oculto.monto) if cargo_oculto and cargo_oculto.monto is not none else '---' }}
-                    </td>
-
-                    <!-- Lógica Robusta para Descuentos -->
-                    <td class="currency">
-                        {% set descuento = empresa.descuentos|first %}
-                        ${{ '%.2f'|format(descuento.valor) if descuento and descuento.valor is not none else '---' }}
-                    </td>
-
-                    <!-- Lógica Robusta para Tarifas Fijas -->
-                    <td class="currency">
-                        {% set tarifa = empresa.tarifas_fijas|first %}
-                        ${{ '%.2f'|format(tarifa.monto) if tarifa and tarifa.monto is not none else '---' }}
-                    </td>
-                    
-                    <td class="actions">
-                        <a href="{{ url_for('main.editar_empresa', id=empresa.id) }}" class="btn-edit">Editar</a>
-                        <a href="{{ url_for('main.eliminar_empresa', id=empresa.id) }}" class="btn-delete" onclick="return confirm('¿Estás seguro?');">Eliminar</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="no-data">No hay empresas registradas.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="stat-card">
+            <div class="number">{{ empresas_registradas|selectattr('esquema_facturacion', 'equalto', 'tarifa_fija')|list|length }}</div>
+            <div class="label">Tarifa Fija</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ empresas_registradas|selectattr('tipo_cliente', 'equalto', 'gobierno')|list|length }}</div>
+            <div class="label">Gobierno</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ empresas_registradas|selectattr('tipo_cliente', 'equalto', 'corporativo')|list|length }}</div>
+            <div class="label">Corporativo</div>
+        </div>
     </div>
+    
+    <!-- Filtros -->
+    <div class="filtros-bar">
+        <div class="filtro-group">
+            <label>🔍</label>
+            <input type="search" id="buscar" placeholder="Buscar..." onkeyup="filtrar()">
+        </div>
+        <div class="filtro-group">
+            <label>Esquema:</label>
+            <select id="filtroEsquema" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="tarifa_fija">Tarifa Fija</option>
+                <option value="cargo_servicio">Cargo Servicio</option>
+                <option value="bonificacion">Bonificación</option>
+                <option value="desglose_especial">Desglose</option>
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label>Tipo:</label>
+            <select id="filtroTipo" onchange="filtrar()">
+                <option value="">Todos</option>
+                <option value="gobierno">Gobierno</option>
+                <option value="corporativo">Corporativo</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Tabla -->
+    <table class="empresas-table" id="tabla">
+        <thead>
+            <tr>
+                <th>Empresa</th>
+                <th>Esquema</th>
+                <th>Cargo Fact.</th>
+                <th>Cargo Oculto</th>
+                <th>Descuento</th>
+                <th>Tarifa Fija</th>
+                <th>Encargado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in empresas_registradas %}
+            <tr data-nombre="{{ e.nombre_empresa|lower }}" 
+                data-esquema="{{ e.esquema_facturacion or 'cargo_servicio' }}"
+                data-tipo="{{ e.tipo_cliente or 'corporativo' }}">
+                <td>
+                    <div class="empresa-nombre">{{ e.nombre_empresa }}</div>
+                    <div class="empresa-tipo">{{ e.tipo_cliente or 'corporativo' }}</div>
+                </td>
+                <td>
+                    <span class="esquema-badge {{ e.esquema_facturacion or 'cargo_servicio' }}">
+                        {% if e.esquema_facturacion == 'tarifa_fija' %}T. Fija
+                        {% elif e.esquema_facturacion == 'bonificacion' %}Bonif.
+                        {% elif e.esquema_facturacion == 'desglose_especial' %}Desglose
+                        {% elif e.esquema_facturacion == 'mixto' %}Mixto
+                        {% else %}Cargo{% endif %}
+                    </span>
+                </td>
+                <td>
+                    {% set cv = e.cargos_servicio|selectattr('tipo', 'equalto', 'visible')|first %}
+                    {% if cv and cv.monto %}<span class="monto">${{ "{:,.2f}".format(cv.monto) }}</span>
+                    {% else %}<span class="monto-na">---</span>{% endif %}
+                </td>
+                <td>
+                    {% set co = e.cargos_servicio|selectattr('tipo', 'equalto', 'oculto')|first %}
+                    {% if co and co.monto %}<span class="monto">${{ "{:,.2f}".format(co.monto) }}</span>
+                    {% else %}<span class="monto-na">---</span>{% endif %}
+                </td>
+                <td>
+                    {% set d = e.descuentos|first %}
+                    {% if d and d.valor %}
+                        {% if d.tipo == 'porcentaje' %}<span class="monto">{{ d.valor }}%</span>
+                        {% else %}<span class="monto">${{ "{:,.2f}".format(d.valor) }}</span>{% endif %}
+                    {% else %}<span class="monto-na">---</span>{% endif %}
+                </td>
+                <td>
+                    {% set t = e.tarifas_fijas|first %}
+                    {% if t and t.monto %}
+                        <span class="monto">${{ "{:,.2f}".format(t.monto) }}</span>
+                        {% if t.ruta_origen and t.ruta_destino %}<br><small style="color:#888;">{{ t.ruta_origen }}-{{ t.ruta_destino }}</small>{% endif %}
+                    {% else %}<span class="monto-na">---</span>{% endif %}
+                </td>
+                <td>{{ e.encargado_cuenta or '---' }}</td>
+                <td class="acciones">
+                    <a href="{{ url_for('main.editar_empresa', id=e.id) }}" class="btn-action btn-edit" title="Editar">✏️</a>
+                    <a href="{{ url_for('main.eliminar_empresa', id=e.id) }}" class="btn-action btn-delete" 
+                       onclick="return confirm('¿Eliminar {{ e.nombre_empresa }}?');" title="Eliminar">🗑️</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="empty-state">No hay empresas registradas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-{% endblock %}
 
+<script>
+function filtrar() {
+    const busqueda = document.getElementById('buscar').value.toLowerCase();
+    const esquema = document.getElementById('filtroEsquema').value;
+    const tipo = document.getElementById('filtroTipo').value;
+    
+    document.querySelectorAll('#tabla tbody tr').forEach(fila => {
+        const nombre = fila.dataset.nombre || '';
+        const filaEsquema = fila.dataset.esquema || '';
+        const filaTipo = fila.dataset.tipo || '';
+        
+        const ok = nombre.includes(busqueda) && 
+                   (!esquema || filaEsquema === esquema) && 
+                   (!tipo || filaTipo === tipo);
+        fila.style.display = ok ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}
