@@ -1827,32 +1827,16 @@ def consulta_desgloses():
 @main.route('/desgloses/nuevo', methods=['GET'])
 @login_required
 def nuevo_desglose_form():
-    empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
-    aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
-    empresas_booking_list = EmpresaBooking.query.order_by(EmpresaBooking.nombre).all()
-    return render_template('desgloses.html', empresas=empresas_list, aerolineas=aerolineas_list, empresas_booking=empresas_booking_list)
+    """Redirige a la calculadora de desglose"""
+    return redirect(url_for('main.calculadora_desglose'))
 
 
+# Ruta POST obsoleta - mantenida por compatibilidad pero redirige
 @main.route('/desgloses/nuevo', methods=['POST'])
 @login_required
 def nuevo_desglose_post():
-    try:
-        nuevo = Desglose(
-            folio=int(request.form.get('folio')), empresa_id=int(request.form.get('empresa_id')),
-            aerolinea_id=int(request.form.get('aerolinea_id')), empresa_booking_id=int(request.form.get('empresa_booking_id')),
-            tarifa_base=float(request.form.get('tarifa_base')), iva=float(request.form.get('iva')),
-            tua=float(request.form.get('tua')), yr=float(request.form.get('yr')),
-            otros_cargos=float(request.form.get('otros_cargos')), cargo_por_servicio=float(request.form.get('cargo_por_servicio')),
-            total=float(request.form.get('total')), clave_reserva=request.form.get('clave_reserva'),
-            usuario_id=current_user.id, sucursal_id=current_user.sucursal_id
-        )
-        db.session.add(nuevo)
-        db.session.commit()
-        flash(f'Desglose con folio {nuevo.folio} creado con éxito.', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error al crear el desglose: {str(e)}', 'danger')
-    return redirect(url_for('main.desgloses'))
+    """Redirige a la calculadora - formulario antiguo obsoleto"""
+    return redirect(url_for('main.calculadora_desglose'))
 
 
 @main.route('/desgloses/editar/<int:folio>', methods=['GET', 'POST'])
@@ -1863,26 +1847,26 @@ def editar_desglose(folio):
         try:
             desglose.empresa_id = int(request.form.get('empresa_id'))
             desglose.aerolinea_id = int(request.form.get('aerolinea_id'))
-            desglose.empresa_booking_id = int(request.form.get('empresa_booking_id'))
-            desglose.tarifa_base = float(request.form.get('tarifa_base'))
-            desglose.iva = float(request.form.get('iva'))
-            desglose.tua = float(request.form.get('tua'))
-            desglose.yr = float(request.form.get('yr'))
-            desglose.otros_cargos = float(request.form.get('otros_cargos'))
-            desglose.cargo_por_servicio = float(request.form.get('cargo_por_servicio'))
-            desglose.total = float(request.form.get('total'))
+            desglose.tarifa_base = float(request.form.get('tarifa_base') or 0)
+            desglose.iva = float(request.form.get('iva') or 0)
+            desglose.tua = float(request.form.get('tua') or 0)
+            desglose.yr = float(request.form.get('yr') or 0)
+            desglose.otros_cargos = float(request.form.get('otros_cargos') or 0)
+            desglose.cargo_por_servicio = float(request.form.get('cargo_por_servicio') or 0)
+            desglose.total = float(request.form.get('total') or 0)
             desglose.clave_reserva = request.form.get('clave_reserva')
+            desglose.pasajero_nombre = request.form.get('pasajero_nombre') or None
+            desglose.ruta = request.form.get('ruta') or None
             db.session.commit()
             flash(f'Desglose {desglose.folio} actualizado con éxito.', 'success')
-            return redirect(url_for('main.desgloses'))
+            return redirect(url_for('main.consulta_desgloses'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error al actualizar: {str(e)}', 'danger')
     
-    empresas_list = Empresa.query.order_by(Empresa.nombre_empresa).all()
+    empresas_list = Empresa.query.filter_by(activa=True).order_by(Empresa.nombre_empresa).all()
     aerolineas_list = Aerolinea.query.order_by(Aerolinea.nombre).all()
-    empresas_booking_list = EmpresaBooking.query.order_by(EmpresaBooking.nombre).all()
-    return render_template('desglose_edit.html', desglose=desglose, empresas=empresas_list, aerolineas=aerolineas_list, empresas_booking=empresas_booking_list)
+    return render_template('desglose_edit.html', desglose=desglose, empresas=empresas_list, aerolineas=aerolineas_list)
 
 
 @main.route('/desgloses/eliminar/<int:folio>')

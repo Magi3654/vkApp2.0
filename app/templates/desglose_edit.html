@@ -1,110 +1,370 @@
 {% extends "base.html" %}
 
+{% block title %}Editar Desglose - Kinessia Hub{% endblock %}
+
 {% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdesglose.css') }}">
+<style>
+/* ========================================
+   EDITAR DESGLOSE - Kinessia Hub
+   ======================================== */
+
+:root {
+    /* Paleta Kinessia */
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+    
+    /* Variables editar */
+    --edit-primary: var(--oxblood);
+    --edit-success: #059669;
+    --edit-warning: #d97706;
+    --edit-bg: var(--bright-snow);
+    --edit-card: var(--white);
+    --edit-border: var(--alabaster-grey);
+    --edit-text: var(--graphite);
+    --edit-muted: #64748b;
+}
+
+.edit-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.edit-card {
+    background: var(--edit-card);
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.edit-header h1 {
+    margin: 0;
+    color:white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.edit-header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+}
+
+.folio-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+}
+
+.edit-body {
+    padding: 1.5rem;
+}
+
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--edit-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--edit-border);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.form-grid.three-cols {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--edit-text);
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    border: 2px solid var(--edit-border);
+    border-radius: 0.5rem;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--edit-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group input:disabled {
+    background: #f1f5f9;
+    color: var(--edit-muted);
+    cursor: not-allowed;
+}
+
+.form-group small {
+    font-size: 0.75rem;
+    color: var(--edit-muted);
+}
+
+.input-money {
+    font-family: 'Consolas', monospace;
+    text-align: right;
+}
+
+/* Total destacado */
+.total-group input {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    border-color: var(--edit-success);
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #166534;
+}
+
+.edit-footer {
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--edit-success), #047857);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: var(--edit-text);
+}
+
+.btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid.three-cols {
+        grid-template-columns: 1fr;
+    }
+    
+    .edit-footer {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <div class="form-header">
-        <h2>Editar Desglose - Folio {{ desglose.folio }}</h2>
-        <p>Modifica la información del desglose existente.</p>
-    </div>
+<div class="edit-container">
+    <div class="edit-card">
+        <div class="edit-header">
+            <h1>
+                Editar Desglose
+                <span class="folio-badge">#{{ desglose.folio }}</span>
+            </h1>
+            <p>Modifica la información del desglose</p>
+        </div>
 
-    <form action="{{ url_for('main.editar_desglose', folio=desglose.folio) }}" method="POST" class="crud-form">
-        <div class="form-grid">
-            <!-- Columna Izquierda del Formulario -->
-            <div class="form-column">
-                <div class="form-group">
-                    <label for="folio">Folio</label>
-                    <input type="number" id="folio" name="folio" value="{{ desglose.folio }}" disabled>
-                    <small>El folio no puede ser modificado</small>
+        <form action="{{ url_for('main.editar_desglose', folio=desglose.folio) }}" method="POST">
+            <div class="edit-body">
+                <!-- Información General -->
+                <div class="form-section">
+                    <div class="section-title">Información General</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Folio</label>
+                            <input type="text" value="{{ desglose.folio }}" disabled>
+                            <small>El folio no puede ser modificado</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="clave_reserva">Clave de Reservación</label>
+                            <input type="text" id="clave_reserva" name="clave_reserva" 
+                                   value="{{ desglose.clave_reserva }}" required 
+                                   style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label for="empresa_id">Empresa Cliente</label>
+                            <select id="empresa_id" name="empresa_id" required>
+                                <option value="" disabled>Selecciona una empresa...</option>
+                                {% for empresa in empresas %}
+                                <option value="{{ empresa.id }}" 
+                                        {% if empresa.id == desglose.empresa_id %}selected{% endif %}>
+                                    {{ empresa.nombre_empresa }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="aerolinea_id">Aerolínea</label>
+                            <select id="aerolinea_id" name="aerolinea_id" required>
+                                <option value="" disabled>Selecciona una aerolínea...</option>
+                                {% for aerolinea in aerolineas %}
+                                <option value="{{ aerolinea.id }}" 
+                                        {% if aerolinea.id == desglose.aerolinea_id %}selected{% endif %}>
+                                    {{ aerolinea.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pasajero_nombre">Pasajero</label>
+                            <input type="text" id="pasajero_nombre" name="pasajero_nombre" 
+                                   value="{{ desglose.pasajero_nombre or '' }}" 
+                                   placeholder="Nombre del pasajero">
+                        </div>
+                        <div class="form-group">
+                            <label for="ruta">Ruta</label>
+                            <input type="text" id="ruta" name="ruta" 
+                                   value="{{ desglose.ruta or '' }}" 
+                                   placeholder="TIJ-MEX-TIJ" style="text-transform: uppercase;">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="empresa_id">Empresa Cliente</label>
-                    <select id="empresa_id" name="empresa_id" required>
-                        <option value="" disabled>Selecciona una empresa...</option>
-                        {% for empresa in empresas %}
-                            <option value="{{ empresa.id }}"
-                                    {% if empresa.id == desglose.empresa_id %}selected{% endif %}>
-                                {{ empresa.nombre_empresa }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="aerolinea_id">Aerolínea</label>
-                    <select id="aerolinea_id" name="aerolinea_id" required>
-                        <option value="" disabled>Selecciona una aerolínea...</option>
-                        {% for aerolinea in aerolineas %}
-                            <option value="{{ aerolinea.id }}"
-                                    {% if aerolinea.id == desglose.aerolinea_id %}selected{% endif %}>
-                                {{ aerolinea.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                 <div class="form-group">
-                    <label for="tarifa_base">Tarifa Base</label>
-                    <input type="number" step="0.01" id="tarifa_base" name="tarifa_base"
-                           value="{{ desglose.tarifa_base }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="iva">IVA</label>
-                    <input type="number" step="0.01" id="iva" name="iva"
-                           value="{{ desglose.iva }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="tua">TUA</label>
-                    <input type="number" step="0.01" id="tua" name="tua"
-                           value="{{ desglose.tua }}" required>
+
+                <!-- Montos del Desglose -->
+                <div class="form-section">
+                    <div class="section-title">Montos del Desglose</div>
+                    <div class="form-grid three-cols">
+                        <div class="form-group">
+                            <label for="tarifa_base">Tarifa Base</label>
+                            <input type="number" step="0.01" id="tarifa_base" name="tarifa_base" 
+                                   class="input-money" value="{{ desglose.tarifa_base }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="iva">IVA</label>
+                            <input type="number" step="0.01" id="iva" name="iva" 
+                                   class="input-money" value="{{ desglose.iva }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="yr">YR (Combustible)</label>
+                            <input type="number" step="0.01" id="yr" name="yr" 
+                                   class="input-money" value="{{ desglose.yr }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tua">TUA</label>
+                            <input type="number" step="0.01" id="tua" name="tua" 
+                                   class="input-money" value="{{ desglose.tua }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="otros_cargos">Otros Cargos</label>
+                            <input type="number" step="0.01" id="otros_cargos" name="otros_cargos" 
+                                   class="input-money" value="{{ desglose.otros_cargos }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cargo_por_servicio">Cargo por Servicio</label>
+                            <input type="number" step="0.01" id="cargo_por_servicio" name="cargo_por_servicio" 
+                                   class="input-money" value="{{ desglose.cargo_por_servicio }}" required>
+                        </div>
+                        <div class="form-group full-width total-group">
+                            <label for="total">Total del Boleto</label>
+                            <input type="number" step="0.01" id="total" name="total" 
+                                   class="input-money" value="{{ desglose.total }}" required>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Columna Derecha del Formulario -->
-            <div class="form-column">
-                <div class="form-group">
-                    <label for="clave_reserva">Clave de Reserva</label>
-                    <input type="text" id="clave_reserva" name="clave_reserva"
-                           value="{{ desglose.clave_reserva }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="empresa_booking_id">Empresa Booking</label>
-                    <select id="empresa_booking_id" name="empresa_booking_id" required>
-                        <option value="" disabled>Selecciona...</option>
-                        {% for eb in empresas_booking %}
-                            <option value="{{ eb.id }}"
-                                    {% if eb.id == desglose.empresa_booking_id %}selected{% endif %}>
-                                {{ eb.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                 <div class="form-group">
-                    <label for="yr">YR</label>
-                    <input type="number" step="0.01" id="yr" name="yr"
-                           value="{{ desglose.yr }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="otros_cargos">Otros Cargos</label>
-                    <input type="number" step="0.01" id="otros_cargos" name="otros_cargos"
-                           value="{{ desglose.otros_cargos }}" required>
-                </div>
-                 <div class="form-group">
-                    <label for="cargo_por_servicio">Cargo por Servicio</label>
-                    <input type="number" step="0.01" id="cargo_por_servicio" name="cargo_por_servicio"
-                           value="{{ desglose.cargo_por_servicio }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="total">Total</label>
-                    <input type="number" step="0.01" id="total" name="total"
-                           value="{{ desglose.total }}" required>
-                </div>
+
+            <div class="edit-footer">
+                <a href="{{ url_for('main.consulta_desgloses') }}" class="btn btn-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Guardar Cambios
+                </button>
             </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn-submit">Guardar Cambios</button>
-            <a href="{{ url_for('main.desgloses') }}" class="btn-cancel">Cancelar</a>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
+
+<script>
+// Auto-calcular total cuando cambian los montos
+const campos = ['tarifa_base', 'iva', 'yr', 'tua', 'otros_cargos', 'cargo_por_servicio'];
+
+campos.forEach(campo => {
+    document.getElementById(campo).addEventListener('input', calcularTotal);
+});
+
+function calcularTotal() {
+    const tarifa = parseFloat(document.getElementById('tarifa_base').value) || 0;
+    const iva = parseFloat(document.getElementById('iva').value) || 0;
+    const yr = parseFloat(document.getElementById('yr').value) || 0;
+    const tua = parseFloat(document.getElementById('tua').value) || 0;
+    const otros = parseFloat(document.getElementById('otros_cargos').value) || 0;
+    const cargo = parseFloat(document.getElementById('cargo_por_servicio').value) || 0;
+    
+    const total = tarifa + iva + yr + tua + otros + cargo;
+    document.getElementById('total').value = total.toFixed(2);
+}
+</script>
 {% endblock %}

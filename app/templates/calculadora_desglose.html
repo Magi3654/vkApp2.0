@@ -10,16 +10,25 @@
    ======================================== */
 
 :root {
-    --calc-primary: #2563eb;
+    /* Paleta Kinessia */
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+    
+    /* Variables calculadora */
+    --calc-primary: var(--oxblood);
     --calc-success: #059669;
     --calc-warning: #d97706;
-    --calc-danger: #dc2626;
-    --calc-bg: #f8fafc;
-    --calc-card: #ffffff;
-    --calc-border: #e2e8f0;
-    --calc-text: #1e293b;
+    --calc-danger: var(--brick-ember);
+    --calc-bg: var(--bright-snow);
+    --calc-card: var(--white);
+    --calc-border: var(--alabaster-grey);
+    --calc-text: var(--graphite);
     --calc-muted: #64748b;
-    --calc-highlight: #dbeafe;
+    --calc-highlight: #fef2f2;
 }
 
 .calc-container {
@@ -47,8 +56,7 @@
 }
 
 .calc-header h1::before {
-    content: '🧮';
-    font-size: 1.5rem;
+    content: '';
 }
 
 .empresa-badge {
@@ -56,7 +64,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, var(--calc-primary), #1d4ed8);
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
     color: white;
     border-radius: 2rem;
     font-size: 0.875rem;
@@ -227,7 +235,7 @@
 
 .result-row.total {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    margin: 1rem -1.25rem -1.25rem;
+    margin: 1rem -1.25rem 0;
     padding: 1rem 1.25rem;
     border-radius: 0 0 1rem 1rem;
 }
@@ -315,7 +323,7 @@
 }
 
 .instrucciones-box::before {
-    content: '💡 ';
+    content: '';
 }
 
 /* Botones */
@@ -341,7 +349,7 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--calc-primary), #1d4ed8);
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
     color: white;
 }
 
@@ -371,21 +379,25 @@
 
 /* Preview para ANT */
 .ant-preview {
-    background: #1e293b;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
     color: #e2e8f0;
-    padding: 1rem;
-    border-radius: 0.5rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.8125rem;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    border: 2px solid #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .ant-preview-header {
     color: #94a3b8;
     font-size: 0.75rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #334155;
 }
 
 .ant-preview-row {
@@ -476,7 +488,7 @@
             <!-- COLUMNA 1: Selección y Datos de Entrada -->
             <div class="calc-card card-input">
                 <div class="calc-card-header">
-                    <span class="icon">📝</span>
+                    <span class="icon"></span>
                     <h3>Datos del Boleto</h3>
                 </div>
                 <div class="calc-card-body">
@@ -530,7 +542,7 @@
                     <hr style="margin: 1rem 0; border: none; border-top: 2px dashed #f59e0b;">
                     
                     <p style="font-size: 0.8125rem; color: #92400e; margin-bottom: 1rem;">
-                        <strong>⚡ Ingresa los datos del boleto:</strong>
+                        <strong> Ingresa los datos del boleto:</strong>
                     </p>
 
                     <div class="form-row">
@@ -578,13 +590,13 @@
             <!-- COLUMNA 2: Resultado del Cálculo (Desglose para Facturación) -->
             <div class="calc-card card-result">
                 <div class="calc-card-header">
-                    <span class="icon">📊</span>
+                    <span class="icon"></span>
                     <h3>Desglose para Facturación</h3>
                 </div>
                 <div class="calc-card-body">
                     <div id="resultadoContainer">
                         <div class="no-empresa-msg">
-                            <div class="icon">🏢</div>
+                            <div class="icon"></div>
                             <p>Selecciona una empresa para ver<br>el esquema de facturación aplicable</p>
                         </div>
                     </div>
@@ -632,10 +644,10 @@
                             <span class="result-value" id="res_total">$0.00</span>
                         </div>
                     </div>
-
-                    <!-- Preview para ANT -->
+                    
+                    <!-- Preview para ANT (separado del desglose) -->
                     <div id="antPreview" class="ant-preview" style="display: none;">
-                        <div class="ant-preview-header">📋 Para capturar en ANT:</div>
+                        <div class="ant-preview-header"> Para capturar en ANT:</div>
                         <div class="ant-preview-row">
                             <span>Nueva Tarifa Base:</span>
                             <span id="ant_tarifa">$0.00</span>
@@ -643,6 +655,14 @@
                         <div class="ant-preview-row">
                             <span>Nuevo IVA (16%):</span>
                             <span id="ant_iva">$0.00</span>
+                        </div>
+                        <div class="ant-preview-row">
+                            <span>TUA:</span>
+                            <span id="ant_tua">$0.00</span>
+                        </div>
+                        <div class="ant-preview-row">
+                            <span>YR:</span>
+                            <span id="ant_yr">$0.00</span>
                         </div>
                         <div class="ant-preview-row highlight">
                             <span>Total:</span>
@@ -664,13 +684,13 @@
             <!-- COLUMNA 3: Info de la Empresa y Acciones -->
             <div class="calc-card card-info">
                 <div class="calc-card-header">
-                    <span class="icon">🏢</span>
+                    <span class="icon"></span>
                     <h3>Esquema de Facturación</h3>
                 </div>
                 <div class="calc-card-body">
                     <div id="empresaInfo">
                         <div class="no-empresa-msg">
-                            <div class="icon">📋</div>
+                            <div class="icon"></div>
                             <p>La información del esquema<br>aparecerá aquí</p>
                         </div>
                     </div>
@@ -695,18 +715,21 @@
                             <div style="font-size: 1.25rem; font-weight: 700; color: var(--calc-primary);">
                                 $<span id="cargoEmpresaMonto">0.00</span>
                             </div>
+                            <div id="cargoOcultoInfo" style="font-size: 0.8125rem; color: #64748b; margin-top: 0.25rem; display: none;">
+                                (+ $<span id="cargoOcultoMonto">0.00</span> oculto)
+                            </div>
                         </div>
                     </div>
 
                     <div class="calc-actions" style="flex-direction: column;">
                         <button type="submit" class="btn-calc btn-success" id="btnGuardar" disabled>
-                            💾 Guardar Desglose
+                             Guardar Desglose
                         </button>
                         <button type="button" class="btn-calc btn-secondary" onclick="limpiarFormulario()">
-                            🗑️ Limpiar
+                             Limpiar
                         </button>
                         <a href="{{ url_for('main.consulta_desgloses') }}" class="btn-calc btn-secondary" style="text-decoration: none; text-align: center;">
-                            📋 Ver Desgloses
+                             Ver Desgloses
                         </a>
                     </div>
                 </div>
@@ -722,7 +745,7 @@
 <div id="modalDesglose" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>✅ Desglose Guardado</h3>
+            <h3> Desglose Guardado</h3>
             <button type="button" class="modal-close" onclick="cerrarModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -791,7 +814,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn-calc btn-primary" onclick="nuevoDesglose()">
-                ➕ Nuevo Desglose
+                 Nuevo Desglose
             </button>
             <button type="button" class="btn-calc btn-secondary" onclick="cerrarModal()">
                 Cerrar
@@ -980,7 +1003,8 @@ let esquemaActual = {
     bonificacion: 0,
     requiereDesglose: false,
     tipoDesglose: 'standard',
-    cargoServicio: 0
+    cargoVisible: 0,
+    cargoOculto: 0
 };
 
 // Cargar esquema cuando se selecciona empresa
@@ -1053,17 +1077,28 @@ function cargarEsquemaEmpresa() {
         .then(data => {
             console.log('Datos empresa:', data);
             
-            // Actualizar cargo
-            if (data.cargo_oculto) {
-                esquemaActual.cargoServicio = data.cargo_oculto;
-                document.getElementById('cargoEmpresaMonto').textContent = data.cargo_oculto.toFixed(2);
+            // Guardar ambos cargos
+            esquemaActual.cargoVisible = data.cargo_visible || 0;
+            esquemaActual.cargoOculto = data.cargo_oculto || 0;
+            
+            // Mostrar info del cargo (visible + oculto para referencia interna)
+            const cargoTotal = esquemaActual.cargoVisible + esquemaActual.cargoOculto;
+            if (cargoTotal > 0) {
+                // Mostrar solo el cargo visible en el campo de entrada
+                document.getElementById('cargo_emision_input').value = esquemaActual.cargoVisible.toFixed(2);
+                
+                // Mostrar cargo visible
+                document.getElementById('cargoEmpresaMonto').textContent = esquemaActual.cargoVisible.toFixed(2);
+                
+                // Mostrar cargo oculto si existe (en línea separada)
+                if (esquemaActual.cargoOculto > 0) {
+                    document.getElementById('cargoOcultoMonto').textContent = esquemaActual.cargoOculto.toFixed(2);
+                    document.getElementById('cargoOcultoInfo').style.display = 'block';
+                } else {
+                    document.getElementById('cargoOcultoInfo').style.display = 'none';
+                }
+                
                 document.getElementById('cargoEmpresaInfo').style.display = 'block';
-                document.getElementById('cargo_emision_input').value = data.cargo_oculto.toFixed(2);
-            } else if (data.cargo_visible) {
-                esquemaActual.cargoServicio = data.cargo_visible;
-                document.getElementById('cargoEmpresaMonto').textContent = data.cargo_visible.toFixed(2);
-                document.getElementById('cargoEmpresaInfo').style.display = 'block';
-                document.getElementById('cargo_emision_input').value = data.cargo_visible.toFixed(2);
             } else {
                 document.getElementById('cargoEmpresaInfo').style.display = 'none';
             }
@@ -1112,7 +1147,12 @@ function calcular() {
     const yr = parseFloat(document.getElementById('yr_input').value) || 0;
     const tua = parseFloat(document.getElementById('tua_input').value) || 0;
     const otros = parseFloat(document.getElementById('otros_input').value) || 0;
-    const cargoEmision = parseFloat(document.getElementById('cargo_emision_input').value) || 0;
+    const cargoVisible = parseFloat(document.getElementById('cargo_emision_input').value) || 0;
+    const cargoOculto = esquemaActual.cargoOculto || 0;
+    
+    // Separar cargo oculto en base e IVA (cargo oculto incluye IVA)
+    const cargoOcultoSinIva = cargoOculto / 1.16;
+    const ivaCargoOculto = cargoOculto - cargoOcultoSinIva;
 
     // Variables de resultado
     let tarifaSinBonif = tarifaBase;
@@ -1124,33 +1164,46 @@ function calcular() {
 
     // Cálculo según tipo de esquema
     if (esquemaActual.tipo === 'bonificacion' && bonificacionAplicada > 0) {
-        // La bonificación es un descuento sobre la tarifa original
-        // T. Base con bonif = T. Base sin bonif * (1 - bonificacion)
-        // Por lo tanto: T. Base sin bonif = T. Base con bonif / (1 - bonificacion)
-        tarifaConBonif = tarifaBase;
+        // T. Base sin bonificación = T. Base con bonif / (1 - bonificación)
+        // NO incluye cargo oculto
         tarifaSinBonif = tarifaBase / (1 - bonificacionAplicada);
+        
+        // T. Base con bonificación = T. Base ingresada + Cargo Oculto SIN IVA
+        tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+        
+        // IVA + YR = IVA ingresado + IVA del cargo oculto
+        ivaYR = iva + ivaCargoOculto;
+        
     } else if (esquemaActual.tipo === 'desglose_especial') {
-        // Fórmula IMSS TML: Todo se suma y divide entre 1.16
-        const sumaTML = tarifaBase + iva + cargoEmision;
+        // Fórmula IMSS TML
+        const sumaTML = tarifaBase + iva + cargoVisible;
         tarifaSinBonif = sumaTML / 1.16;
-        tarifaConBonif = tarifaSinBonif;
-        ivaYR = tarifaSinBonif * 0.16;
+        tarifaConBonif = tarifaSinBonif + cargoOcultoSinIva;
+        ivaYR = (tarifaSinBonif * 0.16) + ivaCargoOculto;
         bonificacionAplicada = 0;
     } else {
         // Cargo por servicio estándar - sin bonificación
         tarifaSinBonif = tarifaBase;
-        tarifaConBonif = tarifaBase;
+        tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+        ivaYR = iva + ivaCargoOculto;
         bonificacionAplicada = 0;
     }
 
     // Calcular totales
+    // Total sin cargo = T.Base con bonif (incluye cargo oculto sin iva) + IVA+YR (incluye iva cargo oculto) + YR + TUA + Otros
     totalSinCargo = tarifaConBonif + ivaYR + yr + tua + otros;
-    total = totalSinCargo + cargoEmision;
+    
+    // Total = Total sin cargo + Cargo Visible
+    total = totalSinCargo + cargoVisible;
 
-    // Cálculo para ANT (simplificado: todo / 1.16)
-    const totalBoleto = tarifaBase + iva + yr + tua + otros + cargoEmision;
-    const antTarifa = totalBoleto / 1.16;
+    // Cálculo para ANT:
+    // (T.Base + IVA + Otros Cargos + Cargo Oculto + Cargo Visible) / 1.16 = Nueva Tarifa Base
+    // Nueva Tarifa Base × 0.16 = Nuevo IVA
+    // TUA y YR se quedan igual
+    const sumaParaAnt = tarifaBase + iva + otros + cargoOculto + cargoVisible;
+    const antTarifa = sumaParaAnt / 1.16;
     const antIva = antTarifa * 0.16;
+    const antTotal = antTarifa + antIva + tua + yr;
 
     // Actualizar UI
     document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
@@ -1161,25 +1214,28 @@ function calcular() {
     document.getElementById('res_tua').textContent = '$' + tua.toFixed(2);
     document.getElementById('res_otros').textContent = '$' + otros.toFixed(2);
     document.getElementById('res_total_sin_cargo').textContent = '$' + totalSinCargo.toFixed(2);
-    document.getElementById('res_cargo_emision').textContent = '$' + cargoEmision.toFixed(2);
+    document.getElementById('res_cargo_emision').textContent = '$' + cargoVisible.toFixed(2);
     document.getElementById('res_total').textContent = '$' + total.toFixed(2);
 
     // ANT Preview
     document.getElementById('ant_tarifa').textContent = '$' + antTarifa.toFixed(2);
     document.getElementById('ant_iva').textContent = '$' + antIva.toFixed(2);
-    document.getElementById('ant_total').textContent = '$' + totalBoleto.toFixed(2);
+    document.getElementById('ant_tua').textContent = '$' + tua.toFixed(2);
+    document.getElementById('ant_yr').textContent = '$' + yr.toFixed(2);
+    document.getElementById('ant_total').textContent = '$' + antTotal.toFixed(2);
     
-    if (totalBoleto > 0) {
+    if (antTotal > 0) {
         document.getElementById('antPreview').style.display = 'block';
     }
 
     // Actualizar campos ocultos para el form
-    document.getElementById('tarifa_base_final').value = tarifaSinBonif.toFixed(2);
+    // Guardar T.Base CON bonificación (que incluye cargo oculto sin iva)
+    document.getElementById('tarifa_base_final').value = tarifaConBonif.toFixed(2);
     document.getElementById('iva_final').value = ivaYR.toFixed(2);
     document.getElementById('tua_final').value = tua.toFixed(2);
     document.getElementById('yr_final').value = yr.toFixed(2);
     document.getElementById('otros_final').value = otros.toFixed(2);
-    document.getElementById('cargo_final').value = cargoEmision.toFixed(2);
+    document.getElementById('cargo_final').value = cargoVisible.toFixed(2);
     document.getElementById('total_final').value = total.toFixed(2);
 }
 
@@ -1199,7 +1255,8 @@ function limpiarFormulario() {
         bonificacion: 0,
         requiereDesglose: false,
         tipoDesglose: 'standard',
-        cargoServicio: 0
+        cargoVisible: 0,
+        cargoOculto: 0
     };
 }
 
@@ -1257,7 +1314,7 @@ document.getElementById('desgloseForm').addEventListener('submit', function(e) {
     const formData = new FormData(this);
     const btnGuardar = document.getElementById('btnGuardar');
     btnGuardar.disabled = true;
-    btnGuardar.innerHTML = '⏳ Guardando...';
+    btnGuardar.innerHTML = ' Guardando...';
     
     fetch('{{ url_for("main.guardar_desglose_calculadora") }}', {
         method: 'POST',
@@ -1266,19 +1323,19 @@ document.getElementById('desgloseForm').addEventListener('submit', function(e) {
     .then(r => r.json())
     .then(data => {
         btnGuardar.disabled = false;
-        btnGuardar.innerHTML = '💾 Guardar Desglose';
+        btnGuardar.innerHTML = ' Guardar Desglose';
         
         if (data.success) {
-            showToast('✅ Desglose guardado correctamente');
+            showToast(' Desglose guardado correctamente');
             mostrarModalDesglose(data.folio);
         } else {
-            showToast('❌ Error: ' + data.error, true);
+            showToast(' Error: ' + data.error, true);
         }
     })
     .catch(err => {
         btnGuardar.disabled = false;
-        btnGuardar.innerHTML = '💾 Guardar Desglose';
-        showToast('❌ Error al guardar: ' + err, true);
+        btnGuardar.innerHTML = ' Guardar Desglose';
+        showToast(' Error al guardar: ' + err, true);
     });
 });
 
