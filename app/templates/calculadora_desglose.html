@@ -584,6 +584,18 @@
                         </div>
                     </div>
 
+                    <!-- Campo QS para ISSFAM (oculto por defecto) -->
+                    <div class="form-row" id="row_qs" style="display: none;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Q'S (Cargo especial ISSFAM)</label>
+                            <input type="number" step="0.01" id="qs_input" 
+                                   class="input-entry" placeholder="0.00" oninput="calcular()">
+                            <small style="color: #92400e; font-size: 0.75rem;">
+                                ≤$5,000: $1,500 | >$5,000: $3,000 | >$10,000: $6,000
+                            </small>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -603,17 +615,28 @@
 
                     <!-- Resultados calculados (se muestra al seleccionar empresa) -->
                     <div id="resultadosCalculo" style="display: none;">
-                        <div class="result-row">
+                        <!-- Filas de bonificación (se ocultan si no hay bonificación) -->
+                        <div class="result-row" id="row_tarifa_sin_bonif">
                             <span class="result-label">T. Base (sin bonificación)</span>
                             <span class="result-value" id="res_tarifa_sin_bonif">$0.00</span>
                         </div>
-                        <div class="result-row">
+                        <div class="result-row" id="row_tarifa_con_bonif">
                             <span class="result-label">T. Base (con bonificación)</span>
                             <span class="result-value" id="res_tarifa_con_bonif">$0.00</span>
                         </div>
-                        <div class="result-row">
+                        <div class="result-row" id="row_bonificacion">
                             <span class="result-label">Bonificación aplicada</span>
                             <span class="result-value" id="res_bonificacion">0%</span>
+                        </div>
+                        <!-- Fila simple de T. Base (se muestra cuando NO hay bonificación) -->
+                        <div class="result-row" id="row_tarifa_simple" style="display: none;">
+                            <span class="result-label">T. Base</span>
+                            <span class="result-value" id="res_tarifa_simple">$0.00</span>
+                        </div>
+                        <!-- Fila Q'S para ISSFAM (oculta por defecto) -->
+                        <div class="result-row" id="row_qs_result" style="display: none;">
+                            <span class="result-label">Q'S</span>
+                            <span class="result-value" id="res_qs">$0.00</span>
                         </div>
                         <div class="result-row">
                             <span class="result-label">IVA + YR</span>
@@ -678,6 +701,8 @@
                     <input type="hidden" name="otros_cargos" id="otros_final">
                     <input type="hidden" name="cargo_por_servicio" id="cargo_final">
                     <input type="hidden" name="total" id="total_final">
+                    <input type="hidden" name="qs" id="qs_final">
+                    <input type="hidden" name="esquema_tipo" id="esquema_tipo_final">
                 </div>
             </div>
 
@@ -774,17 +799,21 @@
             </div>
             
             <div class="modal-desglose">
-                <div class="desglose-row">
-                    <span>T. Base (sin bonificación)</span>
+                <div class="desglose-row" id="modalRowTarifaSinBonif">
+                    <span id="modalLabelTarifaSinBonif">T. Base (sin bonificación)</span>
                     <span id="modalTarifaSinBonif">$0.00</span>
                 </div>
-                <div class="desglose-row">
-                    <span>T. Base (con bonificación)</span>
+                <div class="desglose-row" id="modalRowTarifaConBonif">
+                    <span id="modalLabelTarifaConBonif">T. Base (con bonificación)</span>
                     <span id="modalTarifaConBonif">$0.00</span>
                 </div>
-                <div class="desglose-row">
+                <div class="desglose-row" id="modalRowBonificacion">
                     <span>Bonificación</span>
                     <span id="modalBonificacion">0%</span>
+                </div>
+                <div class="desglose-row" id="modalRowQs" style="display: none;">
+                    <span>Q'S</span>
+                    <span id="modalQs">$0.00</span>
                 </div>
                 <div class="desglose-row">
                     <span>IVA</span>
@@ -1007,10 +1036,17 @@ let esquemaActual = {
     cargoOculto: 0
 };
 
+// Control de versión para evitar race conditions en llamadas API
+let cargarEsquemaVersion = 0;
+
 // Cargar esquema cuando se selecciona empresa
 function cargarEsquemaEmpresa() {
     const select = document.getElementById('empresa_id');
     const option = select.options[select.selectedIndex];
+    
+    // Incrementar versión para cancelar llamadas anteriores
+    cargarEsquemaVersion++;
+    const miVersion = cargarEsquemaVersion;
     
     if (!option.value) {
         document.getElementById('resultadoContainer').style.display = 'block';
@@ -1023,11 +1059,15 @@ function cargarEsquemaEmpresa() {
         return;
     }
 
-    // Obtener datos del option
-    esquemaActual.tipo = option.dataset.esquema || 'cargo_servicio';
-    esquemaActual.bonificacion = parseFloat(option.dataset.bonificacion) || 0;
-    esquemaActual.requiereDesglose = option.dataset.requiereDesglose === 'true';
-    esquemaActual.tipoDesglose = option.dataset.tipoDesglose || 'standard';
+    // Resetear esquema antes de cargar nuevos datos
+    esquemaActual = {
+        tipo: option.dataset.esquema || 'cargo_servicio',
+        bonificacion: parseFloat(option.dataset.bonificacion) || 0,
+        requiereDesglose: option.dataset.requiereDesglose === 'true',
+        tipoDesglose: option.dataset.tipoDesglose || 'standard',
+        cargoVisible: 0,
+        cargoOculto: 0
+    };
 
     // Mostrar nombre en badge
     document.getElementById('empresaNombreBadge').textContent = option.text;
@@ -1044,12 +1084,22 @@ function cargarEsquemaEmpresa() {
     const badge = document.getElementById('esquemaBadge');
     const descripcion = document.getElementById('esquemaDescripcion');
     
+    // Ocultar campo QS por defecto
+    document.getElementById('row_qs').style.display = 'none';
+    
     switch(esquemaActual.tipo) {
         case 'bonificacion':
             badge.textContent = 'BONIFICACIÓN';
             badge.className = 'esquema-badge bonificacion';
             const porcBonif = (esquemaActual.bonificacion * 100).toFixed(2);
             descripcion.innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
+            break;
+        case 'issfam':
+            badge.textContent = 'ISSFAM';
+            badge.className = 'esquema-badge bonificacion';
+            descripcion.innerHTML = 'Fórmula especial con Q\'S';
+            // Mostrar campo QS para ISSFAM
+            document.getElementById('row_qs').style.display = 'flex';
             break;
         case 'tarifa_fija':
             badge.textContent = 'TARIFA FIJA';
@@ -1075,7 +1125,13 @@ function cargarEsquemaEmpresa() {
     fetch(`/api/empresa/${option.value}/cargos`)
         .then(r => r.json())
         .then(data => {
-            console.log('Datos empresa:', data);
+            // Verificar que esta llamada sigue siendo válida
+            if (miVersion !== cargarEsquemaVersion) {
+                console.log('Llamada descartada (versión antigua):', miVersion, 'actual:', cargarEsquemaVersion);
+                return;
+            }
+            
+            console.log('Datos empresa (v' + miVersion + '):', data);
             
             // Guardar ambos cargos
             esquemaActual.cargoVisible = data.cargo_visible || 0;
@@ -1103,17 +1159,35 @@ function cargarEsquemaEmpresa() {
                 document.getElementById('cargoEmpresaInfo').style.display = 'none';
             }
             
-            // Actualizar bonificación y esquema
+            // Actualizar esquema y bonificación
+            // Primero establecer el esquema del API
+            if (data.esquema) {
+                esquemaActual.tipo = data.esquema;
+            }
+            
+            // Guardar bonificación si existe
             if (data.bonificacion && data.bonificacion > 0) {
                 esquemaActual.bonificacion = data.bonificacion;
-                esquemaActual.tipo = 'bonificacion';
+            }
+            
+            // Actualizar UI según el esquema
+            const badge = document.getElementById('esquemaBadge');
+            const descripcion = document.getElementById('esquemaDescripcion');
+            
+            if (esquemaActual.tipo === 'issfam') {
+                badge.textContent = 'ISSFAM';
+                badge.className = 'esquema-badge bonificacion';
+                descripcion.innerHTML = 'Fórmula especial con Q\'S';
+                document.getElementById('row_qs').style.display = 'flex';
+            } else if (esquemaActual.tipo === 'bonificacion' || (data.bonificacion && data.bonificacion > 0 && esquemaActual.tipo !== 'issfam')) {
+                if (esquemaActual.tipo !== 'issfam') {
+                    esquemaActual.tipo = 'bonificacion';
+                }
                 const porcBonif = (data.bonificacion * 100).toFixed(2);
-                document.getElementById('esquemaBadge').textContent = 'BONIFICACIÓN';
-                document.getElementById('esquemaBadge').className = 'esquema-badge bonificacion';
-                document.getElementById('esquemaDescripcion').innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
-            } else if (data.esquema) {
-                esquemaActual.tipo = data.esquema;
-                esquemaActual.bonificacion = 0;
+                badge.textContent = 'BONIFICACIÓN';
+                badge.className = 'esquema-badge bonificacion';
+                descripcion.innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
+                document.getElementById('row_qs').style.display = 'none';
             }
             
             calcular();
@@ -1148,6 +1222,7 @@ function calcular() {
     const tua = parseFloat(document.getElementById('tua_input').value) || 0;
     const otros = parseFloat(document.getElementById('otros_input').value) || 0;
     const cargoVisible = parseFloat(document.getElementById('cargo_emision_input').value) || 0;
+    const qs = parseFloat(document.getElementById('qs_input').value) || 0;  // Q'S para ISSFAM
     const cargoOculto = esquemaActual.cargoOculto || 0;
     
     // Separar cargo oculto en base e IVA (cargo oculto incluye IVA)
@@ -1161,37 +1236,64 @@ function calcular() {
     let ivaYR = iva;
     let totalSinCargo = 0;
     let total = 0;
+    let qsCalculado = qs;  // Q'S para mostrar
 
     // Cálculo según tipo de esquema
-    if (esquemaActual.tipo === 'bonificacion' && bonificacionAplicada > 0) {
-        // T. Base sin bonificación = T. Base con bonif / (1 - bonificación)
-        // NO incluye cargo oculto
-        tarifaSinBonif = tarifaBase / (1 - bonificacionAplicada);
+    if (esquemaActual.tipo === 'issfam') {
+        // ISSFAM: Fórmula especial con Q'S
+        // T.BASE = (T.Base original - QS - YQ + Cargo emisión + IVA) / 1.16
+        // IVA = T.BASE × 16%
         
-        // T. Base con bonificación = T. Base ingresada + Cargo Oculto SIN IVA
+        tarifaSinBonif = tarifaBase;  // T. Base original (sin bonificación)
+        
+        // Calcular nueva tarifa base
+        const sumaIssfam = tarifaBase - qs + cargoOculto + iva;
+        tarifaConBonif = sumaIssfam / 1.16;
+        
+        // Nuevo IVA = nueva tarifa base × 16%
+        ivaYR = tarifaConBonif * 0.16;
+        
+        // No hay bonificación en el sentido tradicional
+        bonificacionAplicada = 0;
+        
+    } else if (esquemaActual.tipo === 'bonificacion' && bonificacionAplicada > 0) {
+        // CON BONIFICACIÓN (DESGLOSE IMSS QROO):
+        // C6 (T.Base CON bonif) = G6 + (G13/1.16) = Tarifa ingresada + Cargo oculto sin IVA
+        // C5 (T.Base SIN bonif) = C6 / (1 - bonif)
+        // C8 (IVA) = IVA boleto + (Cargo - Cargo/1.16) = IVA boleto + IVA del cargo
+        
         tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+        tarifaSinBonif = tarifaConBonif / (1 - bonificacionAplicada);
         
-        // IVA + YR = IVA ingresado + IVA del cargo oculto
+        // IVA = IVA ingresado + IVA del cargo oculto
         ivaYR = iva + ivaCargoOculto;
         
     } else if (esquemaActual.tipo === 'desglose_especial') {
         // Fórmula IMSS TML
         const sumaTML = tarifaBase + iva + cargoVisible;
         tarifaSinBonif = sumaTML / 1.16;
-        tarifaConBonif = tarifaSinBonif + cargoOcultoSinIva;
+        tarifaConBonif = tarifaBase;
         ivaYR = (tarifaSinBonif * 0.16) + ivaCargoOculto;
         bonificacionAplicada = 0;
     } else {
-        // Cargo por servicio estándar - sin bonificación
-        tarifaSinBonif = tarifaBase;
+        // SIN BONIFICACIÓN (cargo por servicio estándar):
+        // Cuando no hay bonificación, solo mostramos T. Base
         tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+        tarifaSinBonif = tarifaConBonif;  // Iguales cuando no hay bonificación
+        
         ivaYR = iva + ivaCargoOculto;
         bonificacionAplicada = 0;
     }
 
-    // Calcular totales
-    // Total sin cargo = T.Base con bonif (incluye cargo oculto sin iva) + IVA+YR (incluye iva cargo oculto) + YR + TUA + Otros
-    totalSinCargo = tarifaConBonif + ivaYR + yr + tua + otros;
+    // Calcular totales según tipo de esquema
+    if (esquemaActual.tipo === 'issfam') {
+        // ISSFAM: Total = T.Base + Q'S + IVA + YR + TUA + Otros
+        totalSinCargo = tarifaConBonif + qs + ivaYR + yr + tua + otros;
+    } else {
+        // Fórmula: Total sin cargo = T.Base CON bonif + IVA + YR + TUA + Otros
+        // (El cargo oculto ya está incluido en T.Base CON bonif y su IVA en ivaYR)
+        totalSinCargo = tarifaConBonif + ivaYR + yr + tua + otros;
+    }
     
     // Total = Total sin cargo + Cargo Visible
     total = totalSinCargo + cargoVisible;
@@ -1205,10 +1307,53 @@ function calcular() {
     const antIva = antTarifa * 0.16;
     const antTotal = antTarifa + antIva + tua + yr;
 
-    // Actualizar UI
-    document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
-    document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
-    document.getElementById('res_bonificacion').textContent = (bonificacionAplicada * 100).toFixed(2) + '%';
+    // Actualizar UI según tipo de esquema
+    const hayBonificacion = bonificacionAplicada > 0;
+    const esIssfam = esquemaActual.tipo === 'issfam';
+    
+    if (esIssfam) {
+        // ISSFAM: Mostrar T. Base (sin bonif) y T. Base calculada
+        document.getElementById('row_tarifa_sin_bonif').style.display = 'flex';
+        document.getElementById('row_tarifa_con_bonif').style.display = 'flex';
+        document.getElementById('row_bonificacion').style.display = 'none';
+        document.getElementById('row_tarifa_simple').style.display = 'none';
+        
+        // Cambiar etiquetas para ISSFAM
+        document.querySelector('#row_tarifa_sin_bonif .result-label').textContent = 'T. Base (original)';
+        document.querySelector('#row_tarifa_con_bonif .result-label').textContent = 'T. Base (calculada)';
+        
+        document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
+        document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
+        
+        // Mostrar fila Q'S
+        document.getElementById('row_qs_result').style.display = 'flex';
+        document.getElementById('res_qs').textContent = '$' + qs.toFixed(2);
+    } else if (hayBonificacion) {
+        // Mostrar filas de bonificación
+        document.getElementById('row_tarifa_sin_bonif').style.display = 'flex';
+        document.getElementById('row_tarifa_con_bonif').style.display = 'flex';
+        document.getElementById('row_bonificacion').style.display = 'flex';
+        document.getElementById('row_tarifa_simple').style.display = 'none';
+        document.getElementById('row_qs_result').style.display = 'none';
+        
+        // Restaurar etiquetas normales
+        document.querySelector('#row_tarifa_sin_bonif .result-label').textContent = 'T. Base (sin bonificación)';
+        document.querySelector('#row_tarifa_con_bonif .result-label').textContent = 'T. Base (con bonificación)';
+        
+        document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
+        document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
+        document.getElementById('res_bonificacion').textContent = (bonificacionAplicada * 100).toFixed(2) + '%';
+    } else {
+        // Mostrar solo T. Base simple
+        document.getElementById('row_tarifa_sin_bonif').style.display = 'none';
+        document.getElementById('row_tarifa_con_bonif').style.display = 'none';
+        document.getElementById('row_bonificacion').style.display = 'none';
+        document.getElementById('row_tarifa_simple').style.display = 'flex';
+        document.getElementById('row_qs_result').style.display = 'none';
+        
+        document.getElementById('res_tarifa_simple').textContent = '$' + tarifaConBonif.toFixed(2);
+    }
+    
     document.getElementById('res_iva_yr').textContent = '$' + ivaYR.toFixed(2);
     document.getElementById('res_yr').textContent = '$' + yr.toFixed(2);
     document.getElementById('res_tua').textContent = '$' + tua.toFixed(2);
@@ -1237,6 +1382,8 @@ function calcular() {
     document.getElementById('otros_final').value = otros.toFixed(2);
     document.getElementById('cargo_final').value = cargoVisible.toFixed(2);
     document.getElementById('total_final').value = total.toFixed(2);
+    document.getElementById('qs_final').value = qs.toFixed(2);
+    document.getElementById('esquema_tipo_final').value = esquemaActual.tipo || '';
 }
 
 // Limpiar formulario
@@ -1281,10 +1428,28 @@ function mostrarModalDesglose(folio) {
     document.getElementById('modalClave').textContent = document.getElementById('clave_reserva').value || '-';
     document.getElementById('modalAerolinea').textContent = aerolineaSelect.options[aerolineaSelect.selectedIndex].text;
     
+    // Verificar si es ISSFAM
+    const esIssfam = esquemaActual.tipo === 'issfam';
+    
+    if (esIssfam) {
+        // Modal para ISSFAM
+        document.getElementById('modalLabelTarifaSinBonif').textContent = 'T. Base (original)';
+        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base (calculada)';
+        document.getElementById('modalRowBonificacion').style.display = 'none';
+        document.getElementById('modalRowQs').style.display = 'flex';
+        document.getElementById('modalQs').textContent = document.getElementById('res_qs').textContent;
+    } else {
+        // Modal normal
+        document.getElementById('modalLabelTarifaSinBonif').textContent = 'T. Base (sin bonificación)';
+        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base (con bonificación)';
+        document.getElementById('modalRowBonificacion').style.display = 'flex';
+        document.getElementById('modalRowQs').style.display = 'none';
+        document.getElementById('modalBonificacion').textContent = document.getElementById('res_bonificacion').textContent;
+    }
+    
     // Datos del desglose
     document.getElementById('modalTarifaSinBonif').textContent = document.getElementById('res_tarifa_sin_bonif').textContent;
     document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_con_bonif').textContent;
-    document.getElementById('modalBonificacion').textContent = document.getElementById('res_bonificacion').textContent;
     document.getElementById('modalIva').textContent = document.getElementById('res_iva_yr').textContent;
     document.getElementById('modalYr').textContent = document.getElementById('res_yr').textContent;
     document.getElementById('modalTua').textContent = document.getElementById('res_tua').textContent;

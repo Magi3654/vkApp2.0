@@ -1884,6 +1884,224 @@ def eliminar_desglose(folio):
 
 
 # =============================================================================
+# RUTAS DE EXPEDIENTES
+# =============================================================================
+
+@main.route('/expedientes')
+@login_required
+def expedientes():
+    """
+    Vista de expedientes - Agrupa documentos por clave de reservación.
+    Un expediente es una vista virtual que muestra todos los documentos
+    relacionados con una misma clave de reservación (desglose, papeleta, factura).
+    
+    Permisos:
+    - Agente: Solo expedientes que él creó (sus propios desgloses y papeletas)
+    - Gerente: Todos los de su sucursal
+    - Director/Admin/Facturación: Todos
+    """
+    from datetime import date
+    
+    # Filtros
+    q = request.args.get('q', '').strip().upper()
+    estatus = request.args.get('estatus', '')
+    empresa_id = request.args.get('empresa_id', '')
+    fecha_desde = request.args.get('fecha_desde', '')
+    fecha_hasta = request.args.get('fecha_hasta', '')
+    
+    # Determinar nivel de permisos
+    rol_usuario = current_user.rol_relacion.nombre if current_user.rol_relacion else current_user.rol
+    roles_ver_todo = ['administrador', 'admin', 'director', 'facturacion', 'gerente']
+    
+    puede_ver_todo = rol_usuario in roles_ver_todo
+    
+    # Query base para desgloses
+    query_desgloses = db.session.query(
+        Desglose.clave_reserva,
+        Desglose.folio,
+        Desglose.pasajero_nombre,
+        Desglose.ruta,
+        Desglose.total,
+        Desglose.fecha_emision,
+        Desglose.empresa_id,
+        Desglose.aerolinea_id,
+        Desglose.numero_boleto,
+        Desglose.sucursal_id,
+        Desglose.usuario_id
+    )
+    
+    # Query base para papeletas
+    query_papeletas = db.session.query(
+        Papeleta.clave_sabre,
+        Papeleta.id,
+        Papeleta.folio,
+        Papeleta.facturar_a,
+        Papeleta.total,
+        Papeleta.fecha_venta,
+        Papeleta.empresa_id,
+        Papeleta.aerolinea_id,
+        Papeleta.numero_factura,
+        Papeleta.sucursal_id,
+        Papeleta.usuario_id
+    )
+    
+    # Aplicar filtros según rol
+    if puede_ver_todo:
+        # Admin/Director/Facturación/Gerente: Ve todos
+        pass
+    else:
+        # Agente: Solo ve los que él creó
+        query_desgloses = query_desgloses.filter(Desglose.usuario_id == current_user.id)
+        query_papeletas = query_papeletas.filter(Papeleta.usuario_id == current_user.id)
+    
+    claves_desgloses = query_desgloses.all()
+    claves_papeletas = query_papeletas.all()
+    
+    # Crear diccionario de expedientes
+    expedientes_dict = {}
+    
+    # Procesar desgloses
+    for d in claves_desgloses:
+        clave = d.clave_reserva.upper() if d.clave_reserva else 'SIN-CLAVE'
+        if clave not in expedientes_dict:
+            expedientes_dict[clave] = {
+                'clave': clave,
+                'pasajero': d.pasajero_nombre or 'Sin nombre',
+                'ruta': d.ruta,
+                'total': float(d.total or 0),
+                'fecha': d.fecha_emision,
+                'empresa_id': d.empresa_id,
+                'empresa': None,
+                'aerolinea_id': d.aerolinea_id,
+                'aerolinea': None,
+                'desglose': d,
+                'papeleta': None,
+                'factura': d.numero_boleto,  # Si tiene número de boleto
+                'es_lowcost': False,
+                'es_facturacion': True
+            }
+        else:
+            # Actualizar con datos del desglose si ya existe
+            expedientes_dict[clave]['desglose'] = d
+            if d.pasajero_nombre:
+                expedientes_dict[clave]['pasajero'] = d.pasajero_nombre
+            if d.ruta:
+                expedientes_dict[clave]['ruta'] = d.ruta
+            if d.total:
+                expedientes_dict[clave]['total'] = max(expedientes_dict[clave]['total'], float(d.total))
+    
+    # Procesar papeletas
+    for p in claves_papeletas:
+        clave = p.clave_sabre.upper() if p.clave_sabre else 'SIN-CLAVE'
+        if clave not in expedientes_dict:
+            expedientes_dict[clave] = {
+                'clave': clave,
+                'pasajero': p.facturar_a or 'Sin nombre',
+                'ruta': None,
+                'total': float(p.total or 0),
+                'fecha': p.fecha_venta,
+                'empresa_id': p.empresa_id,
+                'empresa': None,
+                'aerolinea_id': p.aerolinea_id,
+                'aerolinea': None,
+                'desglose': None,
+                'papeleta': p,
+                'factura': p.numero_factura,
+                'es_lowcost': True,
+                'es_facturacion': True
+            }
+        else:
+            # Vincular papeleta al expediente existente
+            expedientes_dict[clave]['papeleta'] = p
+            expedientes_dict[clave]['es_lowcost'] = True
+            if p.numero_factura:
+                expedientes_dict[clave]['factura'] = p.numero_factura
+            if not expedientes_dict[clave]['fecha'] and p.fecha_venta:
+                expedientes_dict[clave]['fecha'] = p.fecha_venta
+    
+    # Obtener nombres de empresas y aerolíneas
+    empresas_dict = {e.id: e.nombre_empresa for e in Empresa.query.all()}
+    aerolineas_dict = {a.id: a.nombre for a in Aerolinea.query.all()}
+    
+    # Crear lista de expedientes con datos completos
+    expedientes_list = []
+    for clave, exp in expedientes_dict.items():
+        # Obtener nombres
+        exp['empresa'] = empresas_dict.get(exp['empresa_id'], '')
+        exp['aerolinea'] = aerolineas_dict.get(exp['aerolinea_id'], 'Sin aerolínea')
+        
+        # Determinar requisitos
+        exp['requiere_desglose'] = exp['es_facturacion']
+        exp['requiere_papeleta'] = exp['es_lowcost']
+        exp['requiere_factura'] = exp['es_facturacion']
+        
+        # Calcular progreso
+        docs_requeridos = 0
+        docs_completos = 0
+        
+        if exp['requiere_desglose']:
+            docs_requeridos += 1
+            if exp['desglose']:
+                docs_completos += 1
+        
+        if exp['requiere_papeleta']:
+            docs_requeridos += 1
+            if exp['papeleta']:
+                docs_completos += 1
+        
+        if exp['requiere_factura']:
+            docs_requeridos += 1
+            if exp['factura']:
+                docs_completos += 1
+        
+        exp['docs_requeridos'] = docs_requeridos if docs_requeridos > 0 else 1
+        exp['docs_completos'] = docs_completos
+        exp['progreso'] = int((docs_completos / exp['docs_requeridos']) * 100) if exp['docs_requeridos'] > 0 else 0
+        exp['completo'] = docs_completos >= docs_requeridos and docs_requeridos > 0
+        
+        expedientes_list.append(exp)
+    
+    # Aplicar filtros
+    if q:
+        expedientes_list = [e for e in expedientes_list if q in e['clave'] or q in (e['pasajero'] or '').upper()]
+    
+    if estatus == 'completo':
+        expedientes_list = [e for e in expedientes_list if e['completo']]
+    elif estatus == 'pendiente':
+        expedientes_list = [e for e in expedientes_list if not e['completo']]
+    
+    if empresa_id:
+        expedientes_list = [e for e in expedientes_list if e['empresa_id'] == int(empresa_id)]
+    
+    if fecha_desde:
+        fecha_desde_dt = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+        expedientes_list = [e for e in expedientes_list if e['fecha'] and e['fecha'] >= fecha_desde_dt]
+    
+    if fecha_hasta:
+        fecha_hasta_dt = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+        expedientes_list = [e for e in expedientes_list if e['fecha'] and e['fecha'] <= fecha_hasta_dt]
+    
+    # Ordenar por fecha más reciente
+    expedientes_list.sort(key=lambda x: x['fecha'] or date.min, reverse=True)
+    
+    # Estadísticas
+    hoy = fecha_mexico()
+    stats = {
+        'completos': len([e for e in expedientes_list if e['completo']]),
+        'pendientes': len([e for e in expedientes_list if not e['completo']]),
+        'hoy': len([e for e in expedientes_list if e['fecha'] == hoy])
+    }
+    
+    # Empresas para filtro
+    empresas_filtro = Empresa.query.filter_by(activa=True).order_by(Empresa.nombre_empresa).all()
+    
+    return render_template('expedientes.html',
+                           expedientes=expedientes_list,
+                           stats=stats,
+                           empresas=empresas_filtro)
+
+
+# =============================================================================
 # RUTAS DE EMPRESAS
 # =============================================================================
 
@@ -3805,7 +4023,10 @@ def api_empresa_cargos(id):
         
         # Determinar esquema basado en datos
         esquema = empresa.esquema_facturacion or 'cargo_servicio'
-        if bonificacion > 0:
+        
+        # Solo cambiar a 'bonificacion' si NO es un esquema especial (issfam, desglose_especial, etc.)
+        esquemas_especiales = ['issfam', 'desglose_especial', 'tarifa_fija']
+        if bonificacion > 0 and esquema not in esquemas_especiales:
             esquema = 'bonificacion'
         
         return jsonify({

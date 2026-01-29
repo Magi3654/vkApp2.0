@@ -1,0 +1,1192 @@
+{% extends "base.html" %}
+
+{% block title %}Expedientes - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+:root {
+    /* Paleta Kinessia */
+    --bright-snow: #f6f6f6;
+    --alabaster-grey: #e8e8e8;
+    --graphite: #333333;
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --white: #ffffff;
+    
+    --exp-primary: var(--oxblood);
+    --exp-success: #059669;
+    --exp-warning: #d97706;
+    --exp-danger: var(--brick-ember);
+    --exp-info: #0284c7;
+    --exp-bg: var(--bright-snow);
+    --exp-card: var(--white);
+    --exp-border: var(--alabaster-grey);
+    --exp-text: var(--graphite);
+    --exp-muted: #64748b;
+}
+
+.expedientes-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--exp-primary);
+}
+
+.page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--exp-text);
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .stats-grid { grid-template-columns: 1fr; }
+}
+
+.stat-card {
+    background: var(--exp-card);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon.total { background: #dbeafe; color: #1d4ed8; }
+.stat-icon.completos { background: #dcfce7; color: #166534; }
+.stat-icon.pendientes { background: #fef3c7; color: #92400e; }
+.stat-icon.hoy { background: #fce7f3; color: #be185d; }
+
+.stat-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.stat-info h3 {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--exp-muted);
+    text-transform: uppercase;
+    margin: 0 0 0.25rem;
+}
+
+.stat-info .number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--exp-text);
+}
+
+/* Filtros */
+.filters-card {
+    background: var(--exp-card);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 150px;
+}
+
+.filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--exp-muted);
+    text-transform: uppercase;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--exp-border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--exp-primary);
+    box-shadow: 0 0 0 2px rgba(153, 1, 0, 0.1);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
+}
+
+.btn-secondary {
+    background: var(--alabaster-grey);
+    color: var(--exp-text);
+}
+
+/* Expedientes Grid */
+.expedientes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 500px) {
+    .expedientes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Expediente Card */
+.expediente-card {
+    background: var(--exp-card);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.expediente-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.expediente-card.completo {
+    border-left: 4px solid var(--exp-success);
+}
+
+.expediente-card.pendiente {
+    border-left: 4px solid var(--exp-warning);
+}
+
+.expediente-card.incompleto {
+    border-left: 4px solid var(--exp-danger);
+}
+
+.expediente-header {
+    padding: 1rem 1.25rem;
+    background: var(--bright-snow);
+    border-bottom: 1px solid var(--exp-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.expediente-clave {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--exp-primary);
+    font-family: 'Consolas', monospace;
+}
+
+.expediente-pasajero {
+    font-size: 0.875rem;
+    color: var(--exp-text);
+    margin-top: 0.25rem;
+}
+
+.expediente-meta {
+    text-align: right;
+}
+
+.expediente-fecha {
+    font-size: 0.75rem;
+    color: var(--exp-muted);
+}
+
+.expediente-aerolinea {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--exp-text);
+    margin-top: 0.25rem;
+}
+
+.expediente-body {
+    padding: 1rem 1.25rem;
+}
+
+.expediente-info {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--exp-muted);
+}
+
+.info-item svg {
+    width: 14px;
+    height: 14px;
+}
+
+.info-item strong {
+    color: var(--exp-text);
+}
+
+/* Documentos */
+.documentos-section {
+    margin-top: 1rem;
+}
+
+.documentos-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--exp-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.documentos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.doc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: var(--bright-snow);
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+}
+
+.doc-item.ok {
+    background: #dcfce7;
+}
+
+.doc-item.pending {
+    background: #fef3c7;
+}
+
+.doc-item.na {
+    background: #f1f5f9;
+    opacity: 0.6;
+}
+
+.doc-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doc-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.625rem;
+}
+
+.doc-icon.ok { background: #166534; color: white; }
+.doc-icon.pending { background: #92400e; color: white; }
+.doc-icon.na { background: #94a3b8; color: white; }
+
+.doc-name {
+    font-weight: 500;
+    color: var(--exp-text);
+}
+
+.doc-detail {
+    font-size: 0.75rem;
+    color: var(--exp-muted);
+}
+
+.doc-link {
+    font-size: 0.75rem;
+    color: var(--exp-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.doc-link:hover {
+    text-decoration: underline;
+}
+
+/* Progress */
+.expediente-footer {
+    padding: 0.75rem 1.25rem;
+    background: var(--bright-snow);
+    border-top: 1px solid var(--exp-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.progress-bar {
+    width: 100px;
+    height: 6px;
+    background: var(--exp-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.complete { background: var(--exp-success); }
+.progress-fill.partial { background: var(--exp-warning); }
+.progress-fill.empty { background: var(--exp-danger); }
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--exp-muted);
+}
+
+.expediente-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--exp-card);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state svg {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    color: var(--exp-muted);
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.25rem;
+    color: var(--exp-text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--exp-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
+    color: white;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background: var(--bright-snow);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.detail-title {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--exp-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--exp-border);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.detail-item label {
+    font-size: 0.6875rem;
+    color: var(--exp-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.detail-item span {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--exp-text);
+}
+
+.monto-total {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--exp-success);
+    font-family: 'Consolas', monospace;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="expedientes-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>Expedientes</h1>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon total">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <h3>Total Expedientes</h3>
+                <div class="number">{{ expedientes|length }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon completos">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <h3>Completos</h3>
+                <div class="number">{{ stats.completos }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon pendientes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <h3>Pendientes</h3>
+                <div class="number">{{ stats.pendientes }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon hoy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <div class="stat-info">
+                <h3>Hoy</h3>
+                <div class="number">{{ stats.hoy }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-card">
+        <form class="filters-form" method="GET">
+            <div class="filter-group">
+                <label>Buscar</label>
+                <input type="text" name="q" placeholder="Clave, pasajero..." value="{{ request.args.get('q', '') }}">
+            </div>
+            <div class="filter-group">
+                <label>Estatus</label>
+                <select name="estatus">
+                    <option value="">Todos</option>
+                    <option value="completo" {{ 'selected' if request.args.get('estatus') == 'completo' }}>Completos</option>
+                    <option value="pendiente" {{ 'selected' if request.args.get('estatus') == 'pendiente' }}>Pendientes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Empresa</label>
+                <select name="empresa_id">
+                    <option value="">Todas</option>
+                    {% for empresa in empresas %}
+                    <option value="{{ empresa.id }}" {{ 'selected' if request.args.get('empresa_id')|int == empresa.id }}>{{ empresa.nombre_empresa }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Fecha desde</label>
+                <input type="date" name="fecha_desde" value="{{ request.args.get('fecha_desde', '') }}">
+            </div>
+            <div class="filter-group">
+                <label>Fecha hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ request.args.get('fecha_hasta', '') }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Buscar</button>
+            <a href="{{ url_for('main.expedientes') }}" class="btn btn-secondary">Limpiar</a>
+        </form>
+    </div>
+
+    <!-- Lista de Expedientes -->
+    {% if expedientes %}
+    <div class="expedientes-grid">
+        {% for exp in expedientes %}
+        <div class="expediente-card {{ 'completo' if exp.completo else 'pendiente' if exp.progreso > 0 else 'incompleto' }}">
+            <div class="expediente-header">
+                <div>
+                    <div class="expediente-clave">{{ exp.clave }}</div>
+                    <div class="expediente-pasajero">{{ exp.pasajero }}</div>
+                </div>
+                <div class="expediente-meta">
+                    <div class="expediente-fecha">{{ exp.fecha.strftime('%d/%m/%Y') if exp.fecha else '-' }}</div>
+                    <div class="expediente-aerolinea">{{ exp.aerolinea }}</div>
+                </div>
+            </div>
+            
+            <div class="expediente-body">
+                <div class="expediente-info">
+                    {% if exp.empresa %}
+                    <div class="info-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        </svg>
+                        <strong>{{ exp.empresa }}</strong>
+                    </div>
+                    {% endif %}
+                    <div class="info-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        <strong>${{ "%.2f"|format(exp.total) }}</strong>
+                    </div>
+                    {% if exp.ruta %}
+                    <div class="info-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path>
+                        </svg>
+                        <span>{{ exp.ruta }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="documentos-section">
+                    <div class="documentos-title">Documentos</div>
+                    <div class="documentos-list">
+                        <!-- Desglose -->
+                        {% if exp.desglose %}
+                        <div class="doc-item ok">
+                            <div class="doc-info">
+                                <span class="doc-icon ok">✓</span>
+                                <span class="doc-name">Desglose</span>
+                                <span class="doc-detail">#{{ exp.desglose.folio }}</span>
+                            </div>
+                            <a href="{{ url_for('main.consulta_desgloses') }}?folio={{ exp.desglose.folio }}" class="doc-link">Ver</a>
+                        </div>
+                        {% elif exp.requiere_desglose %}
+                        <div class="doc-item pending">
+                            <div class="doc-info">
+                                <span class="doc-icon pending">!</span>
+                                <span class="doc-name">Desglose</span>
+                                <span class="doc-detail">Pendiente</span>
+                            </div>
+                            <a href="{{ url_for('main.calculadora_desglose') }}" class="doc-link">Crear</a>
+                        </div>
+                        {% else %}
+                        <div class="doc-item na">
+                            <div class="doc-info">
+                                <span class="doc-icon na">-</span>
+                                <span class="doc-name">Desglose</span>
+                                <span class="doc-detail">No aplica</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Papeleta -->
+                        {% if exp.papeleta %}
+                        <div class="doc-item ok">
+                            <div class="doc-info">
+                                <span class="doc-icon ok">✓</span>
+                                <span class="doc-name">Papeleta</span>
+                                <span class="doc-detail">#{{ exp.papeleta.folio }}</span>
+                            </div>
+                            <a href="{{ url_for('main.consulta_papeletas') }}" class="doc-link">Ver</a>
+                        </div>
+                        {% elif exp.requiere_papeleta %}
+                        <div class="doc-item pending">
+                            <div class="doc-info">
+                                <span class="doc-icon pending">!</span>
+                                <span class="doc-name">Papeleta</span>
+                                <span class="doc-detail">Pendiente</span>
+                            </div>
+                            <a href="{{ url_for('main.nueva_papeleta') }}" class="doc-link">Crear</a>
+                        </div>
+                        {% else %}
+                        <div class="doc-item na">
+                            <div class="doc-info">
+                                <span class="doc-icon na">-</span>
+                                <span class="doc-name">Papeleta</span>
+                                <span class="doc-detail">No aplica</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Factura -->
+                        {% if exp.factura %}
+                        <div class="doc-item ok">
+                            <div class="doc-info">
+                                <span class="doc-icon ok">✓</span>
+                                <span class="doc-name">Factura</span>
+                                <span class="doc-detail">#{{ exp.factura }}</span>
+                            </div>
+                        </div>
+                        {% elif exp.requiere_factura %}
+                        <div class="doc-item pending">
+                            <div class="doc-info">
+                                <span class="doc-icon pending">!</span>
+                                <span class="doc-name">Factura</span>
+                                <span class="doc-detail">Pendiente</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="doc-item na">
+                            <div class="doc-info">
+                                <span class="doc-icon na">-</span>
+                                <span class="doc-name">Factura</span>
+                                <span class="doc-detail">Opcional</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="expediente-footer">
+                <div class="progress-info">
+                    <div class="progress-bar">
+                        <div class="progress-fill {{ 'complete' if exp.completo else 'partial' if exp.progreso > 0 else 'empty' }}" 
+                             style="width: {{ exp.progreso }}%"></div>
+                    </div>
+                    <span class="progress-text">{{ exp.docs_completos }}/{{ exp.docs_requeridos }} docs</span>
+                </div>
+                <div class="expediente-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="verExpediente('{{ exp.clave }}')">Ver detalle</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <h3>No hay expedientes</h3>
+        <p>Los expedientes se generan automáticamente al crear desgloses o papeletas</p>
+        <a href="{{ url_for('main.calculadora_desglose') }}" class="btn btn-primary">Crear Desglose</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ver Expediente -->
+<div id="modalExpediente" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3>Expediente <span id="modalClave"></span></h3>
+            <button class="modal-close" onclick="cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Información General -->
+            <div class="detail-section">
+                <div class="detail-title">Información General</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Pasajero</label>
+                        <span id="modalPasajero">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Aerolínea</label>
+                        <span id="modalAerolinea">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Empresa</label>
+                        <span id="modalEmpresa">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Ruta</label>
+                        <span id="modalRuta">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Fecha</label>
+                        <span id="modalFecha">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Total</label>
+                        <span id="modalTotal" class="monto-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentos -->
+            <div class="detail-section">
+                <div class="detail-title">Documentos Vinculados</div>
+                <div id="modalDocumentos" class="documentos-list">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="detail-section">
+                <div class="detail-title">Acciones Rápidas</div>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a id="btnCrearDesglose" href="#" class="btn btn-primary btn-sm" style="display: none;">
+                        + Crear Desglose
+                    </a>
+                    <a id="btnCrearPapeleta" href="#" class="btn btn-primary btn-sm" style="display: none;">
+                        + Crear Papeleta
+                    </a>
+                    <a id="btnVerDesglose" href="#" class="btn btn-secondary btn-sm" style="display: none;">
+                        Ver Desglose
+                    </a>
+                    <a id="btnVerPapeleta" href="#" class="btn btn-secondary btn-sm" style="display: none;">
+                        Ver Papeleta
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Datos de expedientes para el modal
+const expedientesData = {
+    {% for exp in expedientes %}
+    '{{ exp.clave }}': {
+        clave: '{{ exp.clave }}',
+        pasajero: '{{ exp.pasajero|e }}',
+        aerolinea: '{{ exp.aerolinea|e }}',
+        empresa: '{{ exp.empresa|e }}',
+        ruta: '{{ exp.ruta or "-" }}',
+        fecha: '{{ exp.fecha.strftime("%d/%m/%Y") if exp.fecha else "-" }}',
+        total: {{ exp.total }},
+        desglose: {% if exp.desglose %}{{ exp.desglose.folio }}{% else %}null{% endif %},
+        papeleta: {% if exp.papeleta %}'{{ exp.papeleta.folio }}'{% else %}null{% endif %},
+        factura: {% if exp.factura %}'{{ exp.factura }}'{% else %}null{% endif %},
+        requiere_desglose: {{ 'true' if exp.requiere_desglose else 'false' }},
+        requiere_papeleta: {{ 'true' if exp.requiere_papeleta else 'false' }},
+        requiere_factura: {{ 'true' if exp.requiere_factura else 'false' }},
+        completo: {{ 'true' if exp.completo else 'false' }}
+    },
+    {% endfor %}
+};
+
+function verExpediente(clave) {
+    const exp = expedientesData[clave];
+    if (!exp) return;
+    
+    // Llenar datos generales
+    document.getElementById('modalClave').textContent = clave;
+    document.getElementById('modalPasajero').textContent = exp.pasajero;
+    document.getElementById('modalAerolinea').textContent = exp.aerolinea;
+    document.getElementById('modalEmpresa').textContent = exp.empresa || 'Sin empresa';
+    document.getElementById('modalRuta').textContent = exp.ruta;
+    document.getElementById('modalFecha').textContent = exp.fecha;
+    document.getElementById('modalTotal').textContent = '$' + exp.total.toFixed(2);
+    
+    // Construir lista de documentos
+    let docsHtml = '';
+    
+    // Desglose
+    if (exp.desglose) {
+        docsHtml += `
+            <div class="doc-item ok">
+                <div class="doc-info">
+                    <span class="doc-icon ok">✓</span>
+                    <span class="doc-name">Desglose</span>
+                    <span class="doc-detail">#${exp.desglose}</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-success);">Completado</span>
+            </div>`;
+    } else if (exp.requiere_desglose) {
+        docsHtml += `
+            <div class="doc-item pending">
+                <div class="doc-info">
+                    <span class="doc-icon pending">!</span>
+                    <span class="doc-name">Desglose</span>
+                    <span class="doc-detail">Requerido</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-warning);">Pendiente</span>
+            </div>`;
+    } else {
+        docsHtml += `
+            <div class="doc-item na">
+                <div class="doc-info">
+                    <span class="doc-icon na">-</span>
+                    <span class="doc-name">Desglose</span>
+                    <span class="doc-detail">No aplica</span>
+                </div>
+            </div>`;
+    }
+    
+    // Papeleta
+    if (exp.papeleta) {
+        docsHtml += `
+            <div class="doc-item ok">
+                <div class="doc-info">
+                    <span class="doc-icon ok">✓</span>
+                    <span class="doc-name">Papeleta</span>
+                    <span class="doc-detail">#${exp.papeleta}</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-success);">Completado</span>
+            </div>`;
+    } else if (exp.requiere_papeleta) {
+        docsHtml += `
+            <div class="doc-item pending">
+                <div class="doc-info">
+                    <span class="doc-icon pending">!</span>
+                    <span class="doc-name">Papeleta</span>
+                    <span class="doc-detail">Requerido</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-warning);">Pendiente</span>
+            </div>`;
+    } else {
+        docsHtml += `
+            <div class="doc-item na">
+                <div class="doc-info">
+                    <span class="doc-icon na">-</span>
+                    <span class="doc-name">Papeleta</span>
+                    <span class="doc-detail">No aplica</span>
+                </div>
+            </div>`;
+    }
+    
+    // Factura
+    if (exp.factura) {
+        docsHtml += `
+            <div class="doc-item ok">
+                <div class="doc-info">
+                    <span class="doc-icon ok">✓</span>
+                    <span class="doc-name">Factura</span>
+                    <span class="doc-detail">#${exp.factura}</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-success);">Completado</span>
+            </div>`;
+    } else if (exp.requiere_factura) {
+        docsHtml += `
+            <div class="doc-item pending">
+                <div class="doc-info">
+                    <span class="doc-icon pending">!</span>
+                    <span class="doc-name">Factura</span>
+                    <span class="doc-detail">Requerido</span>
+                </div>
+                <span class="doc-detail" style="color: var(--exp-warning);">Pendiente</span>
+            </div>`;
+    } else {
+        docsHtml += `
+            <div class="doc-item na">
+                <div class="doc-info">
+                    <span class="doc-icon na">-</span>
+                    <span class="doc-name">Factura</span>
+                    <span class="doc-detail">Opcional</span>
+                </div>
+            </div>`;
+    }
+    
+    document.getElementById('modalDocumentos').innerHTML = docsHtml;
+    
+    // Configurar botones de acción
+    const btnCrearDesglose = document.getElementById('btnCrearDesglose');
+    const btnCrearPapeleta = document.getElementById('btnCrearPapeleta');
+    const btnVerDesglose = document.getElementById('btnVerDesglose');
+    const btnVerPapeleta = document.getElementById('btnVerPapeleta');
+    
+    // Ocultar todos primero
+    btnCrearDesglose.style.display = 'none';
+    btnCrearPapeleta.style.display = 'none';
+    btnVerDesglose.style.display = 'none';
+    btnVerPapeleta.style.display = 'none';
+    
+    // Mostrar según estado
+    if (exp.desglose) {
+        btnVerDesglose.style.display = 'inline-flex';
+        btnVerDesglose.onclick = function() { verDesglose(exp.desglose); };
+        btnVerDesglose.href = '#';
+    } else if (exp.requiere_desglose) {
+        btnCrearDesglose.style.display = 'inline-flex';
+        btnCrearDesglose.href = '/calculadora-desglose';
+    }
+    
+    if (exp.papeleta) {
+        btnVerPapeleta.style.display = 'inline-flex';
+        btnVerPapeleta.onclick = function() { verPapeletaDetalle(exp.clave); };
+        btnVerPapeleta.href = '#';
+    } else if (exp.requiere_papeleta) {
+        btnCrearPapeleta.style.display = 'inline-flex';
+        btnCrearPapeleta.href = '/papeletas/nueva';
+    }
+    
+    document.getElementById('modalExpediente').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modalExpediente').style.display = 'none';
+}
+
+function cerrarModalPapeleta() {
+    document.getElementById('modalPapeleta').style.display = 'none';
+}
+
+function cerrarModalDesglose() {
+    document.getElementById('modalDesglose').style.display = 'none';
+}
+
+// Ver detalle de papeleta
+function verPapeletaDetalle(clave) {
+    const exp = expedientesData[clave];
+    if (!exp || !exp.papeleta) return;
+    
+    document.getElementById('papFolio').textContent = exp.papeleta;
+    document.getElementById('papClave').textContent = exp.clave;
+    document.getElementById('papCliente').textContent = exp.pasajero;
+    document.getElementById('papTotal').textContent = '$' + exp.total.toFixed(2);
+    document.getElementById('papFactura').textContent = exp.factura || 'Pendiente';
+    
+    document.getElementById('modalPapeleta').style.display = 'flex';
+}
+
+// Ver detalle de desglose
+function verDesglose(folio) {
+    // Buscar el expediente con este desglose
+    let expData = null;
+    for (let clave in expedientesData) {
+        if (expedientesData[clave].desglose == folio) {
+            expData = expedientesData[clave];
+            break;
+        }
+    }
+    
+    if (!expData) return;
+    
+    document.getElementById('desFolio').textContent = folio;
+    document.getElementById('desClave').textContent = expData.clave;
+    document.getElementById('desPasajero').textContent = expData.pasajero;
+    document.getElementById('desRuta').textContent = expData.ruta || '-';
+    document.getElementById('desAerolinea').textContent = expData.aerolinea;
+    document.getElementById('desTotal').textContent = '$' + expData.total.toFixed(2);
+    
+    document.getElementById('modalDesglose').style.display = 'flex';
+}
+
+document.getElementById('modalExpediente').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+
+document.getElementById('modalPapeleta').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalPapeleta();
+});
+
+document.getElementById('modalDesglose').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalDesglose();
+});
+</script>
+
+<!-- Modal Ver Papeleta -->
+<div id="modalPapeleta" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Papeleta <span id="papFolio"></span></h3>
+            <button class="modal-close" onclick="cerrarModalPapeleta()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Clave Reservación</label>
+                    <span id="papClave">-</span>
+                </div>
+                <div class="detail-item">
+                    <label>Cliente</label>
+                    <span id="papCliente">-</span>
+                </div>
+                <div class="detail-item">
+                    <label>Total</label>
+                    <span id="papTotal" class="monto-total">$0.00</span>
+                </div>
+                <div class="detail-item">
+                    <label>Factura</label>
+                    <span id="papFactura">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="{{ url_for('main.consulta_papeletas') }}" class="btn btn-secondary">Ir a Papeletas</a>
+            <button class="btn btn-primary" onclick="cerrarModalPapeleta()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Desglose -->
+<div id="modalDesglose" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Desglose #<span id="desFolio"></span></h3>
+            <button class="modal-close" onclick="cerrarModalDesglose()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <label>Clave Reservación</label>
+                    <span id="desClave">-</span>
+                </div>
+                <div class="detail-item">
+                    <label>Pasajero</label>
+                    <span id="desPasajero">-</span>
+                </div>
+                <div class="detail-item">
+                    <label>Ruta</label>
+                    <span id="desRuta">-</span>
+                </div>
+                <div class="detail-item">
+                    <label>Aerolínea</label>
+                    <span id="desAerolinea">-</span>
+                </div>
+                <div class="detail-item" style="grid-column: 1 / -1;">
+                    <label>Total</label>
+                    <span id="desTotal" class="monto-total">$0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="{{ url_for('main.consulta_desgloses') }}" class="btn btn-secondary">Ir a Desgloses</a>
+            <button class="btn btn-primary" onclick="cerrarModalDesglose()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
