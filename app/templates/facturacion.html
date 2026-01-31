@@ -3,6 +3,7 @@
 {% block title %}Facturación - Kinessia Hub{% endblock %}
 
 {% block page_styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 .facturacion-container {
     max-width: 1400px;
@@ -20,11 +21,18 @@
 .page-header h2 {
     color: var(--graphite);
     font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-header h2 i {
+    color: var(--brick-ember);
 }
 
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -49,126 +57,173 @@
     margin-top: 0.25rem;
 }
 
+.stat-card.warning .number { color: #f59e0b; }
+.stat-card.success .number { color: #10b981; }
+
 .section-title {
     font-size: 1.25rem;
     color: var(--graphite);
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--brick-ember);
-}
-
-.papeletas-grid {
-    display: grid;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.papeleta-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.papeleta-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-}
-
-.papeleta-header {
-    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
-    color: white;
-    padding: 1rem 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.papeleta-folio {
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.papeleta-fecha {
-    font-size: 0.875rem;
-    opacity: 0.9;
-}
-
-.papeleta-body {
-    padding: 1.25rem;
-}
-
-.papeleta-info {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.info-item label {
-    display: block;
-    font-size: 0.75rem;
-    color: #888;
-    text-transform: uppercase;
-    margin-bottom: 0.25rem;
-}
-
-.info-item span {
-    font-weight: 600;
-    color: var(--graphite);
-}
-
-.monto-total {
-    font-size: 1.5rem;
-    color: var(--brick-ember);
-}
-
-.papeleta-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
-    margin-top: 1rem;
-}
-
-.btn-ver-detalle {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-    border: none;
-    padding: 0.625rem 1.25rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.btn-ver-detalle:hover {
-    transform: translateY(-1px);
-    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+.section-title i {
+    color: var(--brick-ember);
 }
 
-.btn-facturar {
-    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+/* Grupo por día */
+.dia-grupo {
+    margin-bottom: 2rem;
+}
+
+.dia-header {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dia-header i {
+    opacity: 0.9;
+}
+
+/* Lista de expedientes */
+.expedientes-lista {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.expediente-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 150px 120px 140px 100px;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.3s, transform 0.3s;
+}
+
+.expediente-row:hover {
+    background: #f8f9fa;
+}
+
+.expediente-row:last-child {
+    border-bottom: none;
+}
+
+.expediente-row .clave {
+    font-weight: 700;
+    color: var(--brick-ember);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.expediente-row .clave i {
+    color: #6366f1;
+}
+
+.expediente-row .empresa {
+    font-weight: 500;
+    color: var(--graphite);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.expediente-row .pasajero {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.expediente-row .monto {
+    font-weight: 700;
+    color: var(--graphite);
+    text-align: right;
+}
+
+.expediente-row .estatus-docs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.doc-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.doc-badge.tiene {
+    background: #d4edda;
+    color: #155724;
+}
+
+.doc-badge.no-tiene {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.expediente-row .btn-abrir {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
     border: none;
-    padding: 0.625rem 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     transition: transform 0.2s;
-    white-space: nowrap;
 }
 
-.btn-facturar:hover {
+.expediente-row .btn-abrir:hover {
     transform: translateY(-1px);
 }
 
-/* Modal Estilos */
+/* Header de lista */
+.lista-header {
+    display: grid;
+    grid-template-columns: 120px 1fr 150px 120px 140px 100px;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: #f8f9fa;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #666;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .expediente-row, .lista-header {
+        grid-template-columns: 1fr 1fr;
+    }
+    .lista-header {
+        display: none;
+    }
+}
+
+/* ============================================ */
+/* MODAL GRANDE CON 3 COLUMNAS                  */
+/* ============================================ */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -176,7 +231,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -187,25 +242,32 @@
     display: flex;
 }
 
-.modal-content {
+.modal-expediente {
     background: white;
     border-radius: 16px;
     width: 100%;
-    max-width: 1200px;
-    max-height: 90vh;
+    max-width: 1400px;
+    height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
+}
+
+.modal-header-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .modal-header h3 {
@@ -216,12 +278,25 @@
     gap: 0.5rem;
 }
 
+.modal-header .meta-info {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+.modal-header .meta-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .modal-close {
     background: rgba(255,255,255,0.2);
     border: none;
     color: white;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1.25rem;
@@ -237,46 +312,70 @@
 
 .modal-body {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    overflow-y: auto;
+    grid-template-columns: 300px 300px 1fr;
+    gap: 1px;
+    background: #e5e7eb;
     flex: 1;
+    overflow: hidden;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+    .modal-body {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .modal-section.pdf-section {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 700px) {
     .modal-body {
         grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+    .modal-section.pdf-section {
+        grid-column: span 1;
     }
 }
 
 .modal-section {
-    background: #f8f9fa;
-    border-radius: 12px;
+    background: white;
     padding: 1.25rem;
+    overflow-y: auto;
+}
+
+.modal-section.pdf-section {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-section-title {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--graphite);
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--brick-ember);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
 }
 
-.modal-section-title .icon {
-    font-size: 1.1rem;
+.modal-section-title i {
+    font-size: 1rem;
 }
 
-.papeleta-detail-grid {
+.modal-section-title.papeleta i { color: #3b82f6; }
+.modal-section-title.desglose i { color: #10b981; }
+.modal-section-title.boleto i { color: #ef4444; }
+
+.detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .detail-item {
@@ -285,114 +384,198 @@
 }
 
 .detail-item .label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     color: #888;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.125rem;
     letter-spacing: 0.5px;
 }
 
 .detail-item .value {
     font-weight: 600;
     color: var(--graphite);
-    font-size: 0.95rem;
+    font-size: 0.875rem;
 }
 
-.desglose-box {
-    background: white;
+.detail-item.full-width {
+    grid-column: span 2;
+}
+
+.reembolso-info {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
     border-radius: 8px;
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
+    padding: 0.75rem;
+    margin-top: 1rem;
 }
 
-.desglose-box h4 {
-    font-size: 0.85rem;
-    color: var(--graphite);
-    margin-bottom: 0.75rem;
+.reembolso-info .reembolso-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.desglose-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px dashed #e0e0e0;
-    font-size: 0.9rem;
+.reembolso-info .detail-grid {
+    margin-bottom: 0;
 }
 
-.desglose-row:last-child {
+.reembolso-info .detail-item .label {
+    color: #92400e;
+}
+
+.reembolso-info .detail-item .value {
+    color: #78350f;
+}
+
+.montos-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.monto-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.375rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.monto-row:last-child {
     border-bottom: none;
 }
 
-.desglose-row.total {
+.monto-row.total {
     border-top: 2px solid var(--brick-ember);
     margin-top: 0.5rem;
-    padding-top: 0.75rem;
+    padding-top: 0.5rem;
     font-weight: 700;
-    font-size: 1.1rem;
     color: var(--brick-ember);
+    font-size: 0.95rem;
 }
 
-.pdf-viewer-container {
-    background: white;
+.no-desglose-msg {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #92400e;
+}
+
+.no-desglose-msg i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+.no-desglose-msg p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* PDF Viewer grande */
+.pdf-container {
+    flex: 1;
+    background: #f1f5f9;
     border-radius: 8px;
     overflow: hidden;
-    height: 400px;
-    border: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
 }
 
-.pdf-viewer-container iframe {
+.pdf-container iframe {
     width: 100%;
-    height: 100%;
+    flex: 1;
     border: none;
 }
 
-.no-pdf {
+.pdf-container .no-pdf {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
     color: #888;
     text-align: center;
     padding: 2rem;
 }
 
-.no-pdf .icon {
-    font-size: 3rem;
+.pdf-container .no-pdf i {
+    font-size: 4rem;
     margin-bottom: 1rem;
-    opacity: 0.5;
+    opacity: 0.4;
+    color: #9ca3af;
 }
 
+.pdf-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-pdf-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.btn-pdf-action:hover {
+    transform: translateY(-1px);
+}
+
+.btn-pdf-action.primary {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-pdf-action.secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Modal Footer con formulario */
 .modal-footer {
     background: #f8f9fa;
-    padding: 1.25rem 1.5rem;
-    border-top: 1px solid #e0e0e0;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
 }
 
-.modal-form {
+.factura-form {
     display: flex;
     gap: 1rem;
     align-items: flex-end;
     flex-wrap: wrap;
 }
 
-.modal-form .form-group {
+.factura-form .form-group {
     flex: 1;
-    min-width: 200px;
+    min-width: 180px;
 }
 
-.modal-form label {
+.factura-form label {
     display: block;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: #666;
     margin-bottom: 0.375rem;
     font-weight: 500;
 }
 
-.modal-form input {
+.factura-form input {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid #ddd;
@@ -400,18 +583,36 @@
     font-size: 1rem;
 }
 
-.modal-form input:focus {
+.factura-form input:focus {
     outline: none;
     border-color: var(--brick-ember);
     box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
 }
 
-.modal-form .btn-facturar {
+.btn-registrar {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
     padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 1rem;
+    transition: transform 0.2s;
+}
+
+.btn-registrar:hover {
+    transform: translateY(-1px);
 }
 
 /* Historial */
+.historial-section {
+    margin-top: 3rem;
+}
+
 .historial-table {
     width: 100%;
     background: white;
@@ -435,27 +636,140 @@
 }
 
 .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
 }
 
+.badge i { font-size: 0.7rem; }
+
 .badge-success { background: #d4edda; color: #155724; }
 .badge-warning { background: #fff3cd; color: #856404; }
-.badge-info { background: #d1ecf1; color: #0c5460; }
 .badge-danger { background: #f8d7da; color: #721c24; }
+.badge-info { background: #d1ecf1; color: #0c5460; }
 
 .empty-state {
     text-align: center;
     padding: 3rem;
     color: #888;
+    background: white;
+    border-radius: 12px;
 }
 
-.empty-state .icon {
+.empty-state i {
     font-size: 3rem;
     margin-bottom: 1rem;
+    color: #10b981;
+}
+
+/* Barra de Filtros */
+.filtros-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filtro-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filtro-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+}
+
+.filtro-group label i {
+    color: var(--brick-ember);
+}
+
+.filtro-group input,
+.filtro-group select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+
+.filtro-group input:focus,
+.filtro-group select:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+}
+
+.filtro-group input[type="text"] {
+    min-width: 180px;
+}
+
+.filtro-group input[type="date"] {
+    min-width: 140px;
+}
+
+.btn-limpiar {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.btn-limpiar:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Contador de resultados */
+.resultados-count {
+    font-size: 0.85rem;
+    color: #666;
+    padding: 0.5rem 0;
+}
+
+.resultados-count strong {
+    color: var(--brick-ember);
+}
+
+@media (max-width: 900px) {
+    .filtros-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filtro-group {
+        width: 100%;
+    }
+    
+    .filtro-group input,
+    .filtro-group select {
+        flex: 1;
+    }
+    
+    .btn-limpiar {
+        margin-left: 0;
+        justify-content: center;
+    }
 }
 </style>
 {% endblock %}
@@ -463,295 +777,774 @@
 {% block content %}
 <div class="facturacion-container">
     <div class="page-header">
-        <h2>📄 Módulo de Facturación</h2>
+        <h2><i class="fas fa-file-invoice-dollar"></i> Módulo de Facturación</h2>
     </div>
     
     <!-- Estadísticas -->
     <div class="stats-row">
         <div class="stat-card">
             <div class="number">{{ papeletas_pendientes|length }}</div>
-            <div class="label">Pendientes de Facturar</div>
+            <div class="label">Pendientes</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card warning">
             <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'facturada')|list|length }}</div>
             <div class="label">Por Revisar</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card success">
             <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'aprobada')|list|length }}</div>
             <div class="label">Aprobadas</div>
         </div>
     </div>
     
-    <!-- Papeletas Pendientes -->
-    <h3 class="section-title">Papeletas Pendientes de Facturar</h3>
+    <!-- Barra de Filtros -->
+    <div class="filtros-bar">
+        <div class="filtro-group">
+            <label><i class="fas fa-search"></i></label>
+            <input type="text" id="filtroBuscar" placeholder="Buscar clave, pasajero..." onkeyup="aplicarFiltros()">
+        </div>
+        <div class="filtro-group">
+            <label>Empresa:</label>
+            <select id="filtroEmpresa" onchange="aplicarFiltros()">
+                <option value="">Todas</option>
+                {% set empresas_unicas = papeletas_pendientes|map(attribute='empresa')|select|map(attribute='nombre_empresa')|unique|list %}
+                {% for emp in empresas_unicas %}
+                <option value="{{ emp }}">{{ emp }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label>Fecha:</label>
+            <input type="date" id="filtroFecha" onchange="aplicarFiltros()">
+        </div>
+        <div class="filtro-group">
+            <label>Documentos:</label>
+            <select id="filtroDocs" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="completo">Completos</option>
+                <option value="incompleto">Incompletos</option>
+            </select>
+        </div>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">
+            <i class="fas fa-times"></i> Limpiar
+        </button>
+    </div>
+    
+    <!-- Expedientes Pendientes por Día -->
+    <h3 class="section-title"><i class="fas fa-clock"></i> Expedientes Pendientes de Facturar</h3>
     
     {% if papeletas_pendientes %}
-    <div class="papeletas-grid">
-        {% for p in papeletas_pendientes %}
-        <div class="papeleta-card">
-            <div class="papeleta-header">
-                <span class="papeleta-folio">{{ p.folio }}</span>
-                <span class="papeleta-fecha">{{ p.fecha_venta.strftime('%d/%m/%Y') }}</span>
-            </div>
-            <div class="papeleta-body">
-                <div class="papeleta-info">
-                    <div class="info-item">
-                        <label>Empresa</label>
-                        <span>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Agente</label>
-                        <span>{{ p.usuario.nombre if p.usuario else 'N/A' }}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Tarjeta</label>
-                        <span>{{ p.tarjeta }}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Clave Sabre</label>
-                        <span>{{ p.clave_sabre }}</span>
-                    </div>
-                    <div class="info-item">
-                        <label>Total Papeleta</label>
-                        <span class="monto-total">${{ "%.2f"|format(p.total) }}</span>
-                    </div>
-                </div>
-                
-                <div class="papeleta-actions">
-                    <button type="button" class="btn-ver-detalle" onclick="abrirModalFacturacion({{ p.id }})">
-                        👁️ Ver Detalle y Facturar
-                    </button>
-                </div>
-            </div>
+    
+    {% set papeletas_por_fecha = papeletas_pendientes|groupby('fecha_venta') %}
+    
+    {% for fecha, papeletas_dia in papeletas_por_fecha %}
+    <div class="dia-grupo" data-fecha="{{ fecha.strftime('%Y-%m-%d') }}">
+        <div class="dia-header">
+            <i class="fas fa-calendar-day"></i>
+            {{ fecha.strftime('%A, %d de %B %Y') }}
+            <span class="dia-count" style="margin-left: auto; opacity: 0.8;">({{ papeletas_dia|length }} expediente{{ 's' if papeletas_dia|length > 1 else '' }})</span>
         </div>
-        {% endfor %}
+        <div class="expedientes-lista">
+            <div class="lista-header">
+                <span>Clave Sabre</span>
+                <span>Empresa</span>
+                <span>Pasajero</span>
+                <span>Monto</span>
+                <span>Documentos</span>
+                <span></span>
+            </div>
+            {% for p in papeletas_dia %}
+            {% set desglose = desgloses_dict.get(p.clave_sabre) %}
+            {% set docs_completos = desglose and p.archivo_boleto %}
+            <div class="expediente-row" 
+                 onclick="abrirExpediente({{ p.id }})" 
+                 id="expediente-row-{{ p.id }}"
+                 data-clave="{{ p.clave_sabre|lower }}"
+                 data-empresa="{{ (p.empresa.nombre_empresa if p.empresa else p.facturar_a)|lower }}"
+                 data-pasajero="{{ p.solicito|lower }}"
+                 data-fecha="{{ p.fecha_venta.strftime('%Y-%m-%d') }}"
+                 data-docs="{{ 'completo' if docs_completos else 'incompleto' }}">
+                <div class="clave">
+                    <i class="fas fa-ticket-alt"></i>
+                    {{ p.clave_sabre }}
+                </div>
+                <div class="empresa">{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</div>
+                <div class="pasajero">{{ p.solicito }}</div>
+                <div class="monto">${{ "%.2f"|format(p.total) }}</div>
+                <div class="estatus-docs">
+                    <span class="doc-badge tiene" title="Papeleta"><i class="fas fa-receipt"></i></span>
+                    <span class="doc-badge {{ 'tiene' if desglose else 'no-tiene' }}" title="Desglose">
+                        <i class="fas fa-calculator"></i>
+                    </span>
+                    <span class="doc-badge {{ 'tiene' if p.archivo_boleto else 'no-tiene' }}" title="Boleto PDF">
+                        <i class="fas fa-file-pdf"></i>
+                    </span>
+                </div>
+                <button type="button" class="btn-abrir" onclick="event.stopPropagation(); abrirExpediente({{ p.id }})">
+                    <i class="fas fa-folder-open"></i> Abrir
+                </button>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+    {% endfor %}
+    
     {% else %}
     <div class="empty-state">
-        <div class="icon">✅</div>
+        <i class="fas fa-check-circle"></i>
         <p>No hay papeletas pendientes de facturar.</p>
     </div>
     {% endif %}
     
     <!-- Historial -->
     {% if papeletas_facturadas %}
-    <h3 class="section-title" style="margin-top: 3rem;">Historial de Facturación</h3>
-    <table class="historial-table">
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Empresa</th>
-                <th># Factura</th>
-                <th>Monto</th>
-                <th>Estatus</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in papeletas_facturadas %}
-            <tr>
-                <td><strong>{{ p.folio }}</strong></td>
-                <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
-                <td>{{ p.numero_factura or '-' }}</td>
-                <td>${{ "%.2f"|format(p.monto_factura or 0) }}</td>
-                <td>
-                    {% if p.estatus_facturacion == 'facturada' %}
-                        <span class="badge badge-warning">Por Revisar</span>
-                    {% elif p.estatus_facturacion == 'aprobada' %}
-                        <span class="badge badge-success">Aprobada</span>
-                    {% elif p.estatus_facturacion == 'rechazada' %}
-                        <span class="badge badge-danger">Rechazada</span>
-                    {% endif %}
-                </td>
-                <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y %H:%M') if p.fecha_facturacion else '-' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="historial-section">
+        <h3 class="section-title"><i class="fas fa-history"></i> Historial de Facturación</h3>
+        <table class="historial-table">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Empresa</th>
+                    <th># Factura</th>
+                    <th>Monto</th>
+                    <th>Estatus</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in papeletas_facturadas %}
+                <tr>
+                    <td><strong>{{ p.folio }}</strong></td>
+                    <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
+                    <td>{{ p.numero_factura or '-' }}</td>
+                    <td>${{ "%.2f"|format(p.monto_factura or 0) }}</td>
+                    <td>
+                        {% if p.estatus_facturacion == 'facturada' %}
+                            <span class="badge badge-warning"><i class="fas fa-clock"></i> Por Revisar</span>
+                        {% elif p.estatus_facturacion == 'aprobada' %}
+                            <span class="badge badge-success"><i class="fas fa-check"></i> Aprobada</span>
+                        {% elif p.estatus_facturacion == 'rechazada' %}
+                            <span class="badge badge-danger"><i class="fas fa-times"></i> Rechazada</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y %H:%M') if p.fecha_facturacion else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 </div>
 
-<!-- Modal de Facturación -->
-<div class="modal-overlay" id="modalFacturacion">
-    <div class="modal-content">
+<!-- Modal de Expediente -->
+<div class="modal-overlay" id="modalExpediente">
+    <div class="modal-expediente">
         <div class="modal-header">
-            <h3>🔍 Revisión de Papeleta - <span id="modalFolio"></span></h3>
-            <button class="modal-close" onclick="cerrarModalFacturacion()">✕</button>
+            <div class="modal-header-info">
+                <h3><i class="fas fa-folder-open"></i> Expediente <span id="modalClaveSabre"></span></h3>
+                <div class="meta-info">
+                    <span><i class="fas fa-building"></i> <span id="modalEmpresa"></span></span>
+                    <span><i class="fas fa-user"></i> <span id="modalPasajero"></span></span>
+                    <span><i class="fas fa-calendar"></i> <span id="modalFecha"></span></span>
+                </div>
+            </div>
+            <button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button>
         </div>
         
         <div class="modal-body">
-            <!-- Datos de la Papeleta -->
+            <!-- Columna Papeleta -->
             <div class="modal-section">
-                <div class="modal-section-title">
-                    <span class="icon">📋</span> Datos de la Papeleta
+                <div class="modal-section-title papeleta">
+                    <i class="fas fa-receipt"></i> Papeleta <span id="modalPapeletaFolio"></span>
                 </div>
                 
-                <div class="papeleta-detail-grid">
+                <!-- Indicadores especiales -->
+                <div id="indicadoresEspeciales" style="display: none; margin-bottom: 0.75rem;">
+                    <span id="badgeExtemporanea" class="badge badge-warning" style="display: none;">
+                        <i class="fas fa-clock"></i> Extemporánea
+                    </span>
+                    <span id="badgeReembolso" class="badge badge-info" style="display: none;">
+                        <i class="fas fa-undo"></i> Tiene Reembolso
+                    </span>
+                </div>
+                
+                <div class="detail-grid">
                     <div class="detail-item">
-                        <span class="label">Folio</span>
-                        <span class="value" id="detalleFolio">---</span>
+                        <span class="label">Tarjeta</span>
+                        <span class="value" id="modalTarjeta">---</span>
                     </div>
                     <div class="detail-item">
                         <span class="label">Fecha Venta</span>
-                        <span class="value" id="detalleFecha">---</span>
+                        <span class="value" id="modalFechaVenta">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Cliente / Facturar A</span>
-                        <span class="value" id="detalleCliente">---</span>
+                        <span class="label">Facturar A</span>
+                        <span class="value" id="modalFacturarA">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Aerolínea</span>
-                        <span class="value" id="detalleAerolinea">---</span>
+                        <span class="label">Tipo Cargo</span>
+                        <span class="value" id="modalTipoCargo">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Clave Reserva</span>
-                        <span class="value" id="detalleReserva">---</span>
+                        <span class="label">Aerolínea / Proveedor</span>
+                        <span class="value" id="modalAerolineaProveedor">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Tarjeta</span>
-                        <span class="value" id="detalleTarjeta">---</span>
+                        <span class="label">Solicitó</span>
+                        <span class="value" id="modalSolicito">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Clave Sabre</span>
+                        <span class="value" id="modalClaveSabreDetalle">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Forma Pago</span>
+                        <span class="value" id="modalFormaPago">---</span>
+                    </div>
+                    <div class="detail-item full-width">
+                        <span class="label">Agente</span>
+                        <span class="value" id="modalAgente">---</span>
                     </div>
                 </div>
                 
-                <div class="desglose-box">
-                    <h4>📊 Desglose de Montos</h4>
-                    <div class="desglose-row">
+                <div class="montos-box">
+                    <div class="monto-row">
                         <span>Total Ticket</span>
-                        <span id="detalleTotalTicket">$0.00</span>
+                        <span id="modalTotalTicket">$0.00</span>
                     </div>
-                    <div class="desglose-row">
-                        <span>10%</span>
-                        <span id="detalleDiezPorciento">$0.00</span>
+                    <div class="monto-row">
+                        <span>Comisión (10%)</span>
+                        <span id="modalDiezPorciento">$0.00</span>
                     </div>
-                    <div class="desglose-row">
-                        <span>Cargo Expedición</span>
-                        <span id="detalleCargo">$0.00</span>
+                    <div class="monto-row">
+                        <span>Cargo</span>
+                        <span id="modalCargo">$0.00</span>
                     </div>
-                    <div class="desglose-row total">
-                        <span>TOTAL PAPELETA</span>
-                        <span id="detalleTotal">$0.00</span>
+                    <div class="monto-row total">
+                        <span>Total Papeleta</span>
+                        <span id="modalTotalPapeleta">$0.00</span>
+                    </div>
+                </div>
+                
+                <!-- Sección de reembolso si aplica -->
+                <div id="seccionReembolso" class="reembolso-info" style="display: none;">
+                    <div class="reembolso-title"><i class="fas fa-undo"></i> Información de Reembolso</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="label">Motivo</span>
+                            <span class="value" id="modalMotivoReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Monto</span>
+                            <span class="value" id="modalMontoReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Estatus</span>
+                            <span class="value" id="modalEstatusReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Referencia</span>
+                            <span class="value" id="modalReferenciaReembolso">---</span>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Boleto / Documento -->
+            <!-- Columna Desglose -->
             <div class="modal-section">
-                <div class="modal-section-title">
-                    <span class="icon">🎫</span> Boleto / Documento
+                <div class="modal-section-title desglose">
+                    <i class="fas fa-calculator"></i> Desglose <span id="modalDesgloseFolio"></span>
                 </div>
-                
-                <div class="pdf-viewer-container" id="pdfContainer">
-                    <div class="no-pdf" id="noPdfMessage">
-                        <div class="icon">📄</div>
-                        <p>No hay documento adjunto</p>
-                    </div>
+                <div id="desgloseContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Columna PDF (grande) -->
+            <div class="modal-section pdf-section">
+                <div class="modal-section-title boleto">
+                    <i class="fas fa-file-pdf"></i> Boleto / Documento
+                </div>
+                <div class="pdf-container">
                     <iframe id="pdfViewer" style="display: none;"></iframe>
+                    <div class="no-pdf" id="noPdfMsg">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No hay boleto adjunto a esta papeleta</p>
+                    </div>
+                </div>
+                <div class="pdf-actions" id="pdfActions" style="display: none;">
+                    <a href="#" id="btnAbrirPdf" target="_blank" class="btn-pdf-action primary">
+                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                    </a>
+                    <a href="#" id="btnDescargarPdf" download class="btn-pdf-action secondary">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
                 </div>
             </div>
         </div>
         
         <div class="modal-footer">
-            <form id="formFacturarModal" method="POST" class="modal-form">
+            <form id="formFacturar" class="factura-form" method="POST" autocomplete="off">
                 <div class="form-group">
-                    <label for="modal_numero_factura">Número de Factura</label>
-                    <input type="text" id="modal_numero_factura" name="numero_factura" 
-                           placeholder="Ej: A-12345" required>
+                    <label for="numero_factura">Número de Factura</label>
+                    <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: A-12345" required autocomplete="off">
                 </div>
                 <div class="form-group">
-                    <label for="modal_monto_factura">Monto Facturado</label>
-                    <input type="number" step="0.01" id="modal_monto_factura" name="monto_factura" 
-                           placeholder="0.00" required>
+                    <label for="monto_factura">Monto Facturado</label>
+                    <input type="number" step="0.01" id="monto_factura" name="monto_factura" placeholder="0.00" required>
                 </div>
-                <button type="submit" class="btn-facturar">✓ Registrar Factura</button>
+                <button type="submit" class="btn-registrar">
+                    <i class="fas fa-check"></i> Registrar Factura
+                </button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Datos de papeletas para JavaScript -->
 <script>
-const papeletasData = {
+// Datos de expedientes
+const expedientesData = {
     {% for p in papeletas_pendientes %}
+    {% set desglose = desgloses_dict.get(p.clave_sabre) %}
     {{ p.id }}: {
         id: {{ p.id }},
         folio: "{{ p.folio }}",
+        claveSabre: "{{ p.clave_sabre }}",
+        empresa: "{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}",
+        facturarA: "{{ p.facturar_a }}",
+        solicito: "{{ p.solicito }}",
         fecha: "{{ p.fecha_venta.strftime('%d/%m/%Y') }}",
-        cliente: "{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}",
-        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '---' }}",
-        reserva: "{{ p.clave_sabre or '---' }}",
         tarjeta: "{{ p.tarjeta }}",
+        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '' }}",
+        proveedor: "{{ p.proveedor or '' }}",
+        agente: "{{ p.usuario.nombre if p.usuario else 'N/A' }}",
+        formaPago: "{{ p.forma_pago or 'N/A' }}",
+        tipoCargo: "{{ p.tipo_cargo or 'aerolinea' }}",
         totalTicket: {{ p.total_ticket or 0 }},
         diezPorciento: {{ p.diez_porciento or 0 }},
         cargo: {{ p.cargo or 0 }},
-        total: {{ p.total or 0 }},
+        totalPapeleta: {{ p.total or 0 }},
         archivoBoleto: "{{ p.archivo_boleto or '' }}",
-        actionUrl: "{{ url_for('main.registrar_factura', id=p.id) }}"
+        extemporanea: {{ 'true' if p.extemporanea else 'false' }},
+        motivoExtemporanea: "{{ p.motivo_extemporanea or '' }}",
+        fechaCargoReal: "{{ p.fecha_cargo_real.strftime('%d/%m/%Y') if p.fecha_cargo_real else '' }}",
+        tieneReembolso: {{ 'true' if p.tiene_reembolso else 'false' }},
+        motivoReembolso: "{{ p.motivo_reembolso or '' }}",
+        estatusReembolso: "{{ p.estatus_reembolso or '' }}",
+        montoReembolso: {{ p.monto_reembolso or 0 }},
+        referenciaReembolso: "{{ p.referencia_reembolso or '' }}",
+        actionUrl: "{{ url_for('main.registrar_factura', id=p.id) }}",
+        {% if desglose %}
+        desglose: {
+            folio: {{ desglose.folio }},
+            claveBoleto: "{{ desglose.clave_reserva }}",
+            pasajero: "{{ desglose.pasajero_nombre or 'N/A' }}",
+            ruta: "{{ desglose.ruta or 'N/A' }}",
+            aerolinea: "{{ desglose.aerolinea.nombre if desglose.aerolinea else 'N/A' }}",
+            tarifaBase: {{ desglose.tarifa_base or 0 }},
+            iva: {{ desglose.iva or 0 }},
+            tua: {{ desglose.tua or 0 }},
+            yr: {{ desglose.yr or 0 }},
+            otrosCargos: {{ desglose.otros_cargos or 0 }},
+            cargoServicio: {{ desglose.cargo_por_servicio or 0 }},
+            total: {{ desglose.total or 0 }}
+        }
+        {% else %}
+        desglose: null
+        {% endif %}
     },
     {% endfor %}
 };
 
-function abrirModalFacturacion(papeletaId) {
-    const p = papeletasData[papeletaId];
-    if (!p) return;
+let expedienteActualId = null;
+
+// ==========================================
+// FUNCIONES DE FILTRADO
+// ==========================================
+function aplicarFiltros() {
+    const buscar = document.getElementById('filtroBuscar').value.toLowerCase().trim();
+    const empresa = document.getElementById('filtroEmpresa').value.toLowerCase();
+    const fecha = document.getElementById('filtroFecha').value;
+    const docs = document.getElementById('filtroDocs').value;
     
-    // Llenar datos
-    document.getElementById('modalFolio').textContent = p.folio;
-    document.getElementById('detalleFolio').textContent = p.folio;
-    document.getElementById('detalleFecha').textContent = p.fecha;
-    document.getElementById('detalleCliente').textContent = p.cliente;
-    document.getElementById('detalleAerolinea').textContent = p.aerolinea;
-    document.getElementById('detalleReserva').textContent = p.reserva;
-    document.getElementById('detalleTarjeta').textContent = p.tarjeta;
+    let totalVisibles = 0;
+    
+    document.querySelectorAll('.expediente-row').forEach(row => {
+        const clave = row.dataset.clave || '';
+        const rowEmpresa = row.dataset.empresa || '';
+        const pasajero = row.dataset.pasajero || '';
+        const rowFecha = row.dataset.fecha || '';
+        const rowDocs = row.dataset.docs || '';
+        
+        // Aplicar filtros
+        const matchBuscar = !buscar || 
+            clave.includes(buscar) || 
+            pasajero.includes(buscar) ||
+            rowEmpresa.includes(buscar);
+        const matchEmpresa = !empresa || rowEmpresa.includes(empresa);
+        const matchFecha = !fecha || rowFecha === fecha;
+        const matchDocs = !docs || rowDocs === docs;
+        
+        const visible = matchBuscar && matchEmpresa && matchFecha && matchDocs;
+        row.style.display = visible ? '' : 'none';
+        
+        if (visible) totalVisibles++;
+    });
+    
+    // Ocultar grupos vacíos y actualizar contadores
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        const filas = grupo.querySelectorAll('.expediente-row');
+        const filasVisibles = grupo.querySelectorAll('.expediente-row:not([style*="display: none"])');
+        
+        grupo.style.display = filasVisibles.length > 0 ? '' : 'none';
+        
+        // Actualizar contador del día
+        const contador = grupo.querySelector('.dia-count');
+        if (contador && filasVisibles.length > 0) {
+            contador.textContent = `(${filasVisibles.length} expediente${filasVisibles.length > 1 ? 's' : ''})`;
+        }
+    });
+    
+    // Mostrar mensaje si no hay resultados
+    mostrarMensajeVacio(totalVisibles === 0 && document.querySelectorAll('.expediente-row').length > 0);
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtroBuscar').value = '';
+    document.getElementById('filtroEmpresa').value = '';
+    document.getElementById('filtroFecha').value = '';
+    document.getElementById('filtroDocs').value = '';
+    
+    // Mostrar todas las filas
+    document.querySelectorAll('.expediente-row').forEach(row => {
+        row.style.display = '';
+    });
+    
+    // Mostrar todos los grupos
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        grupo.style.display = '';
+        
+        // Restaurar contador original
+        const filas = grupo.querySelectorAll('.expediente-row');
+        const contador = grupo.querySelector('.dia-count');
+        if (contador) {
+            contador.textContent = `(${filas.length} expediente${filas.length > 1 ? 's' : ''})`;
+        }
+    });
+    
+    mostrarMensajeVacio(false);
+}
+
+function mostrarMensajeVacio(mostrar) {
+    let msgVacio = document.getElementById('filtros-sin-resultados');
+    
+    if (mostrar) {
+        if (!msgVacio) {
+            msgVacio = document.createElement('div');
+            msgVacio.id = 'filtros-sin-resultados';
+            msgVacio.className = 'empty-state';
+            msgVacio.innerHTML = '<i class="fas fa-filter"></i><p>No se encontraron expedientes con los filtros aplicados.</p>';
+            
+            const section = document.querySelector('.section-title');
+            if (section && section.parentElement) {
+                section.parentElement.insertBefore(msgVacio, section.nextSibling.nextSibling);
+            }
+        }
+        msgVacio.style.display = '';
+    } else if (msgVacio) {
+        msgVacio.style.display = 'none';
+    }
+}
+
+// Funciones de formato
+function formatTipoCargo(tipo) {
+    const tipos = {
+        'aerolinea': 'Aerolínea',
+        'hotel': 'Hotel',
+        'auto': 'Renta de Auto',
+        'otro': 'Otro'
+    };
+    return tipos[tipo] || tipo || 'N/A';
+}
+
+function formatMotivoReembolso(motivo) {
+    const motivos = {
+        'duplicado': 'Compra duplicada',
+        'cancelacion': 'Cancelación',
+        'cambio': 'Cambio de itinerario',
+        'error_monto': 'Error en monto',
+        'no_show': 'No show',
+        'otro': 'Otro'
+    };
+    return motivos[motivo] || motivo || 'N/A';
+}
+
+function formatEstatusReembolso(estatus) {
+    const estatuses = {
+        'pendiente': 'Pendiente',
+        'en_proceso': 'En proceso',
+        'completado': 'Completado',
+        'rechazado': 'Rechazado'
+    };
+    return estatuses[estatus] || estatus || 'N/A';
+}
+
+function abrirExpediente(id) {
+    const exp = expedientesData[id];
+    if (!exp) return;
+    
+    expedienteActualId = id;
+    
+    // Header
+    document.getElementById('modalClaveSabre').textContent = exp.claveSabre;
+    document.getElementById('modalEmpresa').textContent = exp.empresa;
+    document.getElementById('modalPasajero').textContent = exp.solicito;
+    document.getElementById('modalFecha').textContent = exp.fecha;
+    
+    // Papeleta - Todos los campos
+    document.getElementById('modalPapeletaFolio').textContent = '#' + exp.folio;
+    document.getElementById('modalTarjeta').textContent = exp.tarjeta;
+    document.getElementById('modalFechaVenta').textContent = exp.fecha;
+    document.getElementById('modalFacturarA').textContent = exp.facturarA;
+    document.getElementById('modalTipoCargo').textContent = formatTipoCargo(exp.tipoCargo);
+    
+    // Aerolínea o Proveedor según tipo de cargo
+    const aerolineaProveedor = exp.tipoCargo === 'aerolinea' ? exp.aerolinea : exp.proveedor;
+    document.getElementById('modalAerolineaProveedor').textContent = aerolineaProveedor || 'N/A';
+    
+    document.getElementById('modalSolicito').textContent = exp.solicito;
+    document.getElementById('modalClaveSabreDetalle').textContent = exp.claveSabre;
+    document.getElementById('modalFormaPago').textContent = exp.formaPago;
+    document.getElementById('modalAgente').textContent = exp.agente;
+    
+    // Indicadores especiales
+    const indicadores = document.getElementById('indicadoresEspeciales');
+    const badgeExtemp = document.getElementById('badgeExtemporanea');
+    const badgeReemb = document.getElementById('badgeReembolso');
+    
+    if (exp.extemporanea || exp.tieneReembolso) {
+        indicadores.style.display = 'flex';
+        indicadores.style.gap = '0.5rem';
+        indicadores.style.flexWrap = 'wrap';
+        badgeExtemp.style.display = exp.extemporanea ? 'inline-flex' : 'none';
+        badgeReemb.style.display = exp.tieneReembolso ? 'inline-flex' : 'none';
+    } else {
+        indicadores.style.display = 'none';
+    }
+    
+    // Montos
+    document.getElementById('modalTotalTicket').textContent = '$' + exp.totalTicket.toFixed(2);
+    document.getElementById('modalDiezPorciento').textContent = '$' + exp.diezPorciento.toFixed(2);
+    document.getElementById('modalCargo').textContent = '$' + exp.cargo.toFixed(2);
+    document.getElementById('modalTotalPapeleta').textContent = '$' + exp.totalPapeleta.toFixed(2);
+    
+    // Sección de reembolso
+    const seccionReembolso = document.getElementById('seccionReembolso');
+    if (exp.tieneReembolso) {
+        seccionReembolso.style.display = 'block';
+        document.getElementById('modalMotivoReembolso').textContent = formatMotivoReembolso(exp.motivoReembolso);
+        document.getElementById('modalMontoReembolso').textContent = '$' + exp.montoReembolso.toFixed(2);
+        document.getElementById('modalEstatusReembolso').textContent = formatEstatusReembolso(exp.estatusReembolso);
+        document.getElementById('modalReferenciaReembolso').textContent = exp.referenciaReembolso || 'N/A';
+    } else {
+        seccionReembolso.style.display = 'none';
+    }
     
     // Desglose
-    document.getElementById('detalleTotalTicket').textContent = '$' + p.totalTicket.toFixed(2);
-    document.getElementById('detalleDiezPorciento').textContent = '$' + p.diezPorciento.toFixed(2);
-    document.getElementById('detalleCargo').textContent = '$' + p.cargo.toFixed(2);
-    document.getElementById('detalleTotal').textContent = '$' + p.total.toFixed(2);
+    const desgloseContent = document.getElementById('desgloseContent');
+    if (exp.desglose) {
+        document.getElementById('modalDesgloseFolio').textContent = '#' + exp.desglose.folio;
+        desgloseContent.innerHTML = `
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="label">Clave Boleto</span>
+                    <span class="value">${exp.desglose.claveBoleto}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Pasajero</span>
+                    <span class="value">${exp.desglose.pasajero}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Ruta</span>
+                    <span class="value">${exp.desglose.ruta}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Aerolínea</span>
+                    <span class="value">${exp.desglose.aerolinea}</span>
+                </div>
+            </div>
+            <div class="montos-box">
+                <div class="monto-row">
+                    <span>Tarifa Base</span>
+                    <span>$${exp.desglose.tarifaBase.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>IVA</span>
+                    <span>$${exp.desglose.iva.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>TUA</span>
+                    <span>$${exp.desglose.tua.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>YR</span>
+                    <span>$${exp.desglose.yr.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Otros Cargos</span>
+                    <span>$${exp.desglose.otrosCargos.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Cargo por Servicio</span>
+                    <span>$${exp.desglose.cargoServicio.toFixed(2)}</span>
+                </div>
+                <div class="monto-row total">
+                    <span>Total Desglose</span>
+                    <span>$${exp.desglose.total.toFixed(2)}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        document.getElementById('modalDesgloseFolio').textContent = '';
+        desgloseContent.innerHTML = `
+            <div class="no-desglose-msg">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>No hay desglose vinculado<br>a esta clave Sabre</p>
+            </div>
+        `;
+    }
     
     // PDF
     const pdfViewer = document.getElementById('pdfViewer');
-    const noPdfMessage = document.getElementById('noPdfMessage');
+    const noPdfMsg = document.getElementById('noPdfMsg');
+    const pdfActions = document.getElementById('pdfActions');
     
-    if (p.archivoBoleto) {
-        pdfViewer.src = '/static/uploads/boletos/' + p.archivoBoleto;
+    if (exp.archivoBoleto) {
+        const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
+        pdfViewer.src = pdfUrl;
         pdfViewer.style.display = 'block';
-        noPdfMessage.style.display = 'none';
+        noPdfMsg.style.display = 'none';
+        pdfActions.style.display = 'flex';
+        document.getElementById('btnAbrirPdf').href = pdfUrl;
+        document.getElementById('btnDescargarPdf').href = pdfUrl;
     } else {
         pdfViewer.style.display = 'none';
-        noPdfMessage.style.display = 'flex';
+        pdfViewer.src = '';
+        noPdfMsg.style.display = 'flex';
+        pdfActions.style.display = 'none';
     }
     
     // Form
-    document.getElementById('formFacturarModal').action = p.actionUrl;
-    document.getElementById('modal_monto_factura').value = p.total.toFixed(2);
-    document.getElementById('modal_numero_factura').value = '';
+    document.getElementById('formFacturar').action = exp.actionUrl;
+    document.getElementById('monto_factura').value = exp.totalPapeleta.toFixed(2);
+    document.getElementById('numero_factura').value = '';
     
     // Mostrar modal
-    document.getElementById('modalFacturacion').classList.add('active');
+    document.getElementById('modalExpediente').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
-function cerrarModalFacturacion() {
-    document.getElementById('modalFacturacion').classList.remove('active');
+function cerrarModal() {
+    document.getElementById('modalExpediente').classList.remove('active');
     document.body.style.overflow = '';
-    
-    // Limpiar PDF
     document.getElementById('pdfViewer').src = '';
+    expedienteActualId = null;
 }
+
+// Form submit con AJAX para eliminar fila
+document.getElementById('formFacturar').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const btn = form.querySelector('.btn-registrar');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+    
+    // Agregar parámetro ajax=1 a la URL
+    const actionUrl = form.action + (form.action.includes('?') ? '&' : '?') + 'ajax=1';
+    
+    fetch(actionUrl, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        // Primero obtenemos el texto para ver qué devuelve
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // Si no es JSON, mostrar el error
+                console.error('Respuesta no es JSON:', text.substring(0, 200));
+                throw new Error('El servidor no devolvió JSON válido. ¿Actualizaste routes.py?');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            // Mostrar toast usando el sistema global de base.html
+            showToast(data.message || 'Factura registrada correctamente', 'success', 4000);
+            
+            // Eliminar fila de la lista con animación
+            const row = document.getElementById('expediente-row-' + expedienteActualId);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    row.remove();
+                    // Verificar si el grupo del día quedó vacío
+                    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+                        const lista = grupo.querySelector('.expedientes-lista');
+                        if (lista && lista.querySelectorAll('.expediente-row').length === 0) {
+                            grupo.remove();
+                        }
+                    });
+                    
+                    // Si no quedan expedientes, mostrar estado vacío
+                    if (document.querySelectorAll('.expediente-row').length === 0) {
+                        const container = document.querySelector('.section-title').parentElement;
+                        const emptyState = document.createElement('div');
+                        emptyState.className = 'empty-state';
+                        emptyState.innerHTML = '<i class="fas fa-check-circle"></i><p>No hay papeletas pendientes de facturar.</p>';
+                        container.appendChild(emptyState);
+                    }
+                }, 300);
+            }
+            
+            cerrarModal();
+            
+            // Actualizar contador
+            const pendientesNum = document.querySelector('.stat-card .number');
+            if (pendientesNum) {
+                const current = parseInt(pendientesNum.textContent) || 0;
+                pendientesNum.textContent = Math.max(0, current - 1);
+            }
+            
+        } else {
+            showToast(data.error || 'No se pudo registrar la factura', 'danger', 5000);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        showToast('Error de conexión: ' + error.message, 'danger', 5000);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+});
 
 // Cerrar con ESC
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        cerrarModalFacturacion();
-    }
+    if (e.key === 'Escape') cerrarModal();
 });
 
-// Cerrar al hacer clic fuera del modal
-document.getElementById('modalFacturacion').addEventListener('click', function(e) {
-    if (e.target === this) {
-        cerrarModalFacturacion();
-    }
+// Cerrar al hacer clic fuera
+document.getElementById('modalExpediente').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
 });
 </script>
 {% endblock %}

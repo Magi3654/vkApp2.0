@@ -1207,10 +1207,58 @@ def revision_facturas():
         flash('Solo gerentes pueden revisar facturas.', 'danger')
         return redirect(url_for('main.dashboard'))
     
+    # Diccionarios para traducir fechas al español
+    DIAS_ES = {
+        'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+        'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+    }
+    MESES_ES = {
+        'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 'April': 'Abril',
+        'May': 'Mayo', 'June': 'Junio', 'July': 'Julio', 'August': 'Agosto',
+        'September': 'Septiembre', 'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
+    }
+    
+    def fecha_espanol(fecha):
+        """Convierte una fecha a formato español: Lunes, 30 de Enero 2026"""
+        if not fecha:
+            return 'Sin fecha'
+        fecha_str = fecha.strftime('%A, %d de %B %Y')
+        for en, es in DIAS_ES.items():
+            fecha_str = fecha_str.replace(en, es)
+        for en, es in MESES_ES.items():
+            fecha_str = fecha_str.replace(en, es)
+        return fecha_str
+    
     # Facturas pendientes de revisión (estatus = 'facturada')
     pendientes = Papeleta.query.filter(
         Papeleta.estatus_facturacion == 'facturada'
     ).order_by(Papeleta.fecha_facturacion.desc()).all()
+    
+    # Agrupar pendientes por fecha (solo día), ordenado de más reciente a más antiguo
+    def agrupar_por_fecha(papeletas):
+        grupos = OrderedDict()
+        for p in papeletas:
+            if p.fecha_facturacion:
+                fecha_key = p.fecha_facturacion.strftime('%Y-%m-%d')
+                fecha_display = fecha_espanol(p.fecha_facturacion)
+            else:
+                fecha_key = ''
+                fecha_display = 'Sin fecha'
+            
+            if fecha_key not in grupos:
+                grupos[fecha_key] = {'fecha_display': fecha_display, 'facturas': []}
+            grupos[fecha_key]['facturas'].append(p)
+        
+        # Ordenar facturas dentro de cada día por número de factura (consecutivo ascendente)
+        for fecha_key in grupos:
+            grupos[fecha_key]['facturas'] = sorted(
+                grupos[fecha_key]['facturas'], 
+                key=lambda p: p.numero_factura or ''
+            )
+        
+        return list(grupos.items())
+    
+    pendientes_agrupados = agrupar_por_fecha(pendientes)
     
     # Calcular monto total pendiente
     monto_pendiente = sum(float(p.monto_factura or 0) for p in pendientes)
@@ -1233,12 +1281,23 @@ def revision_facturas():
         Papeleta.fecha_aprobacion >= hoy_inicio
     ).count()
     
+    # Obtener desgloses para el modal
+    desgloses = Desglose.query.all()
+    desgloses_dict = {}
+    for d in desgloses:
+        if d.clave_sabre:
+            desgloses_dict[d.clave_sabre] = d
+        if d.clave_reserva:
+            desgloses_dict[d.clave_reserva] = d
+    
     return render_template('revision_facturas.html',
                            pendientes=pendientes,
+                           pendientes_agrupados=pendientes_agrupados,
                            historial=historial,
                            monto_pendiente=monto_pendiente,
                            aprobadas_hoy=aprobadas_hoy,
-                           rechazadas_hoy=rechazadas_hoy)
+                           rechazadas_hoy=rechazadas_hoy,
+                           desgloses_dict=desgloses_dict)
 
 
 @main.route('/revision-facturas/aprobar/<int:id>', methods=['POST'])

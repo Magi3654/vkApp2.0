@@ -520,9 +520,22 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Clave Reservación</label>
+                            <label>Clave Boleto</label>
                             <input type="text" id="clave_reserva" name="clave_reserva" 
-                                   class="input-entry" placeholder="XXXXXX" maxlength="10" required>
+                                   class="input-entry" placeholder="Clave del boleto" maxlength="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Clave Sabre</label>
+                            <input type="text" id="clave_sabre" name="clave_sabre" 
+                                   class="input-entry" placeholder="Clave de Sabre" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Ruta</label>
+                            <input type="text" id="ruta" name="ruta" 
+                                   placeholder="TIJ-MEX-TIJ">
                         </div>
                     </div>
 
@@ -531,11 +544,6 @@
                             <label>Pasajero</label>
                             <input type="text" id="pasajero_nombre" name="pasajero_nombre" 
                                    placeholder="Nombre completo">
-                        </div>
-                        <div class="form-group">
-                            <label>Ruta</label>
-                            <input type="text" id="ruta" name="ruta" 
-                                   placeholder="TIJ-MEX-TIJ">
                         </div>
                     </div>
 
@@ -617,11 +625,11 @@
                     <div id="resultadosCalculo" style="display: none;">
                         <!-- Filas de bonificación (se ocultan si no hay bonificación) -->
                         <div class="result-row" id="row_tarifa_sin_bonif">
-                            <span class="result-label">T. Base (sin bonificación)</span>
+                            <span class="result-label" id="label_tarifa_sin_bonif">T. Base (sin bonificación)</span>
                             <span class="result-value" id="res_tarifa_sin_bonif">$0.00</span>
                         </div>
                         <div class="result-row" id="row_tarifa_con_bonif">
-                            <span class="result-label">T. Base (con bonificación)</span>
+                            <span class="result-label" id="label_tarifa_con_bonif">T. Base (con bonificación)</span>
                             <span class="result-value" id="res_tarifa_con_bonif">$0.00</span>
                         </div>
                         <div class="result-row" id="row_bonificacion">
@@ -1312,18 +1320,14 @@ function calcular() {
     const esIssfam = esquemaActual.tipo === 'issfam';
     
     if (esIssfam) {
-        // ISSFAM: Mostrar T. Base (sin bonif) y T. Base calculada
-        document.getElementById('row_tarifa_sin_bonif').style.display = 'flex';
-        document.getElementById('row_tarifa_con_bonif').style.display = 'flex';
+        // ISSFAM: Solo mostrar T. Base (calculada) y Q'S
+        document.getElementById('row_tarifa_sin_bonif').style.display = 'none';
+        document.getElementById('row_tarifa_con_bonif').style.display = 'none';
         document.getElementById('row_bonificacion').style.display = 'none';
-        document.getElementById('row_tarifa_simple').style.display = 'none';
+        document.getElementById('row_tarifa_simple').style.display = 'flex';
         
-        // Cambiar etiquetas para ISSFAM
-        document.querySelector('#row_tarifa_sin_bonif .result-label').textContent = 'T. Base (original)';
-        document.querySelector('#row_tarifa_con_bonif .result-label').textContent = 'T. Base (calculada)';
-        
-        document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
-        document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
+        // Mostrar T. Base calculada en la fila simple
+        document.getElementById('res_tarifa_simple').textContent = '$' + tarifaConBonif.toFixed(2);
         
         // Mostrar fila Q'S
         document.getElementById('row_qs_result').style.display = 'flex';
@@ -1337,8 +1341,8 @@ function calcular() {
         document.getElementById('row_qs_result').style.display = 'none';
         
         // Restaurar etiquetas normales
-        document.querySelector('#row_tarifa_sin_bonif .result-label').textContent = 'T. Base (sin bonificación)';
-        document.querySelector('#row_tarifa_con_bonif .result-label').textContent = 'T. Base (con bonificación)';
+        document.getElementById('label_tarifa_sin_bonif').textContent = 'T. Base (sin bonificación)';
+        document.getElementById('label_tarifa_con_bonif').textContent = 'T. Base (con bonificación)';
         
         document.getElementById('res_tarifa_sin_bonif').textContent = '$' + tarifaSinBonif.toFixed(2);
         document.getElementById('res_tarifa_con_bonif').textContent = '$' + tarifaConBonif.toFixed(2);
@@ -1432,24 +1436,26 @@ function mostrarModalDesglose(folio) {
     const esIssfam = esquemaActual.tipo === 'issfam';
     
     if (esIssfam) {
-        // Modal para ISSFAM
-        document.getElementById('modalLabelTarifaSinBonif').textContent = 'T. Base (original)';
-        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base (calculada)';
+        // Modal para ISSFAM: Solo T. Base y Q'S
+        document.getElementById('modalRowTarifaSinBonif').style.display = 'none';
+        document.getElementById('modalRowTarifaConBonif').style.display = 'flex';
+        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base';
         document.getElementById('modalRowBonificacion').style.display = 'none';
         document.getElementById('modalRowQs').style.display = 'flex';
+        document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_simple').textContent;
         document.getElementById('modalQs').textContent = document.getElementById('res_qs').textContent;
     } else {
         // Modal normal
+        document.getElementById('modalRowTarifaSinBonif').style.display = 'flex';
+        document.getElementById('modalRowTarifaConBonif').style.display = 'flex';
         document.getElementById('modalLabelTarifaSinBonif').textContent = 'T. Base (sin bonificación)';
         document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base (con bonificación)';
         document.getElementById('modalRowBonificacion').style.display = 'flex';
         document.getElementById('modalRowQs').style.display = 'none';
+        document.getElementById('modalTarifaSinBonif').textContent = document.getElementById('res_tarifa_sin_bonif').textContent;
+        document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_con_bonif').textContent;
         document.getElementById('modalBonificacion').textContent = document.getElementById('res_bonificacion').textContent;
     }
-    
-    // Datos del desglose
-    document.getElementById('modalTarifaSinBonif').textContent = document.getElementById('res_tarifa_sin_bonif').textContent;
-    document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_con_bonif').textContent;
     document.getElementById('modalIva').textContent = document.getElementById('res_iva_yr').textContent;
     document.getElementById('modalYr').textContent = document.getElementById('res_yr').textContent;
     document.getElementById('modalTua').textContent = document.getElementById('res_tua').textContent;

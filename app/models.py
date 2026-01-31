@@ -758,6 +758,8 @@ class Desglose(db.Model):
 
     clave_reserva = db.Column(db.String, nullable=False)
 
+    clave_sabre = db.Column(db.String)  # Clave de Sabre para vincular con Papeleta
+
     usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)
 
     empresa_id = db.Column(db.BigInteger, db.ForeignKey('empresas.id'), nullable=False)

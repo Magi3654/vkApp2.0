@@ -4,6 +4,13 @@
 
 {% block page_styles %}
 <style>
+:root {
+    --oxblood: #990100;
+    --brick-ember: #b90504;
+    --graphite: #333333;
+    --bright-snow: #f6f6f6;
+}
+
 .revision-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -14,19 +21,23 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .page-header h2 {
     color: var(--graphite);
     font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+/* Estadísticas */
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .stat-card {
@@ -35,34 +46,303 @@
     padding: 1.25rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     text-align: center;
+    border-left: 4px solid var(--brick-ember);
 }
+
+.stat-card.warning { border-left-color: #f59e0b; }
+.stat-card.success { border-left-color: #10b981; }
+.stat-card.danger { border-left-color: #ef4444; }
 
 .stat-card .number {
     font-size: 2rem;
     font-weight: 700;
+    color: var(--brick-ember);
 }
 
-.stat-card .number.warning { color: #ffc107; }
-.stat-card .number.success { color: #198754; }
-.stat-card .number.danger { color: #dc3545; }
-.stat-card .number.primary { color: var(--brick-ember); }
+.stat-card.warning .number { color: #f59e0b; }
+.stat-card.success .number { color: #10b981; }
+.stat-card.danger .number { color: #ef4444; }
 
 .stat-card .label {
     color: #666;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     margin-top: 0.25rem;
 }
 
-.section-title {
-    font-size: 1.25rem;
-    color: var(--graphite);
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--brick-ember);
+/* Barra de Filtros */
+.filtros-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
-/* Tabla de facturas */
-.facturas-table {
+.filtro-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filtro-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+}
+
+.filtro-group label i {
+    color: var(--brick-ember);
+}
+
+.filtro-group input,
+.filtro-group select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+
+.filtro-group input:focus,
+.filtro-group select:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+}
+
+.filtro-group input[type="text"] {
+    min-width: 180px;
+}
+
+.btn-limpiar {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.btn-limpiar:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Tabs mejorados */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+}
+
+.tab-btn:hover:not(.active) {
+    background: #f1f5f9;
+}
+
+.tab-btn .count {
+    background: rgba(255,255,255,0.2);
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.tab-btn.active .count {
+    background: rgba(255,255,255,0.3);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Sección título */
+.section-title {
+    font-size: 1.125rem;
+    color: var(--graphite);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: var(--brick-ember);
+}
+
+/* Lista de facturas agrupadas por fecha */
+.dia-grupo {
+    margin-bottom: 1.5rem;
+}
+
+.dia-header {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.facturas-lista {
+    background: white;
+    border-radius: 0 0 10px 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.lista-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px 120px 120px 100px 100px 100px;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #666;
+    border-bottom: 1px solid #eee;
+}
+
+.factura-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px 120px 120px 100px 100px 100px;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+    transition: background 0.15s;
+    cursor: pointer;
+}
+
+.factura-row:hover {
+    background: #fafafa;
+}
+
+.factura-row:last-child {
+    border-bottom: none;
+}
+
+.folio {
+    font-weight: 700;
+    color: var(--brick-ember);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.empresa {
+    font-weight: 500;
+    color: var(--graphite);
+}
+
+.num-factura {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.monto {
+    font-weight: 600;
+    font-family: 'Consolas', monospace;
+}
+
+.validacion {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.validacion.match { color: #10b981; }
+.validacion.mismatch { color: #ef4444; }
+
+.validacion i { font-size: 1rem; }
+
+.diferencia-texto {
+    font-size: 0.7rem;
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.agente {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.btn-revisar {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.btn-revisar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #10b981;
+}
+
+/* Historial tabla */
+.historial-table {
     width: 100%;
     background: white;
     border-radius: 12px;
@@ -70,97 +350,48 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-.facturas-table th {
+.historial-table th {
     background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     color: white;
-    padding: 1rem;
+    padding: 0.875rem 1rem;
     text-align: left;
     font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.historial-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
     font-size: 0.875rem;
 }
 
-.facturas-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #eee;
-    vertical-align: middle;
-}
-
-.facturas-table tr:last-child td {
+.historial-table tr:last-child td {
     border-bottom: none;
 }
 
-.facturas-table tr:hover {
-    background: #f8f9fa;
+.historial-table tr:hover {
+    background: #fafafa;
 }
 
-.folio-link {
-    font-weight: 700;
-    color: var(--brick-ember);
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.folio-link:hover {
-    text-decoration: underline;
-}
-
-.monto-cell {
-    font-weight: 600;
-}
-
-.validacion-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.validacion-icon {
-    font-size: 1.25rem;
-}
-
-.validacion-icon.match { color: #198754; }
-.validacion-icon.mismatch { color: #dc3545; }
-
-.diferencia {
-    font-size: 0.75rem;
-    color: #dc3545;
-    font-weight: 600;
-}
-
+/* Badges */
 .badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
 }
 
-.badge-warning { background: #fff3cd; color: #856404; }
-.badge-success { background: #d4edda; color: #155724; }
-.badge-danger { background: #f8d7da; color: #721c24; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
 
-.acciones-cell {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.btn-revisar {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 0.875rem;
-    transition: transform 0.2s;
-}
-
-.btn-revisar:hover {
-    transform: translateY(-1px);
-}
-
-/* Modal */
+/* ========================================
+   MODAL DE REVISIÓN
+   ======================================== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -168,7 +399,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -188,24 +419,44 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #dc3545 0%, #dc3545 100%);
-    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    padding: 1rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.modal-header-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    color: white;
+}
+
 .modal-header h3 {
     margin: 0;
     color: white;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.modal-header-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.modal-header-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
 }
 
 .modal-close {
@@ -229,27 +480,25 @@
 
 .modal-body {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
+    grid-template-columns: 320px 280px 1fr;
+    gap: 1px;
+    background: #e0e0e0;
     overflow-y: auto;
     flex: 1;
 }
 
-@media (max-width: 900px) {
-    .modal-body {
-        grid-template-columns: 1fr;
-    }
-}
-
 .modal-section {
-    background: #f8f9fa;
-    border-radius: 12px;
+    background: white;
     padding: 1.25rem;
 }
 
+.modal-section.pdf-section {
+    display: flex;
+    flex-direction: column;
+}
+
 .modal-section-title {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: var(--graphite);
     margin-bottom: 1rem;
@@ -260,92 +509,154 @@
     border-bottom: 2px solid var(--brick-ember);
 }
 
-.papeleta-detail-grid {
+.modal-section-title.papeleta { border-color: var(--brick-ember); }
+.modal-section-title.desglose { border-color: #10b981; }
+.modal-section-title.boleto { border-color: #ef4444; }
+
+.detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .detail-item {
     display: flex;
     flex-direction: column;
+    gap: 0.2rem;
 }
 
 .detail-item .label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     color: #888;
-    margin-bottom: 0.25rem;
     letter-spacing: 0.5px;
 }
 
 .detail-item .value {
     font-weight: 600;
     color: var(--graphite);
-    font-size: 0.95rem;
+    font-size: 0.875rem;
 }
 
-/* Comparación de montos */
-.comparacion-box {
-    background: white;
+.detail-item.full-width {
+    grid-column: span 2;
+}
+
+/* Factura Info Box */
+.factura-info-box {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
     border-radius: 8px;
-    padding: 1.25rem;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.factura-info-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.factura-info-box .detail-grid {
+    margin-bottom: 0;
+    gap: 0.5rem;
+}
+
+.factura-info-box .detail-item .label {
+    color: #92400e;
+}
+
+/* Desglose Section */
+.desglose-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.desglose-montos {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.desglose-montos .monto-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+.desglose-montos .monto-row.total {
+    font-weight: 700;
+    color: #10b981;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    border-top: 1px dashed #ccc;
+}
+
+.no-desglose {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #92400e;
+}
+
+.no-desglose i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+}
+
+.no-desglose p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* Comparación de montos mejorada */
+.comparacion-box {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1rem;
     border: 2px solid #e0e0e0;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .comparacion-box.match {
-    border-color: #198754;
-    background: #f8fff8;
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
 }
 
 .comparacion-box.mismatch {
-    border-color: #dc3545;
-    background: #fff8f8;
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
 }
 
 .comparacion-title {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid currentColor;
-}
-
-.comparacion-title.match { color: #198754; }
-.comparacion-title.mismatch { color: #dc3545; }
-
-.desglose-section {
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.desglose-section:last-of-type {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.desglose-header {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
+
+.comparacion-title.match { color: #059669; }
+.comparacion-title.mismatch { color: #dc2626; }
 
 .comparacion-row {
     display: flex;
     justify-content: space-between;
-    padding: 0.4rem 0;
-    font-size: 0.9rem;
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
     color: #555;
 }
 
@@ -360,47 +671,36 @@
 .comparacion-row.factura-monto {
     font-weight: 700;
     color: var(--brick-ember);
-    font-size: 1rem;
-}
-
-.comparacion-row.total {
-    font-weight: 700;
-    font-size: 1rem;
-    padding-top: 0.75rem;
+    font-size: 0.95rem;
+    padding-top: 0.5rem;
     margin-top: 0.5rem;
-    border-top: 2px solid #ddd;
+    border-top: 1px solid #ddd;
 }
 
-.comparacion-row .diferencia {
-    color: #dc3545;
+.comparacion-row.diferencia {
     font-weight: 700;
+    color: #dc2626;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    border-top: 2px solid #fca5a5;
 }
 
-.pdf-viewer-container {
-    background: white;
-    border-radius: 8px;
+/* PDF Container */
+.pdf-container {
+    background: #f1f5f9;
+    border-radius: 10px;
     overflow: hidden;
-    height: 500px;
-    min-height: 450px;
-    border: 1px solid #e0e0e0;
-}
-
-.pdf-viewer-container iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Ajustar modal-section para que el PDF ocupe más espacio */
-.modal-section:last-child {
+    flex: 1;
+    min-height: 350px;
     display: flex;
     flex-direction: column;
 }
 
-.modal-section:last-child .pdf-viewer-container {
+.pdf-container iframe {
+    width: 100%;
     flex: 1;
-    height: auto;
-    min-height: 450px;
+    border: none;
+    min-height: 350px;
 }
 
 .no-pdf {
@@ -409,21 +709,62 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #888;
+    min-height: 250px;
+    color: #94a3b8;
     text-align: center;
-    padding: 2rem;
 }
 
-.no-pdf .icon {
+.no-pdf i {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
 }
 
+.pdf-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-pdf-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-pdf-action.primary {
+    background: linear-gradient(135deg, var(--oxblood), var(--brick-ember));
+    color: white;
+}
+
+.btn-pdf-action.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(153, 1, 0, 0.3);
+}
+
+.btn-pdf-action.secondary {
+    background: #e2e8f0;
+    color: var(--graphite);
+}
+
+.btn-pdf-action.secondary:hover {
+    background: #cbd5e1;
+}
+
 /* Footer con acciones */
 .modal-footer {
     background: #f8f9fa;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.5rem;
     border-top: 1px solid #e0e0e0;
 }
 
@@ -436,119 +777,119 @@
 
 .comentario-group {
     flex: 1;
-    min-width: 300px;
+    min-width: 280px;
 }
 
 .comentario-group label {
     display: block;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: #666;
     margin-bottom: 0.375rem;
 }
 
 .comentario-group input {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.625rem 0.875rem;
     border: 1px solid #ddd;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .comentario-group input:focus {
     outline: none;
     border-color: var(--brick-ember);
-    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
 }
 
-.btn-aprobar {
-    background: linear-gradient(135deg, #198754 0%, #157347 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: transform 0.2s;
-}
-
-.btn-aprobar:hover {
-    transform: translateY(-1px);
-}
-
-.btn-rechazar {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: transform 0.2s;
-}
-
-.btn-rechazar:hover {
-    transform: translateY(-1px);
-}
-
-/* Historial */
-.historial-section {
-    margin-top: 3rem;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 3rem;
-    color: #888;
-    background: white;
-    border-radius: 12px;
-}
-
-.empty-state .icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-/* Tabs */
-.tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.tab-btn {
+.btn-aprobar, .btn-rechazar {
     padding: 0.75rem 1.5rem;
     border: none;
-    background: #e9ecef;
-    color: #666;
-    border-radius: 8px 8px 0 0;
+    border-radius: 8px;
+    font-weight: 700;
     cursor: pointer;
-    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     transition: all 0.2s;
 }
 
-.tab-btn.active {
-    background: var(--brick-ember);
+.btn-aprobar {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
 }
 
-.tab-btn:hover:not(.active) {
-    background: #dee2e6;
+.btn-aprobar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
-.tab-content {
-    display: none;
+.btn-rechazar {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
 }
 
-.tab-content.active {
-    display: block;
+.btn-rechazar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .modal-body {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .modal-section.pdf-section {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 900px) {
+    .modal-body {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-section.pdf-section {
+        grid-column: span 1;
+    }
+    
+    .lista-header, .factura-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    
+    .lista-header span:nth-child(n+3),
+    .factura-row > *:nth-child(n+3) {
+        display: none;
+    }
+    
+    .filtros-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filtro-group {
+        width: 100%;
+    }
+    
+    .filtro-group input,
+    .filtro-group select {
+        flex: 1;
+    }
+    
+    .btn-limpiar {
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    .footer-actions {
+        flex-direction: column;
+    }
+    
+    .btn-aprobar, .btn-rechazar {
+        width: 100%;
+        justify-content: center;
+    }
 }
 </style>
 {% endblock %}
@@ -556,98 +897,130 @@
 {% block content %}
 <div class="revision-container">
     <div class="page-header">
-        <h2>📋 Revisión de Facturas</h2>
+        <h2><i class="fas fa-clipboard-check"></i> Revisión de Facturas</h2>
     </div>
     
     <!-- Estadísticas -->
     <div class="stats-row">
-        <div class="stat-card">
-            <div class="number warning">{{ pendientes|length }}</div>
+        <div class="stat-card warning">
+            <div class="number">{{ pendientes|length }}</div>
             <div class="label">Pendientes de Revisar</div>
         </div>
-        <div class="stat-card">
-            <div class="number success">{{ aprobadas_hoy }}</div>
+        <div class="stat-card success">
+            <div class="number">{{ aprobadas_hoy }}</div>
             <div class="label">Aprobadas Hoy</div>
         </div>
-        <div class="stat-card">
-            <div class="number danger">{{ rechazadas_hoy }}</div>
+        <div class="stat-card danger">
+            <div class="number">{{ rechazadas_hoy }}</div>
             <div class="label">Rechazadas Hoy</div>
         </div>
         <div class="stat-card">
-            <div class="number primary">${{ "{:,.2f}".format(monto_pendiente) }}</div>
+            <div class="number">${{ "{:,.2f}".format(monto_pendiente) }}</div>
             <div class="label">Monto Pendiente</div>
         </div>
     </div>
     
+    <!-- Barra de Filtros -->
+    <div class="filtros-bar">
+        <div class="filtro-group">
+            <label><i class="fas fa-search"></i></label>
+            <input type="text" id="filtroBuscar" placeholder="Buscar folio, empresa..." onkeyup="aplicarFiltros()">
+        </div>
+        <div class="filtro-group">
+            <label>Empresa:</label>
+            <select id="filtroEmpresa" onchange="aplicarFiltros()">
+                <option value="">Todas</option>
+                {% set empresas_unicas = pendientes|map(attribute='empresa')|select|map(attribute='nombre_empresa')|unique|list %}
+                {% for emp in empresas_unicas %}
+                <option value="{{ emp }}">{{ emp }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label>Validación:</label>
+            <select id="filtroValidacion" onchange="aplicarFiltros()">
+                <option value="">Todas</option>
+                <option value="match">Coinciden</option>
+                <option value="mismatch">No coinciden</option>
+            </select>
+        </div>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">
+            <i class="fas fa-times"></i> Limpiar
+        </button>
+    </div>
+    
     <!-- Tabs -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('pendientes')">
-            ⏳ Pendientes ({{ pendientes|length }})
+        <button class="tab-btn active" onclick="showTab('pendientes', this)">
+            <i class="fas fa-clock"></i> Pendientes
+            <span class="count">{{ pendientes|length }}</span>
         </button>
-        <button class="tab-btn" onclick="showTab('historial')">
-            📜 Historial
+        <button class="tab-btn" onclick="showTab('historial', this)">
+            <i class="fas fa-history"></i> Historial
         </button>
     </div>
     
     <!-- Tab: Pendientes -->
     <div class="tab-content active" id="tab-pendientes">
-        <h3 class="section-title">Facturas Pendientes de Revisión</h3>
+        <h3 class="section-title"><i class="fas fa-file-invoice"></i> Facturas Pendientes de Revisión</h3>
         
-        {% if pendientes %}
-        <table class="facturas-table">
-            <thead>
-                <tr>
-                    <th>Folio</th>
-                    <th>Empresa</th>
-                    <th># Factura</th>
-                    <th>Monto Papeleta</th>
-                    <th>Monto Factura</th>
-                    <th>Validación</th>
-                    <th>Facturó</th>
-                    <th>Fecha</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in pendientes %}
-                {% set montos_coinciden = (p.total|float - p.monto_factura|float)|abs < 0.01 %}
-                <tr>
-                    <td>
-                        <span class="folio-link" onclick="abrirModalRevision({{ p.id }})">
-                            {{ p.folio }}
-                        </span>
-                    </td>
-                    <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
-                    <td><strong>{{ p.numero_factura }}</strong></td>
-                    <td class="monto-cell">${{ "{:,.2f}".format(p.total) }}</td>
-                    <td class="monto-cell">${{ "{:,.2f}".format(p.monto_factura or 0) }}</td>
-                    <td>
-                        <div class="validacion-cell">
-                            {% if montos_coinciden %}
-                                <span class="validacion-icon match">✅</span>
-                                <span style="color: #198754; font-weight: 600;">Coincide</span>
-                            {% else %}
-                                <span class="validacion-icon mismatch">⚠️</span>
-                                <span class="diferencia">
-                                    Dif: ${{ "{:,.2f}".format((p.total|float - p.monto_factura|float)|abs) }}
-                                </span>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}</td>
-                    <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y') if p.fecha_facturacion else '-' }}</td>
-                    <td>
-                        <button class="btn-revisar" onclick="abrirModalRevision({{ p.id }})">
-                             Revisar
-                        </button>
-                    </td>
-                </tr>
+        {% if pendientes_agrupados %}
+        
+        {% for fecha_str, grupo in pendientes_agrupados %}
+        <div class="dia-grupo" data-fecha="{{ fecha_str }}">
+            <div class="dia-header">
+                <i class="fas fa-calendar-day"></i>
+                {{ grupo.fecha_display }}
+                <span class="dia-count" style="margin-left: auto; opacity: 0.8;">({{ grupo.facturas|length }} factura{{ 's' if grupo.facturas|length > 1 else '' }})</span>
+            </div>
+            <div class="facturas-lista">
+                <div class="lista-header">
+                    <span>Folio</span>
+                    <span>Empresa</span>
+                    <span># Factura</span>
+                    <span>M. Papeleta</span>
+                    <span>M. Factura</span>
+                    <span>Validación</span>
+                    <span>Facturó</span>
+                    <span></span>
+                </div>
+                {% for p in grupo.facturas %}
+                {% set montos_coinciden = (p.total|float - (p.monto_factura or 0)|float)|abs < 0.01 %}
+                <div class="factura-row" 
+                     onclick="abrirModalRevision({{ p.id }})"
+                     id="factura-row-{{ p.id }}"
+                     data-folio="{{ p.folio|lower }}"
+                     data-empresa="{{ (p.empresa.nombre_empresa if p.empresa else p.facturar_a)|lower }}"
+                     data-validacion="{{ 'match' if montos_coinciden else 'mismatch' }}">
+                    <div class="folio">
+                        <i class="fas fa-file-alt"></i>
+                        {{ p.folio }}
+                    </div>
+                    <div class="empresa">{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</div>
+                    <div class="num-factura">{{ p.numero_factura }}</div>
+                    <div class="monto">${{ "{:,.2f}".format(p.total) }}</div>
+                    <div class="monto">${{ "{:,.2f}".format(p.monto_factura or 0) }}</div>
+                    <div class="validacion {{ 'match' if montos_coinciden else 'mismatch' }}">
+                        {% if montos_coinciden %}
+                            <i class="fas fa-check-circle"></i> OK
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="diferencia-texto">${{ "{:,.2f}".format((p.total|float - (p.monto_factura or 0)|float)|abs) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="agente">{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}</div>
+                    <button type="button" class="btn-revisar" onclick="event.stopPropagation(); abrirModalRevision({{ p.id }})">
+                        <i class="fas fa-search"></i> Revisar
+                    </button>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
+        {% endfor %}
+        
         {% else %}
         <div class="empty-state">
-            <div class="icon">✅</div>
+            <i class="fas fa-check-circle"></i>
             <p>No hay facturas pendientes de revisión.</p>
         </div>
         {% endif %}
@@ -655,10 +1028,10 @@
     
     <!-- Tab: Historial -->
     <div class="tab-content" id="tab-historial">
-        <h3 class="section-title">Historial de Revisiones</h3>
+        <h3 class="section-title"><i class="fas fa-history"></i> Historial de Revisiones</h3>
         
         {% if historial %}
-        <table class="facturas-table">
+        <table class="historial-table">
             <thead>
                 <tr>
                     <th>Folio</th>
@@ -667,6 +1040,7 @@
                     <th>Monto</th>
                     <th>Estatus</th>
                     <th>Revisó</th>
+                    <th>Comentario</th>
                     <th>Fecha Revisión</th>
                 </tr>
             </thead>
@@ -679,12 +1053,13 @@
                     <td>${{ "{:,.2f}".format(p.monto_factura or 0) }}</td>
                     <td>
                         {% if p.estatus_facturacion == 'aprobada' %}
-                            <span class="badge badge-success">✓ Aprobada</span>
-                        {% elif p.estatus_facturacion == 'rechazada' %}
-                            <span class="badge badge-danger">✗ Rechazada</span>
+                            <span class="badge badge-success"><i class="fas fa-check"></i> Aprobada</span>
+                        {% else %}
+                            <span class="badge badge-danger"><i class="fas fa-times"></i> Rechazada</span>
                         {% endif %}
                     </td>
                     <td>{{ p.aprobada_por.nombre if p.aprobada_por else 'N/A' }}</td>
+                    <td>{{ p.comentario_revision or '-' }}</td>
                     <td>{{ p.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') if p.fecha_aprobacion else '-' }}</td>
                 </tr>
                 {% endfor %}
@@ -692,7 +1067,7 @@
         </table>
         {% else %}
         <div class="empty-state">
-            <div class="icon">📜</div>
+            <i class="fas fa-folder-open"></i>
             <p>No hay historial de revisiones.</p>
         </div>
         {% endif %}
@@ -703,101 +1078,145 @@
 <div class="modal-overlay" id="modalRevision">
     <div class="modal-content">
         <div class="modal-header">
-            <h3> Revisión de Factura - <span id="modalFolio"></span></h3>
-            <button class="modal-close" onclick="cerrarModalRevision()">✕</button>
+            <div class="modal-header-info">
+                <h3><i class="fas fa-clipboard-check"></i> Revisar Factura #<span id="modalFolio"></span></h3>
+                <div class="modal-header-meta">
+                    <span><i class="fas fa-building"></i> <span id="modalEmpresa"></span></span>
+                    <span><i class="fas fa-calendar"></i> <span id="modalFecha"></span></span>
+                </div>
+            </div>
+            <button class="modal-close" onclick="cerrarModalRevision()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         
         <div class="modal-body">
-            <!-- Datos de la Papeleta y Factura -->
+            <!-- Columna Papeleta -->
             <div class="modal-section">
-                <div class="modal-section-title">
-                    <span class="icon">📋</span> Datos de la Papeleta
+                <div class="modal-section-title papeleta">
+                    <i class="fas fa-receipt"></i> Papeleta <span id="modalPapeletaFolio"></span>
                 </div>
                 
-                <div class="papeleta-detail-grid">
+                <div class="detail-grid">
                     <div class="detail-item">
-                        <span class="label">Folio</span>
-                        <span class="value" id="detalleFolio">---</span>
+                        <span class="label">Tarjeta</span>
+                        <span class="value" id="detalleTarjeta">---</span>
                     </div>
                     <div class="detail-item">
                         <span class="label">Fecha Venta</span>
-                        <span class="value" id="detalleFecha">---</span>
+                        <span class="value" id="detalleFechaVenta">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Cliente / Facturar A</span>
+                        <span class="label">Facturar A</span>
                         <span class="value" id="detalleCliente">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Aerolínea</span>
+                        <span class="label">Tipo Cargo</span>
+                        <span class="value" id="detalleTipoCargo">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Aerolínea / Proveedor</span>
                         <span class="value" id="detalleAerolinea">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label"># Factura</span>
-                        <span class="value" id="detalleNumeroFactura" style="color: var(--brick-ember);">---</span>
+                        <span class="label">Solicitó</span>
+                        <span class="value" id="detalleSolicito">---</span>
                     </div>
                     <div class="detail-item">
-                        <span class="label">Facturó</span>
-                        <span class="value" id="detalleFacturoPor">---</span>
+                        <span class="label">Clave Sabre</span>
+                        <span class="value" id="detalleClaveSabre">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Forma Pago</span>
+                        <span class="value" id="detalleFormaPago">---</span>
+                    </div>
+                    <div class="detail-item full-width">
+                        <span class="label">Agente</span>
+                        <span class="value" id="detalleAgente">---</span>
+                    </div>
+                </div>
+                
+                <!-- Info de Factura -->
+                <div class="factura-info-box">
+                    <div class="factura-info-title">
+                        <i class="fas fa-file-invoice"></i> Información de Factura
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="label"># Factura</span>
+                            <span class="value" id="detalleNumeroFactura" style="color: var(--brick-ember); font-size: 1rem; font-weight: 700;">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Facturó</span>
+                            <span class="value" id="detalleFacturoPor">---</span>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- Comparación de montos -->
                 <div class="comparacion-box" id="comparacionBox">
                     <div class="comparacion-title" id="comparacionTitle">
-                        <span id="comparacionIcon">✅</span>
+                        <i class="fas fa-check-circle" id="comparacionIcon"></i>
                         <span id="comparacionTexto">Montos Coinciden</span>
                     </div>
                     
-                    <!-- Desglose de la Papeleta -->
-                    <div class="desglose-section">
-                        <div class="desglose-header">📋 Desglose Papeleta</div>
-                        <div class="comparacion-row">
-                            <span>Total Ticket</span>
-                            <span id="detalleTotalTicket">$0.00</span>
-                        </div>
-                        <div class="comparacion-row">
-                            <span>Comision Ajustable</span>
-                            <span id="detalleDiezPorciento">$0.00</span>
-                        </div>
-                        <div class="comparacion-row">
-                            <span>Cargo Expedición</span>
-                            <span id="detalleCargo">$0.00</span>
-                        </div>
-                        <div class="comparacion-row subtotal">
-                            <span>Total Papeleta</span>
-                            <span id="comparacionPapeleta">$0.00</span>
-                        </div>
+                    <div class="comparacion-row">
+                        <span>Total Ticket</span>
+                        <span id="detalleTotalTicket">$0.00</span>
                     </div>
-                    
-                    <!-- Monto Facturado -->
-                    <div class="desglose-section">
-                        <div class="desglose-header">🧾 Factura</div>
-                        <div class="comparacion-row factura-monto">
-                            <span>Monto Facturado</span>
-                            <span id="comparacionFactura">$0.00</span>
-                        </div>
+                    <div class="comparacion-row">
+                        <span>Comisión (10%)</span>
+                        <span id="detalleDiezPorciento">$0.00</span>
                     </div>
-                    
-                    <!-- Diferencia (si existe) -->
-                    <div class="comparacion-row total" id="comparacionDiferencia" style="display: none;">
-                        <span>⚠️ Diferencia</span>
-                        <span class="diferencia" id="comparacionDifMonto">$0.00</span>
+                    <div class="comparacion-row">
+                        <span>Cargo Expedición</span>
+                        <span id="detalleCargo">$0.00</span>
+                    </div>
+                    <div class="comparacion-row subtotal">
+                        <span>Total Papeleta</span>
+                        <span id="comparacionPapeleta">$0.00</span>
+                    </div>
+                    <div class="comparacion-row factura-monto">
+                        <span>Monto Facturado</span>
+                        <span id="comparacionFactura">$0.00</span>
+                    </div>
+                    <div class="comparacion-row diferencia" id="comparacionDiferencia" style="display: none;">
+                        <span><i class="fas fa-exclamation-triangle"></i> Diferencia</span>
+                        <span id="comparacionDifMonto">$0.00</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Boleto / Documento -->
+            <!-- Columna Desglose -->
             <div class="modal-section">
-                <div class="modal-section-title">
-                    <span class="icon">🎫</span> Boleto / Documento
+                <div class="modal-section-title desglose">
+                    <i class="fas fa-calculator"></i> Desglose <span id="modalDesgloseFolio"></span>
+                </div>
+                <div id="desgloseContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Columna PDF -->
+            <div class="modal-section pdf-section">
+                <div class="modal-section-title boleto">
+                    <i class="fas fa-file-pdf"></i> Boleto / Documento
                 </div>
                 
-                <div class="pdf-viewer-container" id="pdfContainer">
+                <div class="pdf-container">
+                    <iframe id="pdfViewer" style="display: none;"></iframe>
                     <div class="no-pdf" id="noPdfMessage">
-                        <div class="icon">📄</div>
+                        <i class="fas fa-file-alt"></i>
                         <p>No hay documento adjunto</p>
                     </div>
-                    <iframe id="pdfViewer" style="display: none;"></iframe>
+                </div>
+                <div class="pdf-actions" id="pdfActions" style="display: none;">
+                    <a href="#" id="btnAbrirPdf" target="_blank" class="btn-pdf-action primary">
+                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                    </a>
+                    <a href="#" id="btnDescargarPdf" download class="btn-pdf-action secondary">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
                 </div>
             </div>
         </div>
@@ -806,18 +1225,18 @@
             <div class="footer-actions">
                 <div class="comentario-group">
                     <label for="comentario_revision">Comentario (opcional para aprobar, requerido para rechazar)</label>
-                    <input type="text" id="comentario_revision" placeholder="Ej: Verificado contra estado de cuenta">
+                    <input type="text" id="comentario_revision" placeholder="Ej: Verificado contra estado de cuenta" autocomplete="off">
                 </div>
                 <form id="formAprobar" method="POST" style="display: inline;">
                     <input type="hidden" name="comentario" id="inputComentarioAprobar">
                     <button type="submit" class="btn-aprobar">
-                        ✓ Aprobar
+                        <i class="fas fa-check"></i> Aprobar
                     </button>
                 </form>
                 <form id="formRechazar" method="POST" style="display: inline;">
                     <input type="hidden" name="comentario" id="inputComentarioRechazar">
                     <button type="submit" class="btn-rechazar">
-                        ✗ Rechazar
+                        <i class="fas fa-times"></i> Rechazar
                     </button>
                 </form>
             </div>
@@ -825,9 +1244,8 @@
     </div>
 </div>
 
-<!-- Datos de papeletas para JavaScript -->
 <script>
-// Función para formatear moneda con comas
+// Función para formatear moneda
 function formatMoney(amount) {
     return '$' + amount.toLocaleString('en-US', {
         minimumFractionDigits: 2,
@@ -835,14 +1253,23 @@ function formatMoney(amount) {
     });
 }
 
+// Datos de papeletas
 const papeletasData = {
     {% for p in pendientes %}
+    {% set desglose = desgloses_dict.get(p.clave_sabre) if desgloses_dict else none %}
     {{ p.id }}: {
         id: {{ p.id }},
         folio: "{{ p.folio }}",
         fecha: "{{ p.fecha_venta.strftime('%d/%m/%Y') }}",
+        claveSabre: "{{ p.clave_sabre }}",
+        tarjeta: "{{ p.tarjeta }}",
         cliente: "{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}",
-        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '---' }}",
+        tipoCargo: "{{ p.tipo_cargo or 'aerolinea' }}",
+        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '' }}",
+        proveedor: "{{ p.proveedor or '' }}",
+        solicito: "{{ p.solicito }}",
+        formaPago: "{{ p.forma_pago or 'N/A' }}",
+        agente: "{{ p.usuario.nombre if p.usuario else 'N/A' }}",
         numeroFactura: "{{ p.numero_factura or '---' }}",
         facturoPor: "{{ p.facturada_por.nombre if p.facturada_por else 'N/A' }}",
         totalTicket: {{ p.total_ticket or 0 }},
@@ -852,44 +1279,137 @@ const papeletasData = {
         montoFactura: {{ p.monto_factura or 0 }},
         archivoBoleto: "{{ p.archivo_boleto or '' }}",
         urlAprobar: "{{ url_for('main.aprobar_factura', id=p.id) }}",
-        urlRechazar: "{{ url_for('main.rechazar_factura', id=p.id) }}"
+        urlRechazar: "{{ url_for('main.rechazar_factura', id=p.id) }}",
+        {% if desglose %}
+        desglose: {
+            folio: {{ desglose.folio }},
+            claveBoleto: "{{ desglose.clave_reserva }}",
+            pasajero: "{{ desglose.pasajero_nombre or 'N/A' }}",
+            ruta: "{{ desglose.ruta or 'N/A' }}",
+            aerolinea: "{{ desglose.aerolinea.nombre if desglose.aerolinea else 'N/A' }}",
+            tarifaBase: {{ desglose.tarifa_base or 0 }},
+            iva: {{ desglose.iva or 0 }},
+            tua: {{ desglose.tua or 0 }},
+            yr: {{ desglose.yr or 0 }},
+            otrosCargos: {{ desglose.otros_cargos or 0 }},
+            cargoServicio: {{ desglose.cargo_por_servicio or 0 }},
+            total: {{ desglose.total or 0 }}
+        }
+        {% else %}
+        desglose: null
+        {% endif %}
     },
     {% endfor %}
 };
 
-function showTab(tabName) {
-    // Ocultar todos los tabs
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Mostrar tab seleccionado
-    document.getElementById('tab-' + tabName).classList.add('active');
-    event.target.classList.add('active');
+// Función para formatear tipo de cargo
+function formatTipoCargo(tipo) {
+    const tipos = {
+        'aerolinea': 'Aerolínea',
+        'hotel': 'Hotel',
+        'auto': 'Renta de Auto',
+        'otro': 'Otro'
+    };
+    return tipos[tipo] || tipo || 'N/A';
 }
 
+// ==========================================
+// FUNCIONES DE FILTRADO
+// ==========================================
+function aplicarFiltros() {
+    const buscar = document.getElementById('filtroBuscar').value.toLowerCase().trim();
+    const empresa = document.getElementById('filtroEmpresa').value.toLowerCase();
+    const validacion = document.getElementById('filtroValidacion').value;
+    
+    document.querySelectorAll('.factura-row').forEach(row => {
+        const folio = row.dataset.folio || '';
+        const rowEmpresa = row.dataset.empresa || '';
+        const rowValidacion = row.dataset.validacion || '';
+        
+        const matchBuscar = !buscar || folio.includes(buscar) || rowEmpresa.includes(buscar);
+        const matchEmpresa = !empresa || rowEmpresa.includes(empresa);
+        const matchValidacion = !validacion || rowValidacion === validacion;
+        
+        row.style.display = (matchBuscar && matchEmpresa && matchValidacion) ? '' : 'none';
+    });
+    
+    // Ocultar grupos vacíos
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        const filasVisibles = grupo.querySelectorAll('.factura-row:not([style*="display: none"])');
+        grupo.style.display = filasVisibles.length > 0 ? '' : 'none';
+        
+        const contador = grupo.querySelector('.dia-count');
+        if (contador && filasVisibles.length > 0) {
+            contador.textContent = `(${filasVisibles.length} factura${filasVisibles.length > 1 ? 's' : ''})`;
+        }
+    });
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtroBuscar').value = '';
+    document.getElementById('filtroEmpresa').value = '';
+    document.getElementById('filtroValidacion').value = '';
+    
+    document.querySelectorAll('.factura-row').forEach(row => row.style.display = '');
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        grupo.style.display = '';
+        const filas = grupo.querySelectorAll('.factura-row');
+        const contador = grupo.querySelector('.dia-count');
+        if (contador) {
+            contador.textContent = `(${filas.length} factura${filas.length > 1 ? 's' : ''})`;
+        }
+    });
+}
+
+// ==========================================
+// TABS
+// ==========================================
+function showTab(tabName, btn) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('tab-' + tabName).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ==========================================
+// MODAL
+// ==========================================
 function abrirModalRevision(papeletaId) {
     const p = papeletasData[papeletaId];
     if (!p) return;
     
-    // Llenar datos
+    // Header
     document.getElementById('modalFolio').textContent = p.folio;
-    document.getElementById('detalleFolio').textContent = p.folio;
-    document.getElementById('detalleFecha').textContent = p.fecha;
+    document.getElementById('modalEmpresa').textContent = p.cliente;
+    document.getElementById('modalFecha').textContent = p.fecha;
+    
+    // Papeleta - todos los campos
+    document.getElementById('modalPapeletaFolio').textContent = '#' + p.folio;
+    document.getElementById('detalleTarjeta').textContent = p.tarjeta || 'N/A';
+    document.getElementById('detalleFechaVenta').textContent = p.fecha;
     document.getElementById('detalleCliente').textContent = p.cliente;
-    document.getElementById('detalleAerolinea').textContent = p.aerolinea;
+    document.getElementById('detalleTipoCargo').textContent = formatTipoCargo(p.tipoCargo);
+    
+    // Aerolínea o Proveedor según tipo de cargo
+    const aerolineaProveedor = p.tipoCargo === 'aerolinea' ? p.aerolinea : p.proveedor;
+    document.getElementById('detalleAerolinea').textContent = aerolineaProveedor || 'N/A';
+    
+    document.getElementById('detalleSolicito').textContent = p.solicito || 'N/A';
+    document.getElementById('detalleClaveSabre').textContent = p.claveSabre || 'N/A';
+    document.getElementById('detalleFormaPago').textContent = p.formaPago;
+    document.getElementById('detalleAgente').textContent = p.agente;
+    
+    // Info de factura
     document.getElementById('detalleNumeroFactura').textContent = p.numeroFactura;
     document.getElementById('detalleFacturoPor').textContent = p.facturoPor;
     
-    // Desglose de montos con formato
+    // Montos
     document.getElementById('detalleTotalTicket').textContent = formatMoney(p.totalTicket);
     document.getElementById('detalleDiezPorciento').textContent = formatMoney(p.diezPorciento);
     document.getElementById('detalleCargo').textContent = formatMoney(p.cargo);
     
-    // Comparación de montos
+    // Comparación
     const diferencia = Math.abs(p.totalPapeleta - p.montoFactura);
     const coinciden = diferencia < 0.01;
     
@@ -897,37 +1417,109 @@ function abrirModalRevision(papeletaId) {
     document.getElementById('comparacionFactura').textContent = formatMoney(p.montoFactura);
     
     const comparacionBox = document.getElementById('comparacionBox');
-    const comparacionTitle = document.getElementById('comparacionTitle');
     const comparacionIcon = document.getElementById('comparacionIcon');
     const comparacionTexto = document.getElementById('comparacionTexto');
     const comparacionDiferencia = document.getElementById('comparacionDiferencia');
+    const comparacionTitle = document.getElementById('comparacionTitle');
     
     if (coinciden) {
         comparacionBox.className = 'comparacion-box match';
         comparacionTitle.className = 'comparacion-title match';
-        comparacionIcon.textContent = '✅';
+        comparacionIcon.className = 'fas fa-check-circle';
         comparacionTexto.textContent = 'Montos Coinciden';
         comparacionDiferencia.style.display = 'none';
     } else {
         comparacionBox.className = 'comparacion-box mismatch';
         comparacionTitle.className = 'comparacion-title mismatch';
-        comparacionIcon.textContent = '⚠️';
+        comparacionIcon.className = 'fas fa-exclamation-triangle';
         comparacionTexto.textContent = 'Montos NO Coinciden';
         comparacionDiferencia.style.display = 'flex';
         document.getElementById('comparacionDifMonto').textContent = formatMoney(diferencia);
     }
     
+    // Desglose
+    const desgloseContent = document.getElementById('desgloseContent');
+    document.getElementById('modalDesgloseFolio').textContent = '';
+    
+    if (p.desglose) {
+        document.getElementById('modalDesgloseFolio').textContent = '#' + p.desglose.folio;
+        desgloseContent.innerHTML = `
+            <div class="desglose-detail-grid">
+                <div class="detail-item">
+                    <span class="label">Clave Boleto</span>
+                    <span class="value">${p.desglose.claveBoleto}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Pasajero</span>
+                    <span class="value">${p.desglose.pasajero}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Ruta</span>
+                    <span class="value">${p.desglose.ruta}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Aerolínea</span>
+                    <span class="value">${p.desglose.aerolinea}</span>
+                </div>
+            </div>
+            <div class="desglose-montos">
+                <div class="monto-row">
+                    <span>Tarifa Base</span>
+                    <span>${formatMoney(p.desglose.tarifaBase)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>IVA</span>
+                    <span>${formatMoney(p.desglose.iva)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>TUA</span>
+                    <span>${formatMoney(p.desglose.tua)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>YR</span>
+                    <span>${formatMoney(p.desglose.yr)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Otros Cargos</span>
+                    <span>${formatMoney(p.desglose.otrosCargos)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Cargo Servicio</span>
+                    <span>${formatMoney(p.desglose.cargoServicio)}</span>
+                </div>
+                <div class="monto-row total">
+                    <span>Total Boleto</span>
+                    <span>${formatMoney(p.desglose.total)}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        desgloseContent.innerHTML = `
+            <div class="no-desglose">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>No hay desglose vinculado<br>a esta clave Sabre</p>
+            </div>
+        `;
+    }
+    
     // PDF
     const pdfViewer = document.getElementById('pdfViewer');
     const noPdfMessage = document.getElementById('noPdfMessage');
+    const pdfActions = document.getElementById('pdfActions');
     
     if (p.archivoBoleto) {
-        pdfViewer.src = '/static/uploads/boletos/' + p.archivoBoleto;
+        const pdfUrl = '/static/uploads/boletos/' + p.archivoBoleto;
+        pdfViewer.src = pdfUrl;
         pdfViewer.style.display = 'block';
         noPdfMessage.style.display = 'none';
+        pdfActions.style.display = 'flex';
+        document.getElementById('btnAbrirPdf').href = pdfUrl;
+        document.getElementById('btnDescargarPdf').href = pdfUrl;
     } else {
         pdfViewer.style.display = 'none';
+        pdfViewer.src = '';
         noPdfMessage.style.display = 'flex';
+        pdfActions.style.display = 'none';
     }
     
     // Forms
@@ -948,15 +1540,14 @@ function cerrarModalRevision() {
 
 // Validar comentario en formularios
 document.getElementById('formAprobar').addEventListener('submit', function(e) {
-    const comentario = document.getElementById('comentario_revision').value;
-    document.getElementById('inputComentarioAprobar').value = comentario;
+    document.getElementById('inputComentarioAprobar').value = document.getElementById('comentario_revision').value;
 });
 
 document.getElementById('formRechazar').addEventListener('submit', function(e) {
     const comentario = document.getElementById('comentario_revision').value;
     if (!comentario.trim()) {
         e.preventDefault();
-        alert('Debe ingresar un comentario para rechazar la factura.');
+        showToast('Debe ingresar un comentario para rechazar la factura.', 'warning');
         return false;
     }
     document.getElementById('inputComentarioRechazar').value = comentario;
@@ -964,16 +1555,12 @@ document.getElementById('formRechazar').addEventListener('submit', function(e) {
 
 // Cerrar con ESC
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        cerrarModalRevision();
-    }
+    if (e.key === 'Escape') cerrarModalRevision();
 });
 
-// Cerrar al hacer clic fuera del modal
+// Cerrar al hacer clic fuera
 document.getElementById('modalRevision').addEventListener('click', function(e) {
-    if (e.target === this) {
-        cerrarModalRevision();
-    }
+    if (e.target === this) cerrarModalRevision();
 });
 </script>
 {% endblock %}
