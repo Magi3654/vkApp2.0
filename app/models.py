@@ -122,7 +122,7 @@ class Usuario(UserMixin, db.Model):
 
     papeletas = db.relationship('Papeleta', foreign_keys='Papeleta.usuario_id', back_populates='usuario', lazy='dynamic')
 
-    desgloses = db.relationship('Desglose', back_populates='usuario', lazy='dynamic')
+    desgloses = db.relationship('Desglose', foreign_keys='Desglose.usuario_id', back_populates='usuario', lazy='dynamic')
 
     autorizaciones_solicitadas = db.relationship(
 
@@ -703,6 +703,10 @@ class Aerolinea(db.Model):
     codigo_icao = db.Column(db.String(3))
 
     activa = db.Column(db.Boolean, default=True)
+    
+    es_bsp = db.Column(db.Boolean, default=False)  # True = BSP (Aeromexico, etc), False = Low Cost
+    
+    tipo_vuelo = db.Column(db.String(20), default='nacional')  # 'nacional', 'internacional'
 
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -757,8 +761,8 @@ class Desglose(db.Model):
     total = db.Column(db.Numeric(10, 2), nullable=False)
 
     clave_reserva = db.Column(db.String, nullable=False)
-
-    clave_sabre = db.Column(db.String)  # Clave de Sabre para vincular con Papeleta
+    
+    clave_sabre = db.Column(db.String(10))  # Clave Sabre para vincular con papeleta
 
     usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)
 
@@ -781,6 +785,22 @@ class Desglose(db.Model):
     clase = db.Column(db.String)  # Económica, Ejecutiva, etc.
 
     sucursal_id = db.Column(db.BigInteger, db.ForeignKey('sucursales.id'))
+    
+    # Archivo del boleto PDF
+    archivo_boleto = db.Column(db.String(255))  # Nombre del archivo PDF
+    
+    # Tipo de cliente: facturacion (crédito) o mostrador (contado)
+    tipo_cliente = db.Column(db.String(20), default='facturacion')
+    
+    # Campos de facturación (para BSP)
+    numero_factura = db.Column(db.String(50))
+    monto_factura = db.Column(db.Numeric(10, 2))
+    estatus_facturacion = db.Column(db.String(20), default='pendiente')  # 'pendiente', 'facturada', 'aprobada', 'rechazada'
+    facturada_por_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
+    fecha_facturacion = db.Column(db.DateTime(timezone=True))
+    aprobada_por_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
+    fecha_aprobacion = db.Column(db.DateTime(timezone=True))
+    comentario_revision = db.Column(db.String(500))
 
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -792,11 +812,15 @@ class Desglose(db.Model):
 
     aerolinea = db.relationship('Aerolinea', back_populates='desgloses')
 
-    usuario = db.relationship('Usuario', back_populates='desgloses')
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id], back_populates='desgloses')
 
     empresa = db.relationship('Empresa', back_populates='desgloses')
 
     sucursal = db.relationship('Sucursal')
+    
+    facturada_por = db.relationship('Usuario', foreign_keys=[facturada_por_id])
+    
+    aprobada_por = db.relationship('Usuario', foreign_keys=[aprobada_por_id])
 
     def __repr__(self):
 

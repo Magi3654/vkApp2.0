@@ -105,8 +105,8 @@
 
 .expediente-row {
     display: grid;
-    grid-template-columns: 120px 1fr 150px 120px 140px 100px;
-    gap: 1rem;
+    grid-template-columns: 70px 100px 1fr 150px 100px 100px 90px;
+    gap: 0.75rem;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid #eee;
     align-items: center;
@@ -122,16 +122,37 @@
     border-bottom: none;
 }
 
+/* Badge de tipo (BSP / Low Cost) */
+.tipo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.tipo-badge.bsp {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+}
+
+.tipo-badge.lowcost {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.tipo-badge i {
+    font-size: 0.65rem;
+}
+
 .expediente-row .clave {
     font-weight: 700;
     color: var(--brick-ember);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.expediente-row .clave i {
-    color: #6366f1;
+    font-size: 0.85rem;
 }
 
 .expediente-row .empresa {
@@ -197,26 +218,55 @@
     transform: translateY(-1px);
 }
 
+/* BSP badge header en modal */
+.bsp-badge-header {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.bsp-badge-header .tipo-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
 /* Header de lista */
 .lista-header {
     display: grid;
-    grid-template-columns: 120px 1fr 150px 120px 140px 100px;
-    gap: 1rem;
+    grid-template-columns: 70px 100px 1fr 150px 100px 100px 90px;
+    gap: 0.75rem;
     padding: 0.75rem 1.25rem;
     background: #f8f9fa;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     color: #666;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.5px;
+    border-bottom: 1px solid #eee;
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
     .expediente-row, .lista-header {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 70px 1fr 100px 90px;
     }
+    .expediente-row .empresa,
+    .expediente-row .pasajero,
+    .lista-header span:nth-child(3),
+    .lista-header span:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
     .lista-header {
+        display: none;
+    }
+    .expediente-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .expediente-row .estatus-docs,
+    .expediente-row .clave {
         display: none;
     }
 }
@@ -783,8 +833,16 @@
     <!-- Estadísticas -->
     <div class="stats-row">
         <div class="stat-card">
-            <div class="number">{{ papeletas_pendientes|length }}</div>
-            <div class="label">Pendientes</div>
+            <div class="number">{{ expedientes_pendientes|length }}</div>
+            <div class="label">Total Pendientes</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="number" style="color: #f59e0b;">{{ papeletas_pendientes|length }}</div>
+            <div class="label">Low Cost</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #0ea5e9;">
+            <div class="number" style="color: #0ea5e9;">{{ desgloses_bsp_pendientes|length }}</div>
+            <div class="label">BSP</div>
         </div>
         <div class="stat-card warning">
             <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'facturada')|list|length }}</div>
@@ -803,12 +861,25 @@
             <input type="text" id="filtroBuscar" placeholder="Buscar clave, pasajero..." onkeyup="aplicarFiltros()">
         </div>
         <div class="filtro-group">
+            <label>Tipo:</label>
+            <select id="filtroTipo" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="lowcost">Low Cost</option>
+                <option value="bsp">BSP</option>
+            </select>
+        </div>
+        <div class="filtro-group">
             <label>Empresa:</label>
             <select id="filtroEmpresa" onchange="aplicarFiltros()">
                 <option value="">Todas</option>
-                {% set empresas_unicas = papeletas_pendientes|map(attribute='empresa')|select|map(attribute='nombre_empresa')|unique|list %}
-                {% for emp in empresas_unicas %}
-                <option value="{{ emp }}">{{ emp }}</option>
+                {% set empresas_unicas = [] %}
+                {% for exp in expedientes_pendientes %}
+                    {% if exp.empresa not in empresas_unicas %}
+                        {% set _ = empresas_unicas.append(exp.empresa) %}
+                    {% endif %}
+                {% endfor %}
+                {% for emp in empresas_unicas|sort %}
+                <option value="{{ emp|lower }}">{{ emp }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -832,54 +903,67 @@
     <!-- Expedientes Pendientes por Día -->
     <h3 class="section-title"><i class="fas fa-clock"></i> Expedientes Pendientes de Facturar</h3>
     
-    {% if papeletas_pendientes %}
+    {% if expedientes_agrupados %}
     
-    {% set papeletas_por_fecha = papeletas_pendientes|groupby('fecha_venta') %}
-    
-    {% for fecha, papeletas_dia in papeletas_por_fecha %}
-    <div class="dia-grupo" data-fecha="{{ fecha.strftime('%Y-%m-%d') }}">
+    {% for fecha_str, grupo in expedientes_agrupados %}
+    <div class="dia-grupo" data-fecha="{{ fecha_str }}">
         <div class="dia-header">
             <i class="fas fa-calendar-day"></i>
-            {{ fecha.strftime('%A, %d de %B %Y') }}
-            <span class="dia-count" style="margin-left: auto; opacity: 0.8;">({{ papeletas_dia|length }} expediente{{ 's' if papeletas_dia|length > 1 else '' }})</span>
+            {{ grupo.fecha_display }}
+            <span class="dia-count" style="margin-left: auto; opacity: 0.8;">({{ grupo.expedientes|length }} expediente{{ 's' if grupo.expedientes|length > 1 else '' }})</span>
         </div>
         <div class="expedientes-lista">
             <div class="lista-header">
-                <span>Clave Sabre</span>
+                <span>Tipo</span>
+                <span>Clave</span>
                 <span>Empresa</span>
                 <span>Pasajero</span>
                 <span>Monto</span>
-                <span>Documentos</span>
+                <span>Docs</span>
                 <span></span>
             </div>
-            {% for p in papeletas_dia %}
-            {% set desglose = desgloses_dict.get(p.clave_sabre) %}
-            {% set docs_completos = desglose and p.archivo_boleto %}
+            {% for exp in grupo.expedientes %}
             <div class="expediente-row" 
-                 onclick="abrirExpediente({{ p.id }})" 
-                 id="expediente-row-{{ p.id }}"
-                 data-clave="{{ p.clave_sabre|lower }}"
-                 data-empresa="{{ (p.empresa.nombre_empresa if p.empresa else p.facturar_a)|lower }}"
-                 data-pasajero="{{ p.solicito|lower }}"
-                 data-fecha="{{ p.fecha_venta.strftime('%Y-%m-%d') }}"
-                 data-docs="{{ 'completo' if docs_completos else 'incompleto' }}">
+                 onclick="abrirExpediente('{{ exp.tipo }}', {{ exp.id }})" 
+                 id="expediente-row-{{ exp.tipo }}-{{ exp.id }}"
+                 data-tipo="{{ 'bsp' if exp.tipo == 'desglose_bsp' else 'lowcost' }}"
+                 data-clave="{{ exp.clave|lower if exp.clave else '' }}"
+                 data-empresa="{{ exp.empresa|lower }}"
+                 data-pasajero="{{ exp.pasajero|lower }}"
+                 data-fecha="{{ exp.fecha.strftime('%Y-%m-%d') if exp.fecha else '' }}"
+                 data-docs="{{ 'completo' if exp.tiene_desglose and exp.tiene_boleto else 'incompleto' }}">
+                <div class="tipo-badge {{ 'bsp' if exp.tipo == 'desglose_bsp' else 'lowcost' }}">
+                    {% if exp.tipo == 'desglose_bsp' %}
+                        <i class="fas fa-plane"></i> BSP
+                    {% else %}
+                        <i class="fas fa-ticket-alt"></i> LC
+                    {% endif %}
+                </div>
                 <div class="clave">
-                    <i class="fas fa-ticket-alt"></i>
-                    {{ p.clave_sabre }}
+                    {{ exp.clave or exp.folio }}
                 </div>
-                <div class="empresa">{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</div>
-                <div class="pasajero">{{ p.solicito }}</div>
-                <div class="monto">${{ "%.2f"|format(p.total) }}</div>
+                <div class="empresa">{{ exp.empresa }}</div>
+                <div class="pasajero">{{ exp.pasajero }}</div>
+                <div class="monto">${{ "{:,.2f}".format(exp.total) }}</div>
                 <div class="estatus-docs">
-                    <span class="doc-badge tiene" title="Papeleta"><i class="fas fa-receipt"></i></span>
-                    <span class="doc-badge {{ 'tiene' if desglose else 'no-tiene' }}" title="Desglose">
-                        <i class="fas fa-calculator"></i>
-                    </span>
-                    <span class="doc-badge {{ 'tiene' if p.archivo_boleto else 'no-tiene' }}" title="Boleto PDF">
-                        <i class="fas fa-file-pdf"></i>
-                    </span>
+                    {% if exp.tipo == 'desglose_bsp' %}
+                        {# BSP solo tiene desglose #}
+                        <span class="doc-badge tiene" title="Desglose"><i class="fas fa-calculator"></i></span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_boleto else 'no-tiene' }}" title="Boleto">
+                            <i class="fas fa-file-pdf"></i>
+                        </span>
+                    {% else %}
+                        {# Low Cost tiene papeleta + desglose opcional #}
+                        <span class="doc-badge tiene" title="Papeleta"><i class="fas fa-receipt"></i></span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_desglose else 'no-tiene' }}" title="Desglose">
+                            <i class="fas fa-calculator"></i>
+                        </span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_boleto else 'no-tiene' }}" title="Boleto PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </span>
+                    {% endif %}
                 </div>
-                <button type="button" class="btn-abrir" onclick="event.stopPropagation(); abrirExpediente({{ p.id }})">
+                <button type="button" class="btn-abrir" onclick="event.stopPropagation(); abrirExpediente('{{ exp.tipo }}', {{ exp.id }})">
                     <i class="fas fa-folder-open"></i> Abrir
                 </button>
             </div>
@@ -891,7 +975,7 @@
     {% else %}
     <div class="empty-state">
         <i class="fas fa-check-circle"></i>
-        <p>No hay papeletas pendientes de facturar.</p>
+        <p>No hay expedientes pendientes de facturar.</p>
     </div>
     {% endif %}
     
@@ -1101,11 +1185,12 @@
 </div>
 
 <script>
-// Datos de expedientes
-const expedientesData = {
+// Datos de expedientes - Papeletas (Low Cost)
+const expedientesPapeleta = {
     {% for p in papeletas_pendientes %}
     {% set desglose = desgloses_dict.get(p.clave_sabre) %}
     {{ p.id }}: {
+        tipo: 'papeleta',
         id: {{ p.id }},
         folio: "{{ p.folio }}",
         claveSabre: "{{ p.clave_sabre }}",
@@ -1155,6 +1240,37 @@ const expedientesData = {
     {% endfor %}
 };
 
+// Datos de expedientes - Desgloses BSP
+const expedientesBSP = {
+    {% for d in desgloses_bsp_pendientes %}
+    {{ d.folio }}: {
+        tipo: 'desglose_bsp',
+        id: {{ d.folio }},
+        folio: "BSP-{{ d.folio }}",
+        claveReserva: "{{ d.clave_reserva }}",
+        claveSabre: "{{ d.clave_sabre or d.clave_reserva }}",
+        empresa: "{{ d.empresa.nombre_empresa if d.empresa else 'N/A' }}",
+        pasajero: "{{ d.pasajero_nombre or 'N/A' }}",
+        fecha: "{{ d.fecha_emision.strftime('%d/%m/%Y') if d.fecha_emision else '' }}",
+        fechaViaje: "{{ d.fecha_viaje.strftime('%d/%m/%Y') if d.fecha_viaje else '' }}",
+        aerolinea: "{{ d.aerolinea.nombre if d.aerolinea else 'N/A' }}",
+        ruta: "{{ d.ruta or 'N/A' }}",
+        clase: "{{ d.clase or 'N/A' }}",
+        numeroBoleto: "{{ d.numero_boleto or '' }}",
+        agente: "{{ d.usuario.nombre if d.usuario else 'N/A' }}",
+        tarifaBase: {{ d.tarifa_base or 0 }},
+        iva: {{ d.iva or 0 }},
+        tua: {{ d.tua or 0 }},
+        yr: {{ d.yr or 0 }},
+        otrosCargos: {{ d.otros_cargos or 0 }},
+        cargoServicio: {{ d.cargo_por_servicio or 0 }},
+        total: {{ d.total or 0 }},
+        actionUrl: "{{ url_for('main.registrar_factura_bsp', folio=d.folio) }}"
+    },
+    {% endfor %}
+};
+
+let expedienteActualTipo = null;
 let expedienteActualId = null;
 
 // ==========================================
@@ -1162,6 +1278,7 @@ let expedienteActualId = null;
 // ==========================================
 function aplicarFiltros() {
     const buscar = document.getElementById('filtroBuscar').value.toLowerCase().trim();
+    const tipo = document.getElementById('filtroTipo').value;
     const empresa = document.getElementById('filtroEmpresa').value.toLowerCase();
     const fecha = document.getElementById('filtroFecha').value;
     const docs = document.getElementById('filtroDocs').value;
@@ -1169,6 +1286,7 @@ function aplicarFiltros() {
     let totalVisibles = 0;
     
     document.querySelectorAll('.expediente-row').forEach(row => {
+        const rowTipo = row.dataset.tipo || '';
         const clave = row.dataset.clave || '';
         const rowEmpresa = row.dataset.empresa || '';
         const pasajero = row.dataset.pasajero || '';
@@ -1176,6 +1294,7 @@ function aplicarFiltros() {
         const rowDocs = row.dataset.docs || '';
         
         // Aplicar filtros
+        const matchTipo = !tipo || rowTipo === tipo;
         const matchBuscar = !buscar || 
             clave.includes(buscar) || 
             pasajero.includes(buscar) ||
@@ -1184,7 +1303,7 @@ function aplicarFiltros() {
         const matchFecha = !fecha || rowFecha === fecha;
         const matchDocs = !docs || rowDocs === docs;
         
-        const visible = matchBuscar && matchEmpresa && matchFecha && matchDocs;
+        const visible = matchTipo && matchBuscar && matchEmpresa && matchFecha && matchDocs;
         row.style.display = visible ? '' : 'none';
         
         if (visible) totalVisibles++;
@@ -1210,6 +1329,7 @@ function aplicarFiltros() {
 
 function limpiarFiltros() {
     document.getElementById('filtroBuscar').value = '';
+    document.getElementById('filtroTipo').value = '';
     document.getElementById('filtroEmpresa').value = '';
     document.getElementById('filtroFecha').value = '';
     document.getElementById('filtroDocs').value = '';
@@ -1288,154 +1408,257 @@ function formatEstatusReembolso(estatus) {
     return estatuses[estatus] || estatus || 'N/A';
 }
 
-function abrirExpediente(id) {
-    const exp = expedientesData[id];
+function abrirExpediente(tipo, id) {
+    let exp;
+    
+    if (tipo === 'papeleta') {
+        exp = expedientesPapeleta[id];
+    } else if (tipo === 'desglose_bsp') {
+        exp = expedientesBSP[id];
+    }
+    
     if (!exp) return;
     
+    expedienteActualTipo = tipo;
     expedienteActualId = id;
     
     // Header
-    document.getElementById('modalClaveSabre').textContent = exp.claveSabre;
+    document.getElementById('modalClaveSabre').textContent = exp.claveSabre || exp.claveReserva;
     document.getElementById('modalEmpresa').textContent = exp.empresa;
-    document.getElementById('modalPasajero').textContent = exp.solicito;
+    document.getElementById('modalPasajero').textContent = tipo === 'papeleta' ? exp.solicito : exp.pasajero;
     document.getElementById('modalFecha').textContent = exp.fecha;
     
-    // Papeleta - Todos los campos
-    document.getElementById('modalPapeletaFolio').textContent = '#' + exp.folio;
-    document.getElementById('modalTarjeta').textContent = exp.tarjeta;
-    document.getElementById('modalFechaVenta').textContent = exp.fecha;
-    document.getElementById('modalFacturarA').textContent = exp.facturarA;
-    document.getElementById('modalTipoCargo').textContent = formatTipoCargo(exp.tipoCargo);
+    // Sección Papeleta (columna izquierda)
+    const seccionPapeleta = document.querySelector('.modal-column.papeleta-col');
+    const seccionBSP = document.getElementById('seccionBSP');
     
-    // Aerolínea o Proveedor según tipo de cargo
-    const aerolineaProveedor = exp.tipoCargo === 'aerolinea' ? exp.aerolinea : exp.proveedor;
-    document.getElementById('modalAerolineaProveedor').textContent = aerolineaProveedor || 'N/A';
-    
-    document.getElementById('modalSolicito').textContent = exp.solicito;
-    document.getElementById('modalClaveSabreDetalle').textContent = exp.claveSabre;
-    document.getElementById('modalFormaPago').textContent = exp.formaPago;
-    document.getElementById('modalAgente').textContent = exp.agente;
-    
-    // Indicadores especiales
-    const indicadores = document.getElementById('indicadoresEspeciales');
-    const badgeExtemp = document.getElementById('badgeExtemporanea');
-    const badgeReemb = document.getElementById('badgeReembolso');
-    
-    if (exp.extemporanea || exp.tieneReembolso) {
-        indicadores.style.display = 'flex';
-        indicadores.style.gap = '0.5rem';
-        indicadores.style.flexWrap = 'wrap';
-        badgeExtemp.style.display = exp.extemporanea ? 'inline-flex' : 'none';
-        badgeReemb.style.display = exp.tieneReembolso ? 'inline-flex' : 'none';
-    } else {
-        indicadores.style.display = 'none';
-    }
-    
-    // Montos
-    document.getElementById('modalTotalTicket').textContent = '$' + exp.totalTicket.toFixed(2);
-    document.getElementById('modalDiezPorciento').textContent = '$' + exp.diezPorciento.toFixed(2);
-    document.getElementById('modalCargo').textContent = '$' + exp.cargo.toFixed(2);
-    document.getElementById('modalTotalPapeleta').textContent = '$' + exp.totalPapeleta.toFixed(2);
-    
-    // Sección de reembolso
-    const seccionReembolso = document.getElementById('seccionReembolso');
-    if (exp.tieneReembolso) {
-        seccionReembolso.style.display = 'block';
-        document.getElementById('modalMotivoReembolso').textContent = formatMotivoReembolso(exp.motivoReembolso);
-        document.getElementById('modalMontoReembolso').textContent = '$' + exp.montoReembolso.toFixed(2);
-        document.getElementById('modalEstatusReembolso').textContent = formatEstatusReembolso(exp.estatusReembolso);
-        document.getElementById('modalReferenciaReembolso').textContent = exp.referenciaReembolso || 'N/A';
-    } else {
-        seccionReembolso.style.display = 'none';
-    }
-    
-    // Desglose
-    const desgloseContent = document.getElementById('desgloseContent');
-    if (exp.desglose) {
-        document.getElementById('modalDesgloseFolio').textContent = '#' + exp.desglose.folio;
+    if (tipo === 'papeleta') {
+        // Mostrar sección papeleta, ocultar BSP
+        if (seccionPapeleta) seccionPapeleta.style.display = '';
+        if (seccionBSP) seccionBSP.style.display = 'none';
+        
+        // Papeleta - Todos los campos
+        document.getElementById('modalPapeletaFolio').textContent = '#' + exp.folio;
+        document.getElementById('modalTarjeta').textContent = exp.tarjeta;
+        document.getElementById('modalFechaVenta').textContent = exp.fecha;
+        document.getElementById('modalFacturarA').textContent = exp.facturarA;
+        document.getElementById('modalTipoCargo').textContent = formatTipoCargo(exp.tipoCargo);
+        
+        // Aerolínea o Proveedor según tipo de cargo
+        const aerolineaProveedor = exp.tipoCargo === 'aerolinea' ? exp.aerolinea : exp.proveedor;
+        document.getElementById('modalAerolineaProveedor').textContent = aerolineaProveedor || 'N/A';
+        
+        document.getElementById('modalSolicito').textContent = exp.solicito;
+        document.getElementById('modalClaveSabreDetalle').textContent = exp.claveSabre;
+        document.getElementById('modalFormaPago').textContent = exp.formaPago;
+        document.getElementById('modalAgente').textContent = exp.agente;
+        
+        // Indicadores especiales
+        const indicadores = document.getElementById('indicadoresEspeciales');
+        const badgeExtemp = document.getElementById('badgeExtemporanea');
+        const badgeReemb = document.getElementById('badgeReembolso');
+        
+        if (exp.extemporanea || exp.tieneReembolso) {
+            indicadores.style.display = 'flex';
+            indicadores.style.gap = '0.5rem';
+            indicadores.style.flexWrap = 'wrap';
+            badgeExtemp.style.display = exp.extemporanea ? 'inline-flex' : 'none';
+            badgeReemb.style.display = exp.tieneReembolso ? 'inline-flex' : 'none';
+        } else {
+            indicadores.style.display = 'none';
+        }
+        
+        // Montos
+        document.getElementById('modalTotalTicket').textContent = '$' + exp.totalTicket.toFixed(2);
+        document.getElementById('modalDiezPorciento').textContent = '$' + exp.diezPorciento.toFixed(2);
+        document.getElementById('modalCargo').textContent = '$' + exp.cargo.toFixed(2);
+        document.getElementById('modalTotalPapeleta').textContent = '$' + exp.totalPapeleta.toFixed(2);
+        
+        // Sección de reembolso
+        const seccionReembolso = document.getElementById('seccionReembolso');
+        if (exp.tieneReembolso) {
+            seccionReembolso.style.display = 'block';
+            document.getElementById('modalMotivoReembolso').textContent = formatMotivoReembolso(exp.motivoReembolso);
+            document.getElementById('modalMontoReembolso').textContent = '$' + exp.montoReembolso.toFixed(2);
+            document.getElementById('modalEstatusReembolso').textContent = formatEstatusReembolso(exp.estatusReembolso);
+            document.getElementById('modalReferenciaReembolso').textContent = exp.referenciaReembolso || 'N/A';
+        } else {
+            seccionReembolso.style.display = 'none';
+        }
+        
+        // Desglose
+        const desgloseContent = document.getElementById('desgloseContent');
+        if (exp.desglose) {
+            document.getElementById('modalDesgloseFolio').textContent = '#' + exp.desglose.folio;
+            desgloseContent.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label">Clave Boleto</span>
+                        <span class="value">${exp.desglose.claveBoleto}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Pasajero</span>
+                        <span class="value">${exp.desglose.pasajero}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Ruta</span>
+                        <span class="value">${exp.desglose.ruta}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Aerolínea</span>
+                        <span class="value">${exp.desglose.aerolinea}</span>
+                    </div>
+                </div>
+                <div class="montos-box">
+                    <div class="monto-row">
+                        <span>Tarifa Base</span>
+                        <span>$${exp.desglose.tarifaBase.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>IVA</span>
+                        <span>$${exp.desglose.iva.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>TUA</span>
+                        <span>$${exp.desglose.tua.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>YR</span>
+                        <span>$${exp.desglose.yr.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Otros Cargos</span>
+                        <span>$${exp.desglose.otrosCargos.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Cargo por Servicio</span>
+                        <span>$${exp.desglose.cargoServicio.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row total">
+                        <span>Total Desglose</span>
+                        <span>$${exp.desglose.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            document.getElementById('modalDesgloseFolio').textContent = '';
+            desgloseContent.innerHTML = `
+                <div class="no-desglose-msg">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>No hay desglose vinculado<br>a esta clave Sabre</p>
+                </div>
+            `;
+        }
+        
+        // PDF
+        if (exp.archivoBoleto) {
+            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
+            document.getElementById('pdfViewer').src = pdfUrl;
+            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('noPdfMsg').style.display = 'none';
+            document.getElementById('pdfActions').style.display = 'flex';
+            document.getElementById('btnAbrirPdf').href = pdfUrl;
+            document.getElementById('btnDescargarPdf').href = pdfUrl;
+        } else {
+            document.getElementById('pdfViewer').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
+            document.getElementById('noPdfMsg').style.display = 'flex';
+            document.getElementById('pdfActions').style.display = 'none';
+        }
+        
+        // Form - monto de papeleta
+        document.getElementById('monto_factura').value = exp.totalPapeleta.toFixed(2);
+        
+    } else if (tipo === 'desglose_bsp') {
+        // BSP - Solo tiene desglose, sin papeleta
+        if (seccionPapeleta) seccionPapeleta.style.display = 'none';
+        
+        // Mostrar desglose BSP en la columna del desglose
+        document.getElementById('modalDesgloseFolio').textContent = '#' + exp.id;
+        const desgloseContent = document.getElementById('desgloseContent');
         desgloseContent.innerHTML = `
+            <div class="bsp-badge-header">
+                <span class="tipo-badge bsp"><i class="fas fa-plane"></i> BSP - ${exp.aerolinea}</span>
+            </div>
             <div class="detail-grid">
                 <div class="detail-item">
-                    <span class="label">Clave Boleto</span>
-                    <span class="value">${exp.desglose.claveBoleto}</span>
+                    <span class="label">Clave Reserva</span>
+                    <span class="value">${exp.claveReserva}</span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Pasajero</span>
-                    <span class="value">${exp.desglose.pasajero}</span>
+                    <span class="value">${exp.pasajero}</span>
                 </div>
                 <div class="detail-item">
                     <span class="label">Ruta</span>
-                    <span class="value">${exp.desglose.ruta}</span>
+                    <span class="value">${exp.ruta}</span>
                 </div>
                 <div class="detail-item">
-                    <span class="label">Aerolínea</span>
-                    <span class="value">${exp.desglose.aerolinea}</span>
+                    <span class="label"># Boleto</span>
+                    <span class="value">${exp.numeroBoleto || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Fecha Emisión</span>
+                    <span class="value">${exp.fecha}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Fecha Viaje</span>
+                    <span class="value">${exp.fechaViaje || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Clase</span>
+                    <span class="value">${exp.clase}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Agente</span>
+                    <span class="value">${exp.agente}</span>
                 </div>
             </div>
             <div class="montos-box">
                 <div class="monto-row">
                     <span>Tarifa Base</span>
-                    <span>$${exp.desglose.tarifaBase.toFixed(2)}</span>
+                    <span>$${exp.tarifaBase.toFixed(2)}</span>
                 </div>
                 <div class="monto-row">
                     <span>IVA</span>
-                    <span>$${exp.desglose.iva.toFixed(2)}</span>
+                    <span>$${exp.iva.toFixed(2)}</span>
                 </div>
                 <div class="monto-row">
                     <span>TUA</span>
-                    <span>$${exp.desglose.tua.toFixed(2)}</span>
+                    <span>$${exp.tua.toFixed(2)}</span>
                 </div>
                 <div class="monto-row">
                     <span>YR</span>
-                    <span>$${exp.desglose.yr.toFixed(2)}</span>
+                    <span>$${exp.yr.toFixed(2)}</span>
                 </div>
                 <div class="monto-row">
                     <span>Otros Cargos</span>
-                    <span>$${exp.desglose.otrosCargos.toFixed(2)}</span>
+                    <span>$${exp.otrosCargos.toFixed(2)}</span>
                 </div>
                 <div class="monto-row">
                     <span>Cargo por Servicio</span>
-                    <span>$${exp.desglose.cargoServicio.toFixed(2)}</span>
+                    <span>$${exp.cargoServicio.toFixed(2)}</span>
                 </div>
                 <div class="monto-row total">
-                    <span>Total Desglose</span>
-                    <span>$${exp.desglose.total.toFixed(2)}</span>
+                    <span>Total BSP</span>
+                    <span>$${exp.total.toFixed(2)}</span>
                 </div>
             </div>
         `;
-    } else {
-        document.getElementById('modalDesgloseFolio').textContent = '';
-        desgloseContent.innerHTML = `
-            <div class="no-desglose-msg">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>No hay desglose vinculado<br>a esta clave Sabre</p>
-            </div>
-        `;
+        
+        // BSP no tiene PDF de boleto en el sistema (generalmente)
+        document.getElementById('pdfViewer').style.display = 'none';
+        document.getElementById('pdfViewer').src = '';
+        document.getElementById('noPdfMsg').innerHTML = '<i class="fas fa-plane"></i><p>Boleto BSP<br>(sin documento adjunto)</p>';
+        document.getElementById('noPdfMsg').style.display = 'flex';
+        document.getElementById('pdfActions').style.display = 'none';
+        
+        // Form - monto total del desglose
+        document.getElementById('monto_factura').value = exp.total.toFixed(2);
     }
     
-    // PDF
-    const pdfViewer = document.getElementById('pdfViewer');
-    const noPdfMsg = document.getElementById('noPdfMsg');
-    const pdfActions = document.getElementById('pdfActions');
-    
-    if (exp.archivoBoleto) {
-        const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
-        pdfViewer.src = pdfUrl;
-        pdfViewer.style.display = 'block';
-        noPdfMsg.style.display = 'none';
-        pdfActions.style.display = 'flex';
-        document.getElementById('btnAbrirPdf').href = pdfUrl;
-        document.getElementById('btnDescargarPdf').href = pdfUrl;
-    } else {
-        pdfViewer.style.display = 'none';
-        pdfViewer.src = '';
-        noPdfMsg.style.display = 'flex';
-        pdfActions.style.display = 'none';
-    }
-    
-    // Form
+    // Form action URL
     document.getElementById('formFacturar').action = exp.actionUrl;
-    document.getElementById('monto_factura').value = exp.totalPapeleta.toFixed(2);
     document.getElementById('numero_factura').value = '';
     
     // Mostrar modal
@@ -1447,6 +1670,7 @@ function cerrarModal() {
     document.getElementById('modalExpediente').classList.remove('active');
     document.body.style.overflow = '';
     document.getElementById('pdfViewer').src = '';
+    expedienteActualTipo = null;
     expedienteActualId = null;
 }
 
@@ -1489,8 +1713,9 @@ document.getElementById('formFacturar').addEventListener('submit', function(e) {
             // Mostrar toast usando el sistema global de base.html
             showToast(data.message || 'Factura registrada correctamente', 'success', 4000);
             
-            // Eliminar fila de la lista con animación
-            const row = document.getElementById('expediente-row-' + expedienteActualId);
+            // Eliminar fila de la lista con animación (usa tipo-id)
+            const rowId = expedienteActualTipo + '-' + expedienteActualId;
+            const row = document.getElementById('expediente-row-' + rowId);
             if (row) {
                 row.style.opacity = '0';
                 row.style.transform = 'translateX(-20px)';
@@ -1509,7 +1734,7 @@ document.getElementById('formFacturar').addEventListener('submit', function(e) {
                         const container = document.querySelector('.section-title').parentElement;
                         const emptyState = document.createElement('div');
                         emptyState.className = 'empty-state';
-                        emptyState.innerHTML = '<i class="fas fa-check-circle"></i><p>No hay papeletas pendientes de facturar.</p>';
+                        emptyState.innerHTML = '<i class="fas fa-check-circle"></i><p>No hay expedientes pendientes de facturar.</p>';
                         container.appendChild(emptyState);
                     }
                 }, 300);
@@ -1517,15 +1742,15 @@ document.getElementById('formFacturar').addEventListener('submit', function(e) {
             
             cerrarModal();
             
-            // Actualizar contador
-            const pendientesNum = document.querySelector('.stat-card .number');
-            if (pendientesNum) {
-                const current = parseInt(pendientesNum.textContent) || 0;
-                pendientesNum.textContent = Math.max(0, current - 1);
+            // Actualizar contadores
+            const totalNum = document.querySelector('.stat-card .number');
+            if (totalNum) {
+                const current = parseInt(totalNum.textContent) || 0;
+                totalNum.textContent = Math.max(0, current - 1);
             }
             
         } else {
-            showToast(data.error || 'No se pudo registrar la factura', 'danger', 5000);
+            showToast(data.message || 'No se pudo registrar la factura', 'danger', 5000);
             btn.disabled = false;
             btn.innerHTML = originalText;
         }

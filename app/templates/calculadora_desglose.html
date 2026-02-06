@@ -411,6 +411,114 @@
     font-weight: 600;
 }
 
+/* Upload Boleto BSP */
+.upload-boleto-container {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+/* Input especial para Aeromexico */
+.input-aeromexico {
+    border: 2px solid #0ea5e9 !important;
+    background: #f0f9ff !important;
+    width: 100%;
+}
+
+.input-aeromexico:focus {
+    border-color: #0284c7 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2) !important;
+}
+
+/* Rows especiales para BSP */
+#row_numero_boleto,
+#row_boleto_bsp {
+    width: 100%;
+}
+
+#row_numero_boleto .form-group,
+#row_boleto_bsp .form-group {
+    width: 100%;
+    max-width: 100%;
+}
+
+.upload-boleto-area {
+    border: 2px dashed #0ea5e9;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    background: #f0f9ff;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.upload-boleto-area:hover {
+    background: #e0f2fe;
+    border-color: #0284c7;
+}
+
+.upload-boleto-area i {
+    font-size: 1.5rem;
+    color: #0ea5e9;
+}
+
+.upload-boleto-area span {
+    color: #0369a1;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.boleto-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.boleto-preview i {
+    font-size: 1.25rem;
+    color: #ef4444;
+    flex-shrink: 0;
+}
+
+.boleto-preview span {
+    flex: 1;
+    font-size: 0.8rem;
+    color: #064e3b;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-remove-boleto {
+    background: #fecaca;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #dc2626;
+    transition: all 0.2s;
+}
+
+.btn-remove-boleto:hover {
+    background: #fca5a5;
+}
+
 /* Mensaje cuando no hay empresa seleccionada */
 .no-empresa-msg {
     text-align: center;
@@ -483,7 +591,7 @@
         </div>
     </div>
 
-    <form id="desgloseForm" method="POST">
+    <form id="desgloseForm" method="POST" enctype="multipart/form-data">
         <div class="calc-grid">
             <!-- COLUMNA 1: Selección y Datos de Entrada -->
             <div class="calc-card card-input">
@@ -600,6 +708,43 @@
                                    class="input-entry" placeholder="0.00" oninput="calcular()">
                             <small style="color: #92400e; font-size: 0.75rem;">
                                 ≤$5,000: $1,500 | >$5,000: $3,000 | >$10,000: $6,000
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Campo Número de Boleto - Solo Aeromexico (oculto por defecto) -->
+                    <div class="form-row" id="row_numero_boleto" style="display: none;">
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-ticket-alt" style="color: #0ea5e9;"></i> Número de Boleto (Aeromexico)</label>
+                            <input type="text" id="numero_boleto" name="numero_boleto" 
+                                   class="input-entry input-aeromexico" placeholder="Ej: 1392112345678" maxlength="20">
+                            <small style="color: #666; font-size: 0.75rem;">
+                                Número de 13 dígitos del boleto electrónico
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Campo para subir Boleto PDF - Solo BSP (oculto por defecto) -->
+                    <div class="form-row" id="row_boleto_bsp" style="display: none;">
+                        <div class="form-group" style="flex: 1;">
+                            <label><i class="fas fa-file-pdf" style="color: #ef4444;"></i> Boleto PDF (BSP)</label>
+                            <div class="upload-boleto-container">
+                                <input type="file" id="archivo_boleto" name="archivo_boleto" 
+                                       accept=".pdf,.png,.jpg,.jpeg" style="display: none;">
+                                <div class="upload-boleto-area" id="uploadBoletoArea" onclick="document.getElementById('archivo_boleto').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span id="uploadBoletoText">Click para seleccionar archivo</span>
+                                </div>
+                                <div class="boleto-preview" id="boletoPreview" style="display: none;">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span id="boletoFileName"></span>
+                                    <button type="button" class="btn-remove-boleto" onclick="removerBoleto()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small style="color: #666; font-size: 0.75rem;">
+                                Formatos: PDF, PNG, JPG (máx. 5MB)
                             </small>
                         </div>
                     </div>
@@ -1068,8 +1213,25 @@ function cargarEsquemaEmpresa() {
     }
 
     // Resetear esquema antes de cargar nuevos datos
+    // Mapear valores de BD a valores internos
+    const esquemaMap = {
+        'cargo': 'cargo_servicio',
+        'cargo_servicio': 'cargo_servicio',
+        'bonif': 'bonificacion',
+        'bonificacion': 'bonificacion',
+        't_fija': 'tarifa_fija',
+        'tarifa_fija': 'tarifa_fija',
+        'desglose': 'desglose_especial',
+        'desglose_especial': 'desglose_especial',
+        'issfam': 'issfam',
+        'mixto': 'mixto'
+    };
+    
+    const esquemaRaw = option.dataset.esquema || 'cargo_servicio';
+    const esquemaTipo = esquemaMap[esquemaRaw.toLowerCase()] || esquemaRaw;
+    
     esquemaActual = {
-        tipo: option.dataset.esquema || 'cargo_servicio',
+        tipo: esquemaTipo,
         bonificacion: parseFloat(option.dataset.bonificacion) || 0,
         requiereDesglose: option.dataset.requiereDesglose === 'true',
         tipoDesglose: option.dataset.tipoDesglose || 'standard',
@@ -1122,7 +1284,12 @@ function cargarEsquemaEmpresa() {
         case 'desglose_especial':
             badge.textContent = 'DESGLOSE ESPECIAL';
             badge.className = 'esquema-badge desglose';
-            descripcion.innerHTML = 'Requiere desglose detallado (TML/ISSFAM)';
+            descripcion.innerHTML = 'Requiere desglose detallado (TML)';
+            break;
+        case 'mixto':
+            badge.textContent = 'MIXTO';
+            badge.className = 'esquema-badge mixto';
+            descripcion.innerHTML = 'Esquema mixto (cargo + bonificación)';
             break;
         default:
             badge.textContent = esquemaActual.tipo.toUpperCase();
@@ -1168,9 +1335,21 @@ function cargarEsquemaEmpresa() {
             }
             
             // Actualizar esquema y bonificación
-            // Primero establecer el esquema del API
+            // Primero establecer el esquema del API (con mapeo)
             if (data.esquema) {
-                esquemaActual.tipo = data.esquema;
+                const esquemaApiMap = {
+                    'cargo': 'cargo_servicio',
+                    'cargo_servicio': 'cargo_servicio',
+                    'bonif': 'bonificacion',
+                    'bonificacion': 'bonificacion',
+                    't_fija': 'tarifa_fija',
+                    'tarifa_fija': 'tarifa_fija',
+                    'desglose': 'desglose_especial',
+                    'desglose_especial': 'desglose_especial',
+                    'issfam': 'issfam',
+                    'mixto': 'mixto'
+                };
+                esquemaActual.tipo = esquemaApiMap[data.esquema.toLowerCase()] || data.esquema;
             }
             
             // Guardar bonificación si existe
@@ -1182,20 +1361,41 @@ function cargarEsquemaEmpresa() {
             const badge = document.getElementById('esquemaBadge');
             const descripcion = document.getElementById('esquemaDescripcion');
             
+            // Ocultar Q'S por defecto
+            document.getElementById('row_qs').style.display = 'none';
+            
             if (esquemaActual.tipo === 'issfam') {
                 badge.textContent = 'ISSFAM';
                 badge.className = 'esquema-badge bonificacion';
                 descripcion.innerHTML = 'Fórmula especial con Q\'S';
                 document.getElementById('row_qs').style.display = 'flex';
-            } else if (esquemaActual.tipo === 'bonificacion' || (data.bonificacion && data.bonificacion > 0 && esquemaActual.tipo !== 'issfam')) {
-                if (esquemaActual.tipo !== 'issfam') {
-                    esquemaActual.tipo = 'bonificacion';
+            } else if (esquemaActual.tipo === 'desglose_especial') {
+                badge.textContent = 'DESGLOSE ESPECIAL';
+                badge.className = 'esquema-badge desglose';
+                descripcion.innerHTML = 'Requiere desglose detallado (TML)';
+            } else if (esquemaActual.tipo === 'tarifa_fija') {
+                badge.textContent = 'TARIFA FIJA';
+                badge.className = 'esquema-badge tarifa-fija';
+                descripcion.innerHTML = 'Tarifa fija configurada';
+            } else if (esquemaActual.tipo === 'mixto') {
+                badge.textContent = 'MIXTO';
+                badge.className = 'esquema-badge mixto';
+                if (data.bonificacion && data.bonificacion > 0) {
+                    const porcBonif = (data.bonificacion * 100).toFixed(2);
+                    descripcion.innerHTML = `Mixto: <strong>${porcBonif}%</strong> bonificación + cargo`;
+                } else {
+                    descripcion.innerHTML = 'Esquema mixto (cargo + descuento)';
                 }
+            } else if (esquemaActual.tipo === 'bonificacion' || (data.bonificacion && data.bonificacion > 0)) {
+                esquemaActual.tipo = 'bonificacion';
                 const porcBonif = (data.bonificacion * 100).toFixed(2);
                 badge.textContent = 'BONIFICACIÓN';
                 badge.className = 'esquema-badge bonificacion';
                 descripcion.innerHTML = `<strong>${porcBonif}%</strong> de bonificación sobre tarifa base`;
-                document.getElementById('row_qs').style.display = 'none';
+            } else {
+                badge.textContent = 'CARGO POR SERVICIO';
+                badge.className = 'esquema-badge cargo-servicio';
+                descripcion.innerHTML = 'Cargo fijo + tarifa del boleto';
             }
             
             calcular();
@@ -1277,12 +1477,34 @@ function calcular() {
         ivaYR = iva + ivaCargoOculto;
         
     } else if (esquemaActual.tipo === 'desglose_especial') {
-        // Fórmula IMSS TML
-        const sumaTML = tarifaBase + iva + cargoVisible;
+        // Fórmula IMSS TML - usa el cargo oculto para calcular
+        // T.Base = (T.Base ingresada + IVA + Cargo Oculto) / 1.16
+        const sumaTML = tarifaBase + iva + cargoOculto;
         tarifaSinBonif = sumaTML / 1.16;
         tarifaConBonif = tarifaBase;
-        ivaYR = (tarifaSinBonif * 0.16) + ivaCargoOculto;
+        ivaYR = tarifaSinBonif * 0.16;
         bonificacionAplicada = 0;
+        
+    } else if (esquemaActual.tipo === 'mixto') {
+        // MIXTO: Similar a bonificación pero puede tener cargo visible también
+        if (bonificacionAplicada > 0) {
+            tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+            tarifaSinBonif = tarifaConBonif / (1 - bonificacionAplicada);
+            ivaYR = iva + ivaCargoOculto;
+        } else {
+            tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+            tarifaSinBonif = tarifaConBonif;
+            ivaYR = iva + ivaCargoOculto;
+            bonificacionAplicada = 0;
+        }
+        
+    } else if (esquemaActual.tipo === 'tarifa_fija') {
+        // TARIFA FIJA: La tarifa ya está definida, solo agregar cargo oculto
+        tarifaConBonif = tarifaBase + cargoOcultoSinIva;
+        tarifaSinBonif = tarifaConBonif;
+        ivaYR = iva + ivaCargoOculto;
+        bonificacionAplicada = 0;
+        
     } else {
         // SIN BONIFICACIÓN (cargo por servicio estándar):
         // Cuando no hay bonificación, solo mostramos T. Base
@@ -1297,6 +1519,9 @@ function calcular() {
     if (esquemaActual.tipo === 'issfam') {
         // ISSFAM: Total = T.Base + Q'S + IVA + YR + TUA + Otros
         totalSinCargo = tarifaConBonif + qs + ivaYR + yr + tua + otros;
+    } else if (esquemaActual.tipo === 'desglose_especial') {
+        // DESGLOSE ESPECIAL (TML): Total = T.Base calculada (tarifaSinBonif) + IVA + YR + TUA + Otros
+        totalSinCargo = tarifaSinBonif + ivaYR + yr + tua + otros;
     } else {
         // Fórmula: Total sin cargo = T.Base CON bonif + IVA + YR + TUA + Otros
         // (El cargo oculto ya está incluido en T.Base CON bonif y su IVA en ivaYR)
@@ -1318,6 +1543,7 @@ function calcular() {
     // Actualizar UI según tipo de esquema
     const hayBonificacion = bonificacionAplicada > 0;
     const esIssfam = esquemaActual.tipo === 'issfam';
+    const esDesgloseEspecial = esquemaActual.tipo === 'desglose_especial';
     
     if (esIssfam) {
         // ISSFAM: Solo mostrar T. Base (calculada) y Q'S
@@ -1332,6 +1558,16 @@ function calcular() {
         // Mostrar fila Q'S
         document.getElementById('row_qs_result').style.display = 'flex';
         document.getElementById('res_qs').textContent = '$' + qs.toFixed(2);
+    } else if (esDesgloseEspecial) {
+        // DESGLOSE ESPECIAL (IMSS TML): Mostrar T. Base calculada (tarifaSinBonif)
+        document.getElementById('row_tarifa_sin_bonif').style.display = 'none';
+        document.getElementById('row_tarifa_con_bonif').style.display = 'none';
+        document.getElementById('row_bonificacion').style.display = 'none';
+        document.getElementById('row_tarifa_simple').style.display = 'flex';
+        document.getElementById('row_qs_result').style.display = 'none';
+        
+        // Para desglose especial, la T. Base calculada está en tarifaSinBonif
+        document.getElementById('res_tarifa_simple').textContent = '$' + tarifaSinBonif.toFixed(2);
     } else if (hayBonificacion) {
         // Mostrar filas de bonificación
         document.getElementById('row_tarifa_sin_bonif').style.display = 'flex';
@@ -1432,8 +1668,10 @@ function mostrarModalDesglose(folio) {
     document.getElementById('modalClave').textContent = document.getElementById('clave_reserva').value || '-';
     document.getElementById('modalAerolinea').textContent = aerolineaSelect.options[aerolineaSelect.selectedIndex].text;
     
-    // Verificar si es ISSFAM
+    // Verificar tipo de esquema
     const esIssfam = esquemaActual.tipo === 'issfam';
+    const esDesgloseEspecial = esquemaActual.tipo === 'desglose_especial';
+    const hayBonificacion = esquemaActual.bonificacion > 0;
     
     if (esIssfam) {
         // Modal para ISSFAM: Solo T. Base y Q'S
@@ -1444,8 +1682,16 @@ function mostrarModalDesglose(folio) {
         document.getElementById('modalRowQs').style.display = 'flex';
         document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_simple').textContent;
         document.getElementById('modalQs').textContent = document.getElementById('res_qs').textContent;
-    } else {
-        // Modal normal
+    } else if (esDesgloseEspecial) {
+        // Modal para DESGLOSE ESPECIAL (IMSS TML): Solo T. Base calculada
+        document.getElementById('modalRowTarifaSinBonif').style.display = 'none';
+        document.getElementById('modalRowTarifaConBonif').style.display = 'flex';
+        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base';
+        document.getElementById('modalRowBonificacion').style.display = 'none';
+        document.getElementById('modalRowQs').style.display = 'none';
+        document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_simple').textContent;
+    } else if (hayBonificacion) {
+        // Modal con bonificación
         document.getElementById('modalRowTarifaSinBonif').style.display = 'flex';
         document.getElementById('modalRowTarifaConBonif').style.display = 'flex';
         document.getElementById('modalLabelTarifaSinBonif').textContent = 'T. Base (sin bonificación)';
@@ -1455,7 +1701,16 @@ function mostrarModalDesglose(folio) {
         document.getElementById('modalTarifaSinBonif').textContent = document.getElementById('res_tarifa_sin_bonif').textContent;
         document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_con_bonif').textContent;
         document.getElementById('modalBonificacion').textContent = document.getElementById('res_bonificacion').textContent;
+    } else {
+        // Modal SIN bonificación - usar res_tarifa_simple
+        document.getElementById('modalRowTarifaSinBonif').style.display = 'none';
+        document.getElementById('modalRowTarifaConBonif').style.display = 'flex';
+        document.getElementById('modalLabelTarifaConBonif').textContent = 'T. Base';
+        document.getElementById('modalRowBonificacion').style.display = 'none';
+        document.getElementById('modalRowQs').style.display = 'none';
+        document.getElementById('modalTarifaConBonif').textContent = document.getElementById('res_tarifa_simple').textContent;
     }
+    
     document.getElementById('modalIva').textContent = document.getElementById('res_iva_yr').textContent;
     document.getElementById('modalYr').textContent = document.getElementById('res_yr').textContent;
     document.getElementById('modalTua').textContent = document.getElementById('res_tua').textContent;
@@ -1516,5 +1771,98 @@ document.getElementById('modalDesglose').addEventListener('click', function(e) {
         cerrarModal();
     }
 });
+
+// ==========================================
+// LÓGICA PARA BOLETO BSP
+// ==========================================
+
+// Lista de aerolíneas BSP (por nombre)
+const AEROLINEAS_BSP = [
+    'aeromexico', 'aerom', 'american', 'united', 'delta', 
+    'air canada', 'lufthansa', 'iberia', 'copa', 'avianca', 'latam'
+];
+
+// Verificar si una aerolínea es BSP
+function esAerolineaBSP(nombreAerolinea) {
+    if (!nombreAerolinea) return false;
+    const nombre = nombreAerolinea.toLowerCase();
+    return AEROLINEAS_BSP.some(bsp => nombre.includes(bsp));
+}
+
+// Verificar si es específicamente Aeromexico
+function esAeromexico(nombreAerolinea) {
+    if (!nombreAerolinea) return false;
+    const nombre = nombreAerolinea.toLowerCase();
+    return nombre.includes('aerom') || nombre.includes('aeromexico');
+}
+
+// Mostrar/ocultar campos según aerolínea
+function verificarAerolineaBSP() {
+    const aerolineaSelect = document.getElementById('aerolinea_id');
+    const rowBoletoBSP = document.getElementById('row_boleto_bsp');
+    const rowNumeroBoleto = document.getElementById('row_numero_boleto');
+    
+    if (!aerolineaSelect || !rowBoletoBSP) return;
+    
+    const selectedOption = aerolineaSelect.options[aerolineaSelect.selectedIndex];
+    const nombreAerolinea = selectedOption ? selectedOption.text : '';
+    
+    // Campo Boleto PDF - para todas las BSP
+    if (esAerolineaBSP(nombreAerolinea)) {
+        rowBoletoBSP.style.display = 'flex';
+    } else {
+        rowBoletoBSP.style.display = 'none';
+        removerBoleto();
+    }
+    
+    // Campo Número de Boleto - solo para Aeromexico
+    if (rowNumeroBoleto) {
+        if (esAeromexico(nombreAerolinea)) {
+            rowNumeroBoleto.style.display = 'flex';
+        } else {
+            rowNumeroBoleto.style.display = 'none';
+            document.getElementById('numero_boleto').value = '';
+        }
+    }
+}
+
+// Manejar selección de archivo
+document.getElementById('archivo_boleto').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const uploadArea = document.getElementById('uploadBoletoArea');
+    const preview = document.getElementById('boletoPreview');
+    const fileName = document.getElementById('boletoFileName');
+    
+    if (file) {
+        // Validar tamaño (5MB máximo)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('El archivo es muy grande (máximo 5MB)', true);
+            e.target.value = '';
+            return;
+        }
+        
+        // Mostrar preview
+        uploadArea.style.display = 'none';
+        preview.style.display = 'flex';
+        fileName.textContent = file.name;
+    }
+});
+
+// Remover boleto seleccionado
+function removerBoleto() {
+    const input = document.getElementById('archivo_boleto');
+    const uploadArea = document.getElementById('uploadBoletoArea');
+    const preview = document.getElementById('boletoPreview');
+    
+    if (input) input.value = '';
+    if (uploadArea) uploadArea.style.display = 'flex';
+    if (preview) preview.style.display = 'none';
+}
+
+// Agregar evento al select de aerolínea
+document.getElementById('aerolinea_id').addEventListener('change', verificarAerolineaBSP);
+
+// Verificar al cargar la página (por si hay datos precargados)
+document.addEventListener('DOMContentLoaded', verificarAerolineaBSP);
 </script>
 {% endblock %}

@@ -1143,26 +1143,150 @@ def rechazar_por_email(token):
 @main.route('/facturacion')
 @login_required
 def facturacion():
-    """Vista principal de facturación - muestra papeletas pendientes de facturar"""
+    """Vista principal de facturación - muestra papeletas y desgloses BSP pendientes de facturar"""
     # Solo facturación, admin y gerente pueden acceder
     if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
         flash('No tienes permiso para acceder a este módulo.', 'danger')
         return redirect(url_for('main.dashboard'))
     
-    # Papeletas pendientes de facturar (tienen empresa = crédito/facturación)
+    # Diccionarios para traducir fechas al español
+    DIAS_ES = {
+        'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+        'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+    }
+    MESES_ES = {
+        'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 'April': 'Abril',
+        'May': 'Mayo', 'June': 'Junio', 'July': 'Julio', 'August': 'Agosto',
+        'September': 'Septiembre', 'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
+    }
+    
+    def fecha_espanol(fecha):
+        if not fecha:
+            return 'Sin fecha'
+        fecha_str = fecha.strftime('%A, %d de %B %Y')
+        for en, es in DIAS_ES.items():
+            fecha_str = fecha_str.replace(en, es)
+        for en, es in MESES_ES.items():
+            fecha_str = fecha_str.replace(en, es)
+        return fecha_str
+    
+    # 1. Papeletas pendientes de facturar (Low Cost con empresa = crédito)
     papeletas_pendientes = Papeleta.query.filter(
         Papeleta.estatus_facturacion == 'pendiente',
         Papeleta.empresa_id.isnot(None)  # Solo las que tienen empresa (crédito)
     ).order_by(Papeleta.fecha_venta.desc()).all()
+    
+    # 2. Desgloses BSP pendientes de facturar
+    # Buscar desgloses que:
+    # - Sean de aerolíneas BSP (es_bsp=True) O sean Aeromexico por nombre
+    # - Tengan empresa_id (cliente de facturación/crédito)
+    # - No tengan factura registrada aún (numero_factura es NULL o estatus_facturacion = 'pendiente')
+    desgloses_bsp_pendientes = Desglose.query.join(Aerolinea).filter(
+        db.or_(
+            Aerolinea.es_bsp == True,
+            Aerolinea.nombre.ilike('%aeromexico%'),
+            Aerolinea.nombre.ilike('%aerom%xico%'),
+            Aerolinea.nombre.ilike('%american%'),
+            Aerolinea.nombre.ilike('%united%'),
+            Aerolinea.nombre.ilike('%delta%')
+        ),
+        Desglose.empresa_id.isnot(None),  # Tiene cliente de facturación
+        db.or_(
+            Desglose.estatus_facturacion == 'pendiente',
+            Desglose.estatus_facturacion.is_(None),
+            Desglose.numero_factura.is_(None)
+        )
+    ).order_by(Desglose.fecha_emision.desc()).all()
+    
+    # Crear lista unificada de expedientes pendientes
+    expedientes_pendientes = []
+    
+    # Agregar papeletas
+    for p in papeletas_pendientes:
+        expedientes_pendientes.append({
+            'tipo': 'papeleta',
+            'id': p.id,
+            'folio': p.folio,
+            'fecha': p.fecha_venta,
+            'fecha_display': fecha_espanol(p.fecha_venta),
+            'empresa': p.empresa.nombre_empresa if p.empresa else p.facturar_a,
+            'pasajero': p.solicito,
+            'aerolinea': p.aerolinea.nombre if p.aerolinea else (p.proveedor or 'N/A'),
+            'total': float(p.total or 0),
+            'clave': p.clave_sabre,
+            'tiene_desglose': bool(p.clave_sabre),
+            'tiene_boleto': bool(p.archivo_boleto),
+            'objeto': p
+        })
+    
+    # Agregar desgloses BSP
+    for d in desgloses_bsp_pendientes:
+        expedientes_pendientes.append({
+            'tipo': 'desglose_bsp',
+            'id': d.folio,
+            'folio': f'BSP-{d.folio}',
+            'fecha': d.fecha_emision,
+            'fecha_display': fecha_espanol(d.fecha_emision),
+            'empresa': d.empresa.nombre_empresa if d.empresa else 'N/A',
+            'pasajero': d.pasajero_nombre or 'N/A',
+            'aerolinea': d.aerolinea.nombre if d.aerolinea else 'N/A',
+            'total': float(d.total or 0),
+            'clave': d.clave_reserva,
+            'tiene_desglose': True,  # BSP siempre tiene desglose
+            'tiene_boleto': bool(d.numero_boleto),
+            'objeto': d
+        })
+    
+    # Ordenar por fecha descendente
+    expedientes_pendientes.sort(key=lambda x: x['fecha'] or date.min, reverse=True)
+    
+    # Agrupar por fecha
+    def agrupar_por_fecha(expedientes):
+        grupos = OrderedDict()
+        for exp in expedientes:
+            if exp['fecha']:
+                fecha_key = exp['fecha'].strftime('%Y-%m-%d')
+                fecha_display = exp['fecha_display']
+            else:
+                fecha_key = ''
+                fecha_display = 'Sin fecha'
+            
+            if fecha_key not in grupos:
+                grupos[fecha_key] = {'fecha_display': fecha_display, 'expedientes': []}
+            grupos[fecha_key]['expedientes'].append(exp)
+        
+        return list(grupos.items())
+    
+    expedientes_agrupados = agrupar_por_fecha(expedientes_pendientes)
     
     # Papeletas ya facturadas (para historial)
     papeletas_facturadas = Papeleta.query.filter(
         Papeleta.estatus_facturacion.in_(['facturada', 'aprobada', 'rechazada'])
     ).order_by(Papeleta.fecha_facturacion.desc()).limit(50).all()
     
+    # Desgloses BSP ya facturados
+    desgloses_bsp_facturados = Desglose.query.join(Aerolinea).filter(
+        Aerolinea.es_bsp == True,
+        Desglose.estatus_facturacion.in_(['facturada', 'aprobada', 'rechazada'])
+    ).order_by(Desglose.fecha_facturacion.desc()).limit(50).all()
+    
+    # Obtener desgloses para vincular con papeletas
+    desgloses = Desglose.query.all()
+    desgloses_dict = {}
+    for d in desgloses:
+        if d.clave_sabre:
+            desgloses_dict[d.clave_sabre] = d
+        if d.clave_reserva:
+            desgloses_dict[d.clave_reserva] = d
+    
     return render_template('facturacion.html',
                            papeletas_pendientes=papeletas_pendientes,
-                           papeletas_facturadas=papeletas_facturadas)
+                           desgloses_bsp_pendientes=desgloses_bsp_pendientes,
+                           expedientes_pendientes=expedientes_pendientes,
+                           expedientes_agrupados=expedientes_agrupados,
+                           papeletas_facturadas=papeletas_facturadas,
+                           desgloses_bsp_facturados=desgloses_bsp_facturados,
+                           desgloses_dict=desgloses_dict)
 
 
 @main.route('/facturacion/registrar/<int:id>', methods=['POST'])
@@ -1170,6 +1294,8 @@ def facturacion():
 def registrar_factura(id):
     """Registra la factura para una papeleta"""
     if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No tienes permiso para esta acción.'})
         flash('No tienes permiso para esta acción.', 'danger')
         return redirect(url_for('main.facturacion'))
     
@@ -1179,6 +1305,8 @@ def registrar_factura(id):
     monto_factura = request.form.get('monto_factura', '').strip()
     
     if not numero_factura or not monto_factura:
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Debe ingresar el número y monto de la factura.'})
         flash('Debe ingresar el número y monto de la factura.', 'warning')
         return redirect(url_for('main.facturacion'))
     
@@ -1190,13 +1318,138 @@ def registrar_factura(id):
         papeleta.fecha_facturacion = datetime.utcnow()
         
         db.session.commit()
+        
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True, 
+                'message': f'Factura {numero_factura} registrada correctamente.',
+                'folio': papeleta.folio
+            })
+        
         flash(f'Factura {numero_factura} registrada para papeleta {papeleta.folio}.', 'success')
         
     except Exception as e:
         db.session.rollback()
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'})
         flash(f'Error al registrar factura: {str(e)}', 'danger')
     
     return redirect(url_for('main.facturacion'))
+
+
+@main.route('/facturacion/registrar-bsp/<int:folio>', methods=['POST'])
+@login_required
+def registrar_factura_bsp(folio):
+    """Registra la factura para un desglose BSP"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No tienes permiso para esta acción.'})
+        flash('No tienes permiso para esta acción.', 'danger')
+        return redirect(url_for('main.facturacion'))
+    
+    desglose = Desglose.query.get_or_404(folio)
+    
+    numero_factura = request.form.get('numero_factura', '').strip()
+    monto_factura = request.form.get('monto_factura', '').strip()
+    
+    if not numero_factura or not monto_factura:
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Debe ingresar el número y monto de la factura.'})
+        flash('Debe ingresar el número y monto de la factura.', 'warning')
+        return redirect(url_for('main.facturacion'))
+    
+    try:
+        desglose.numero_factura = numero_factura
+        desglose.monto_factura = float(monto_factura)
+        desglose.estatus_facturacion = 'facturada'
+        desglose.facturada_por_id = current_user.id
+        desglose.fecha_facturacion = datetime.utcnow()
+        
+        db.session.commit()
+        
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True, 
+                'message': f'Factura {numero_factura} registrada correctamente.',
+                'folio': f'BSP-{desglose.folio}'
+            })
+        
+        flash(f'Factura {numero_factura} registrada para desglose BSP-{desglose.folio}.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        if request.args.get('ajax') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+        flash(f'Error al registrar factura: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.facturacion'))
+
+
+@main.route('/desglose/subir-boleto/<int:folio>', methods=['POST'])
+@login_required
+def subir_boleto_desglose(folio):
+    """Sube el PDF del boleto para un desglose BSP"""
+    import os
+    from werkzeug.utils import secure_filename
+    
+    desglose = Desglose.query.get_or_404(folio)
+    
+    if 'archivo_boleto' not in request.files:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        flash('No se seleccionó ningún archivo', 'warning')
+        return redirect(request.referrer or url_for('main.facturacion'))
+    
+    archivo = request.files['archivo_boleto']
+    
+    if archivo.filename == '':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No se seleccionó ningún archivo'})
+        flash('No se seleccionó ningún archivo', 'warning')
+        return redirect(request.referrer or url_for('main.facturacion'))
+    
+    # Validar extensión
+    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+    extension = archivo.filename.rsplit('.', 1)[1].lower() if '.' in archivo.filename else ''
+    
+    if extension not in ALLOWED_EXTENSIONS:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Solo se permiten archivos PDF, PNG, JPG'})
+        flash('Solo se permiten archivos PDF, PNG, JPG', 'warning')
+        return redirect(request.referrer or url_for('main.facturacion'))
+    
+    try:
+        # Crear nombre único para el archivo
+        nombre_archivo = f"bsp_{desglose.folio}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{extension}"
+        nombre_archivo = secure_filename(nombre_archivo)
+        
+        # Ruta de guardado
+        upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads', 'boletos')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        ruta_completa = os.path.join(upload_folder, nombre_archivo)
+        archivo.save(ruta_completa)
+        
+        # Actualizar registro
+        desglose.archivo_boleto = nombre_archivo
+        db.session.commit()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True, 
+                'message': 'Boleto subido correctamente',
+                'archivo': nombre_archivo
+            })
+        
+        flash('Boleto subido correctamente', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+        flash(f'Error al subir boleto: {str(e)}', 'danger')
+    
+    return redirect(request.referrer or url_for('main.facturacion'))
 
 
 @main.route('/revision-facturas')
@@ -4171,7 +4424,9 @@ def api_empresa_esquema(id):
 def guardar_desglose_calculadora():
     """Guarda un desglose desde la calculadora"""
     from flask import current_app
+    from werkzeug.utils import secure_filename
     import sys
+    import os
     
     # Debug: imprimir datos recibidos
     current_app.logger.info("=== DATOS DEL FORMULARIO ===")
@@ -4203,6 +4458,28 @@ def guardar_desglose_calculadora():
         if not empresa_booking:
             return jsonify({'success': False, 'error': 'No hay Empresa Booking configurada'}), 400
         
+        # Procesar archivo de boleto BSP si se subió
+        archivo_boleto_nombre = None
+        if 'archivo_boleto' in request.files:
+            archivo = request.files['archivo_boleto']
+            if archivo and archivo.filename:
+                # Validar extensión
+                ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+                extension = archivo.filename.rsplit('.', 1)[1].lower() if '.' in archivo.filename else ''
+                
+                if extension in ALLOWED_EXTENSIONS:
+                    # Crear nombre único para el archivo
+                    archivo_boleto_nombre = f"bsp_{nuevo_folio}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{extension}"
+                    archivo_boleto_nombre = secure_filename(archivo_boleto_nombre)
+                    
+                    # Ruta de guardado
+                    upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads', 'boletos')
+                    os.makedirs(upload_folder, exist_ok=True)
+                    
+                    ruta_completa = os.path.join(upload_folder, archivo_boleto_nombre)
+                    archivo.save(ruta_completa)
+                    print(f"Archivo boleto guardado: {archivo_boleto_nombre}", file=sys.stderr)
+        
         print(f"Creando desglose...", file=sys.stderr)
         
         nuevo = Desglose(
@@ -4218,8 +4495,10 @@ def guardar_desglose_calculadora():
             cargo_por_servicio=float(request.form.get('cargo_por_servicio') or 0),
             total=float(request.form.get('total') or 0),
             clave_reserva=clave_reserva,
+            clave_sabre=request.form.get('clave_sabre') or None,
             pasajero_nombre=request.form.get('pasajero_nombre') or None,
             ruta=request.form.get('ruta') or None,
+            archivo_boleto=archivo_boleto_nombre,
             usuario_id=current_user.id,
             sucursal_id=current_user.sucursal_id,
             estatus='pendiente',
@@ -4244,13 +4523,6 @@ def guardar_desglose_calculadora():
         error_detail = traceback.format_exc()
         print(f"ERROR: {str(e)}", file=sys.stderr)
         print(f"DETALLE: {error_detail}", file=sys.stderr)
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-        
-    except Exception as e:
-        db.session.rollback()
         return jsonify({
             'success': False,
             'error': str(e)
