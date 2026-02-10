@@ -4,174 +4,70 @@
 
 {% block page_styles %}
 <style>
-.vale-container {
-    max-width: 900px;
+/* Estilos específicos para el vale de entrega */
+.vale-form-container {
+    max-width: 56.25rem;
     margin: 0 auto;
-    padding: 1.5rem;
 }
 
-.vale-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.vale-header {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    padding: 1.5rem;
-    text-align: center;
-}
-
-.vale-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.vale-header p {
-    margin: 0.5rem 0 0;
-    opacity: 0.9;
-    font-size: 0.9rem;
-}
-
-.vale-body {
-    padding: 2rem;
-}
-
-/* Secciones */
-.seccion {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.seccion:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.seccion-titulo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-}
-
-.seccion-titulo i {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+.form-section-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
 }
 
-.seccion-titulo.efectivo i { background: #d1fae5; color: #059669; }
-.seccion-titulo.dolares i { background: #cffafe; color: #0891b2; }
-.seccion-titulo.otros i { background: #fef3c7; color: #d97706; }
-.seccion-titulo.arqueo i { background: #e0e7ff; color: #4f46e5; }
+.form-section-icon.efectivo { background: var(--color-success-light); color: var(--color-success-dark); }
+.form-section-icon.dolares { background: var(--color-info-light); color: var(--color-info-dark); }
+.form-section-icon.otros { background: var(--color-warning-light); color: var(--color-warning-dark); }
+.form-section-icon.arqueo { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
 
-/* Form Grid */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    padding: 0.75rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    outline: none;
-}
-
-.form-group input[type="number"] {
-    font-family: 'Monaco', 'Consolas', monospace;
-    font-weight: 600;
+.input-grande {
+    font-size: var(--text-2xl) !important;
+    padding: 1rem 1.25rem !important;
+    background: var(--color-success-light);
+    border-color: var(--color-success);
+    font-family: var(--font-mono);
     text-align: right;
 }
 
-.input-grande {
-    font-size: 1.5rem !important;
-    padding: 1rem 1.25rem !important;
-    background: #f0fdf4;
-    border-color: #86efac;
-}
-
 .input-dolares {
-    background: #ecfeff;
-    border-color: #67e8f9;
+    background: var(--color-info-light);
+    border-color: var(--color-info);
+    font-family: var(--font-mono);
+    text-align: right;
 }
 
-/* Tipo de Cambio */
 .tipo-cambio-box {
-    background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
-    border: 2px solid #22d3ee;
-    border-radius: 8px;
+    background: linear-gradient(135deg, var(--color-info-light) 0%, rgba(34, 211, 238, 0.2) 100%);
+    border: 0.125rem solid var(--color-info);
+    border-radius: var(--radius-md);
     padding: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-top: var(--space-sm);
 }
 
 .tipo-cambio-box .tc-label {
     font-weight: 600;
-    color: #0e7490;
-}
-
-.tipo-cambio-box input {
-    width: 100px;
-    text-align: center;
-    font-weight: 700;
-    border: none;
-    background: white;
-    padding: 0.5rem;
-    border-radius: 6px;
+    color: var(--color-info-dark);
 }
 
 .equivalente-pesos {
     margin-left: auto;
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 700;
-    color: #059669;
+    color: var(--color-success);
+    font-family: var(--font-mono);
 }
 
-/* Arqueo */
 .arqueo-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
     gap: 0.75rem;
 }
 
@@ -179,48 +75,47 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: var(--bright-snow);
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-md);
     padding: 0.75rem;
 }
 
 .arqueo-item .denominacion {
     font-weight: 700;
-    color: #374151;
+    color: var(--graphite);
     margin-bottom: 0.5rem;
 }
 
 .arqueo-item input {
-    width: 60px;
+    width: 3.75rem;
     text-align: center;
     padding: 0.4rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border: 0.0625rem solid var(--gray-300);
+    border-radius: var(--radius-sm);
     font-weight: 600;
 }
 
 .arqueo-item .subtotal {
-    font-size: 0.75rem;
-    color: #059669;
+    font-size: var(--text-xs);
+    color: var(--color-success);
     margin-top: 0.25rem;
     font-weight: 600;
 }
 
-/* Resumen */
 .resumen-box {
     background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-    color: white;
-    border-radius: 12px;
+    color: var(--white);
+    border-radius: var(--radius-xl);
     padding: 1.5rem;
-    margin-top: 1.5rem;
+    margin-top: var(--space-lg);
 }
 
 .resumen-row {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 0.0625rem solid rgba(255,255,255,0.1);
 }
 
 .resumen-row:last-child {
@@ -228,84 +123,46 @@
 }
 
 .resumen-row.total {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     font-weight: 700;
     padding-top: 1rem;
     margin-top: 0.5rem;
-    border-top: 2px solid rgba(255,255,255,0.2);
+    border-top: 0.125rem solid rgba(255,255,255,0.2);
 }
 
 .resumen-row .valor {
-    font-family: 'Monaco', 'Consolas', monospace;
+    font-family: var(--font-mono);
 }
 
-/* Footer */
-.vale-footer {
-    background: #f9fafb;
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #e5e7eb;
-}
-
-.btn-cancelar {
-    background: #f3f4f6;
-    color: #374151;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-guardar {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
-    padding: 0.75rem 2rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-}
-
-.btn-guardar:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
-}
-
-/* Reporte selector */
 .reporte-selector {
-    background: #eff6ff;
-    border: 2px dashed #3b82f6;
-    border-radius: 8px;
+    background: var(--color-info-light);
+    border: 0.125rem dashed var(--color-info);
+    border-radius: var(--radius-md);
     padding: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-lg);
 }
 
 .reporte-selector label {
-    color: #1e40af;
+    color: var(--color-info-dark);
+    font-weight: 600;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="vale-container">
-    <div class="vale-card">
-        <div class="vale-header">
-            <h1><i class="fas fa-file-invoice-dollar"></i> Vale de Entrega</h1>
-            <p>Cierre de turno - {{ fecha_hoy.strftime('%d de %B de %Y') }}</p>
+<div class="page-container vale-form-container">
+    <!-- Card Principal -->
+    <div class="card">
+        <div class="card-header card-header--primary" style="text-align: center;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-file-invoice-dollar" style="font-size: 1.5rem;"></i>
+                <h1 style="margin: 0; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.125rem;">Vale de Entrega</h1>
+                <p style="margin: 0; opacity: 0.9; font-size: var(--text-sm);">Cierre de turno - {{ fecha_hoy.strftime('%d de %B de %Y') }}</p>
+            </div>
         </div>
 
         <form method="POST" id="formVale">
-            <div class="vale-body">
+            <div class="card-body">
                 
                 <!-- Vincular a Reporte (opcional) -->
                 {% if reportes_disponibles %}
@@ -330,13 +187,13 @@
                 {% endif %}
 
                 <!-- Efectivo Pesos -->
-                <div class="seccion">
-                    <div class="seccion-titulo efectivo">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span>Efectivo en Pesos (MXN)</span>
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="form-section-icon efectivo"><i class="fas fa-money-bill-wave"></i></span>
+                        Efectivo en Pesos (MXN)
                     </div>
                     <div class="form-group">
-                        <label>Monto Total en Pesos</label>
+                        <label for="efectivoPesos">Monto Total en Pesos</label>
                         <input type="number" name="efectivo_pesos" id="efectivoPesos" 
                                step="0.01" value="0" class="input-grande"
                                oninput="calcularTotales()">
@@ -344,23 +201,23 @@
                 </div>
 
                 <!-- Dólares -->
-                <div class="seccion">
-                    <div class="seccion-titulo dolares">
-                        <i class="fas fa-dollar-sign"></i>
-                        <span>Dólares (USD)</span>
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="form-section-icon dolares"><i class="fas fa-dollar-sign"></i></span>
+                        Dólares (USD)
                     </div>
-                    <div class="form-grid">
+                    <div class="form-row">
                         <div class="form-group">
-                            <label>Cantidad en Dólares</label>
+                            <label for="efectivoDolares">Cantidad en Dólares</label>
                             <input type="number" name="efectivo_dolares" id="efectivoDolares" 
                                    step="0.01" value="0" class="input-dolares"
                                    oninput="calcularTotales()">
                         </div>
                         <div class="form-group">
-                            <label>Tipo de Cambio</label>
+                            <label for="tipoCambio">Tipo de Cambio</label>
                             <input type="number" name="tipo_cambio" id="tipoCambio" 
                                    step="0.0001" value="17.50"
-                                   oninput="calcularTotales()">
+                                   oninput="calcularTotales()" style="text-align: right;">
                         </div>
                     </div>
                     <div class="tipo-cambio-box" id="boxEquivalente" style="display: none;">
@@ -369,35 +226,35 @@
                     </div>
                 </div>
 
-                <!-- Otros -->
-                <div class="seccion">
-                    <div class="seccion-titulo otros">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Cheques y Vouchers</span>
+                <!-- Cheques y Vouchers -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="form-section-icon otros"><i class="fas fa-file-alt"></i></span>
+                        Cheques y Vouchers
                     </div>
-                    <div class="form-grid">
+                    <div class="form-row">
                         <div class="form-group">
-                            <label>Cheques</label>
+                            <label for="cheques">Cheques</label>
                             <input type="number" name="cheques" id="cheques" 
                                    step="0.01" value="0"
-                                   oninput="calcularTotales()">
+                                   oninput="calcularTotales()" style="text-align: right;">
                         </div>
                         <div class="form-group">
-                            <label>Vouchers TC (Solo referencia)</label>
+                            <label for="vouchersTc">Vouchers TC (Solo referencia)</label>
                             <input type="number" name="vouchers_tc" id="vouchersTc" 
                                    step="0.01" value="0" 
-                                   style="background: #f3f4f6;">
+                                   style="background: var(--gray-100); text-align: right;">
                         </div>
                     </div>
                 </div>
 
                 <!-- Arqueo Opcional -->
-                <div class="seccion">
-                    <div class="seccion-titulo arqueo">
-                        <i class="fas fa-coins"></i>
-                        <span>Arqueo Detallado (Opcional)</span>
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="form-section-icon arqueo"><i class="fas fa-coins"></i></span>
+                        Arqueo Detallado (Opcional)
                     </div>
-                    <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 1rem;">
+                    <p style="font-size: var(--text-sm); color: var(--gray-500); margin-bottom: 1rem;">
                         Puedes detallar la cantidad de billetes por denominación
                     </p>
                     <div class="arqueo-grid">
@@ -416,10 +273,10 @@
                 </div>
 
                 <!-- Notas -->
-                <div class="seccion">
+                <div class="form-section">
                     <div class="form-group">
-                        <label>Notas / Observaciones</label>
-                        <textarea name="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+                        <label for="notas">Notas / Observaciones</label>
+                        <textarea name="notas" id="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
                     </div>
                 </div>
 
@@ -442,14 +299,13 @@
                         <span class="valor" id="resTotal">$0.00</span>
                     </div>
                 </div>
-
             </div>
 
-            <div class="vale-footer">
-                <a href="{{ url_for('main.lista_entregas') }}" class="btn-cancelar">
+            <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="{{ url_for('main.lista_entregas') }}" class="btn btn--secondary">
                     <i class="fas fa-times"></i> Cancelar
                 </a>
-                <button type="submit" class="btn-guardar">
+                <button type="submit" class="btn btn--success">
                     <i class="fas fa-check"></i> Generar Vale de Entrega
                 </button>
             </div>
@@ -471,7 +327,6 @@ function calcularTotales() {
     var equivalente = dolares * tc;
     var total = efectivo + cheques + equivalente;
     
-    // Mostrar/ocultar equivalente
     var boxEq = document.getElementById('boxEquivalente');
     if (dolares > 0 && tc > 0) {
         boxEq.style.display = 'flex';
@@ -480,7 +335,6 @@ function calcularTotales() {
         boxEq.style.display = 'none';
     }
     
-    // Actualizar resumen
     document.getElementById('resEfectivo').textContent = formatMoney(efectivo);
     document.getElementById('resCheques').textContent = formatMoney(cheques);
     document.getElementById('resDolares').textContent = formatMoney(equivalente);
@@ -494,7 +348,6 @@ function calcularArqueo(input) {
     document.getElementById('sub' + denom).textContent = formatMoney(subtotal);
 }
 
-// Cargar datos de reporte seleccionado
 var selectReporte = document.getElementById('selectReporte');
 if (selectReporte) {
     selectReporte.addEventListener('change', function() {
@@ -510,7 +363,6 @@ if (selectReporte) {
     });
 }
 
-// Calcular al cargar
 calcularTotales();
 </script>
 {% endblock %}

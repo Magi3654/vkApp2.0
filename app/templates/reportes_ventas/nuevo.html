@@ -2,63 +2,67 @@
 
 {% block title %}Nuevo Reporte de Ventas - Kinessia Hub{% endblock %}
 
-{% block page_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_reportes_ventas.css') }}">
-{% endblock %}
-
 {% block content %}
-<div class="reportes-container">
-    <!-- Header -->
+<div class="page-container-narrow">
+    <!-- Page Header Unificado -->
     <div class="page-header">
-        <div class="page-title">
-            <span class="icon"><i class="fas fa-plus-circle"></i></span>
-            <div>
+        <div class="page-header-title">
+            <div class="page-header-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="page-header-text">
                 <h1>Nuevo Reporte de Ventas</h1>
                 <p>Crear reporte diario de ventas</p>
             </div>
         </div>
-        <a href="{{ url_for('main.reportes_ventas') }}" class="btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver
-        </a>
+        <div class="page-header-actions">
+            <a href="{{ url_for('main.reportes_ventas') }}" class="btn btn--secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
     </div>
 
-    <!-- Formulario -->
-    <div class="form-card">
-        <form method="POST" class="form-nuevo-reporte">
-            <div class="form-section">
-                <h3><i class="fas fa-calendar-day"></i> Datos del Reporte</h3>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="fecha">Fecha del Reporte *</label>
-                        <input type="date" id="fecha" name="fecha" value="{{ fecha_hoy }}" required>
-                        <small>Selecciona la fecha de las ventas a reportar</small>
+    <!-- Form Card -->
+    <div class="card">
+        <div class="card-header card-header--primary">
+            <h3><i class="fas fa-calendar-day"></i> Datos del Reporte</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fecha">Fecha del Reporte *</label>
+                            <input type="date" id="fecha" name="fecha" value="{{ fecha_hoy }}" required>
+                            <small>Selecciona la fecha de las ventas a reportar</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="notas">Notas (opcional)</label>
+                            <textarea id="notas" name="notas" rows="3" placeholder="Observaciones o comentarios..."></textarea>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label for="notas">Notas (opcional)</label>
-                        <textarea id="notas" name="notas" rows="3" placeholder="Observaciones o comentarios..."></textarea>
+
+                <!-- Alert Info -->
+                <div class="alert alert--info">
+                    <div class="alert-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="alert-content">
+                        <div class="alert-title">¿Qué sigue?</div>
+                        <p>Después de crear el reporte, podrás agregar las papeletas del día y completar el desglose de ventas.</p>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-info">
-                <i class="fas fa-info-circle"></i>
-                <div>
-                    <strong>¿Qué sigue?</strong>
-                    <p>Después de crear el reporte, podrás agregar las papeletas del día y completar el desglose de ventas.</p>
+                <div class="form-actions">
+                    <a href="{{ url_for('main.reportes_ventas') }}" class="btn btn--secondary">Cancelar</a>
+                    <button type="submit" class="btn btn--success">
+                        <i class="fas fa-plus"></i> Crear Reporte
+                    </button>
                 </div>
-            </div>
-
-            <div class="form-actions">
-                <a href="{{ url_for('main.reportes_ventas') }}" class="btn-cancel">Cancelar</a>
-                <button type="submit" class="btn-submit">
-                    <i class="fas fa-plus"></i> Crear Reporte
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -4,165 +4,14 @@
 
 {% block page_styles %}
 <style>
-.recepcion-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.5rem;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.page-title {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.page-title .icon {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.page-title h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #1f2937;
-}
-
-.page-title p {
-    margin: 0;
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
-/* Stats */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.stat-card .stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-}
-
-.stat-card.pendientes .stat-icon { background: #fef3c7; color: #d97706; }
-.stat-card.custodia .stat-icon { background: #dbeafe; color: #2563eb; }
-.stat-card.monto .stat-icon { background: #d1fae5; color: #059669; }
-
-.stat-card .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1f2937;
-}
-
-.stat-card .stat-label {
-    font-size: 0.85rem;
-    color: #6b7280;
-}
-
-/* Tabla de vales */
-.vales-section {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.section-header {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 1rem 1.5rem;
-    border-bottom: 2px solid #f59e0b;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.section-header i {
-    color: #d97706;
-    font-size: 1.25rem;
-}
-
-.section-header h2 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #92400e;
-}
-
-.section-header .count {
-    margin-left: auto;
-    background: #d97706;
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-.vales-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.vales-table th {
-    background: #f9fafb;
-    padding: 1rem;
-    text-align: left;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #6b7280;
-    font-weight: 600;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.vales-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    vertical-align: middle;
-}
-
-.vales-table tr:hover {
-    background: #f9fafb;
-}
-
+/* Estilos específicos para recepción de vales */
 .folio-badge {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
+    background: linear-gradient(135deg, var(--color-warning-light) 0%, rgba(253, 230, 138, 1) 100%);
+    color: var(--color-warning-dark);
     padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
     display: inline-block;
 }
 
@@ -173,33 +22,33 @@
 }
 
 .agente-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    width: 2.5rem;
+    height: 2.5rem;
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--white);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
 }
 
 .agente-nombre {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--graphite);
 }
 
 .monto-cell {
-    font-family: 'Monaco', 'Consolas', monospace;
+    font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 1.1rem;
-    color: #059669;
+    font-size: var(--text-lg);
+    color: var(--color-success);
 }
 
 .monto-cell.dolares {
-    color: #0891b2;
-    font-size: 0.9rem;
+    color: var(--color-info);
+    font-size: var(--text-sm);
 }
 
 .tiempo-badge {
@@ -207,87 +56,46 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
     font-weight: 500;
 }
 
 .tiempo-badge.reciente {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
 }
 
 .tiempo-badge.espera {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--color-warning-light);
+    color: var(--color-warning-dark);
 }
 
 .tiempo-badge.urgente {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--color-danger-light);
+    color: var(--color-danger-dark);
 }
 
 .btn-recibir {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    color: var(--white);
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    transition: all 0.2s;
+    transition: all var(--transition-base);
 }
 
 .btn-recibir:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.25rem 0.75rem rgba(5, 150, 105, 0.4);
 }
 
-.btn-ver {
-    background: white;
-    color: #6b7280;
-    padding: 0.5rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.btn-ver:hover {
-    border-color: #d1d5db;
-    color: #374151;
-}
-
-.acciones-cell {
-    display: flex;
-    gap: 0.5rem;
-}
-
-/* Empty state */
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: #6b7280;
-}
-
-.empty-state i {
-    font-size: 4rem;
-    color: #d1d5db;
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    margin: 0 0 0.5rem;
-    color: #374151;
-}
-
-/* Modal confirmación */
+/* Modal estilos */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -302,135 +110,90 @@
 }
 
 .modal-content {
-    background: white;
-    border-radius: 16px;
+    background: var(--white);
+    border-radius: var(--radius-xl);
     width: 90%;
-    max-width: 500px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    overflow: hidden;
+    max-width: 28rem;
+    box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.3);
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
-    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+.modal-header h3 { margin: 0; font-size: var(--text-lg); }
 
 .modal-close {
     background: none;
     border: none;
-    color: white;
+    color: var(--white);
     font-size: 1.5rem;
     cursor: pointer;
-    opacity: 0.8;
 }
 
-.modal-close:hover {
-    opacity: 1;
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
+.modal-body { padding: 1.5rem; }
 
 .vale-resumen {
-    background: #f9fafb;
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+    background: var(--bright-snow);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
 .vale-resumen-row {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: 1px dashed #e5e7eb;
+    border-bottom: 0.0625rem dashed var(--gray-300);
 }
 
-.vale-resumen-row:last-child {
-    border-bottom: none;
-    padding-top: 0.75rem;
-    margin-top: 0.5rem;
-    border-top: 2px solid #e5e7eb;
-    font-weight: 700;
-}
+.vale-resumen-row:last-child { border-bottom: none; }
 
-.vale-resumen-row .label {
-    color: #6b7280;
-}
+.vale-resumen-row .label { color: var(--gray-500); }
 
 .vale-resumen-row .value {
     font-weight: 600;
-    color: #1f2937;
+    color: var(--graphite);
 }
 
 .vale-resumen-row .value.total {
-    color: #059669;
-    font-size: 1.25rem;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #374151;
-}
-
-.form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    resize: vertical;
-}
-
-.form-group textarea:focus {
-    border-color: #059669;
-    outline: none;
+    font-size: var(--text-xl);
+    color: var(--color-success);
+    font-family: var(--font-mono);
 }
 
 .confirmacion-check {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    background: #ecfdf5;
-    border: 2px solid #059669;
-    border-radius: 8px;
+    background: var(--color-warning-light);
+    border: 0.125rem solid var(--color-warning);
+    border-radius: var(--radius-md);
     padding: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
 }
 
 .confirmacion-check input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    accent-color: #059669;
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--color-success);
+    margin-top: 0.125rem;
 }
 
 .confirmacion-check label {
-    color: #065f46;
-    font-weight: 500;
-    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--color-warning-dark);
 }
 
 .modal-footer {
     padding: 1rem 1.5rem;
-    background: #f9fafb;
+    background: var(--bright-snow);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
@@ -438,19 +201,19 @@
 
 .btn-cancelar {
     padding: 0.75rem 1.5rem;
-    background: white;
-    border: 2px solid #d1d5db;
-    border-radius: 8px;
+    background: var(--white);
+    border: 0.125rem solid var(--gray-300);
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 500;
 }
 
 .btn-confirmar {
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    color: var(--white);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 600;
     display: flex;
@@ -459,152 +222,158 @@
 }
 
 .btn-confirmar:disabled {
-    background: #9ca3af;
+    background: var(--gray-400);
     cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
-    .vales-table thead { display: none; }
-    .vales-table tr {
+@media (max-width: 48rem) {
+    .data-table thead { display: none; }
+    .data-table tr {
         display: block;
         margin-bottom: 1rem;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        border: 0.0625rem solid var(--alabaster-grey);
+        border-radius: var(--radius-md);
     }
-    .vales-table td {
+    .data-table td {
         display: flex;
         justify-content: space-between;
         padding: 0.75rem 1rem;
     }
-    .vales-table td::before {
+    .data-table td::before {
         content: attr(data-label);
         font-weight: 600;
-        color: #6b7280;
+        color: var(--gray-500);
     }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="recepcion-container">
-    <!-- Header -->
+<div class="page-container">
+    <!-- Page Header Unificado -->
     <div class="page-header">
-        <div class="page-title">
-            <span class="icon"><i class="fas fa-hand-holding-usd"></i></span>
-            <div>
+        <div class="page-header-title">
+            <div class="page-header-icon">
+                <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <div class="page-header-text">
                 <h1>Recepción de Vales</h1>
                 <p>Confirma la recepción física del efectivo</p>
             </div>
         </div>
-        <a href="{{ url_for('main.lista_entregas') }}" class="btn-ver">
-            <i class="fas fa-list"></i> Ver Todas las Entregas
-        </a>
+        <div class="page-header-actions">
+            <a href="{{ url_for('main.lista_entregas') }}" class="btn btn--secondary">
+                <i class="fas fa-list"></i> Ver Todas las Entregas
+            </a>
+        </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-row">
-        <div class="stat-card pendientes">
-            <div class="stat-icon"><i class="fas fa-clock"></i></div>
-            <div>
-                <div class="stat-value">{{ vales_pendientes|length }}</div>
-                <div class="stat-label">Pendientes de Recibir</div>
-            </div>
+    <!-- Stats Grid Unificado -->
+    <div class="stats-grid">
+        <div class="stat-card stat-card--warning">
+            <div class="stat-card-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-card-value">{{ vales_pendientes|length }}</div>
+            <div class="stat-card-label">Pendientes de Recibir</div>
         </div>
-        <div class="stat-card monto">
-            <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
-            <div>
-                <div class="stat-value">${{ '{:,.0f}'.format(total_pendiente) }}</div>
-                <div class="stat-label">Total por Recibir</div>
-            </div>
+        <div class="stat-card stat-card--success">
+            <div class="stat-card-icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="stat-card-value">${{ '{:,.0f}'.format(total_pendiente) }}</div>
+            <div class="stat-card-label">Total por Recibir</div>
         </div>
-        <div class="stat-card custodia">
-            <div class="stat-icon"><i class="fas fa-box"></i></div>
-            <div>
-                <div class="stat-value">{{ en_custodia }}</div>
-                <div class="stat-label">En Mi Custodia</div>
-            </div>
+        <div class="stat-card stat-card--info">
+            <div class="stat-card-icon"><i class="fas fa-box"></i></div>
+            <div class="stat-card-value">{{ en_custodia }}</div>
+            <div class="stat-card-label">En Mi Custodia</div>
         </div>
     </div>
 
     <!-- Tabla de Vales Pendientes -->
-    <div class="vales-section">
-        <div class="section-header">
-            <i class="fas fa-inbox"></i>
-            <h2>Vales Pendientes de Recepción</h2>
-            <span class="count">{{ vales_pendientes|length }}</span>
+    <div class="card">
+        <div class="card-header" style="background: linear-gradient(135deg, var(--color-warning-light) 0%, rgba(253, 230, 138, 1) 100%); border-bottom: 0.125rem solid var(--color-warning);">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-inbox" style="color: var(--color-warning-dark);"></i>
+                <h3 style="margin: 0; color: var(--color-warning-dark);">Vales Pendientes de Recepción</h3>
+            </div>
+            <span class="badge badge--warning" style="margin-left: auto;">{{ vales_pendientes|length }}</span>
         </div>
 
-        {% if vales_pendientes %}
-        <table class="vales-table">
-            <thead>
-                <tr>
-                    <th>Folio</th>
-                    <th>Agente</th>
-                    <th>Fecha</th>
-                    <th>Efectivo MXN</th>
-                    <th>Dólares</th>
-                    <th>Total Físico</th>
-                    <th>Tiempo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for vale in vales_pendientes %}
-                <tr>
-                    <td data-label="Folio">
-                        <span class="folio-badge">{{ vale.folio }}</span>
-                    </td>
-                    <td data-label="Agente">
-                        <div class="agente-info">
-                            <div class="agente-avatar">
-                                {{ vale.agente.nombre[0] if vale.agente else '?' }}
-                            </div>
-                            <span class="agente-nombre">{{ vale.agente.nombre if vale.agente else '---' }}</span>
-                        </div>
-                    </td>
-                    <td data-label="Fecha">{{ vale.fecha.strftime('%d/%m/%Y') }}</td>
-                    <td data-label="Efectivo" class="monto-cell">
-                        ${{ '{:,.2f}'.format(vale.efectivo_pesos|float) }}
-                    </td>
-                    <td data-label="Dólares">
-                        {% if vale.efectivo_dolares > 0 %}
-                        <span class="monto-cell dolares">${{ '{:,.2f}'.format(vale.efectivo_dolares|float) }} USD</span>
-                        {% else %}
-                        <span style="color: #9ca3af;">-</span>
-                        {% endif %}
-                    </td>
-                    <td data-label="Total" class="monto-cell">
-                        ${{ '{:,.2f}'.format(vale.total_fisico|float) }}
-                    </td>
-                    <td data-label="Tiempo">
-                        {% set horas = ((now - vale.fecha_hora_creacion).total_seconds() / 3600)|int if vale.fecha_hora_creacion else 0 %}
-                        {% if horas < 2 %}
-                        <span class="tiempo-badge reciente"><i class="fas fa-check"></i> Reciente</span>
-                        {% elif horas < 8 %}
-                        <span class="tiempo-badge espera"><i class="fas fa-clock"></i> {{ horas }}h</span>
-                        {% else %}
-                        <span class="tiempo-badge urgente"><i class="fas fa-exclamation-triangle"></i> {{ horas }}h</span>
-                        {% endif %}
-                    </td>
-                    <td data-label="Acciones" class="acciones-cell">
-                        <button type="button" class="btn-recibir" onclick="mostrarModalRecibir({{ vale.id }}, '{{ vale.folio }}', '{{ vale.agente.nombre if vale.agente else '---' }}', {{ vale.efectivo_pesos|float }}, {{ vale.efectivo_dolares|float }}, {{ vale.total_fisico|float }})">
-                            <i class="fas fa-check"></i> Recibir
-                        </button>
-                        <a href="{{ url_for('main.ver_entrega', id=vale.id) }}" class="btn-ver">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-inbox"></i>
-            <h3>No hay vales pendientes</h3>
-            <p>Todos los vales han sido recibidos</p>
+        <div class="card-body" style="padding: 0;">
+            {% if vales_pendientes %}
+            <div class="data-table-container" style="border-radius: 0;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Agente</th>
+                            <th>Fecha</th>
+                            <th>Efectivo MXN</th>
+                            <th>Dólares</th>
+                            <th>Total Físico</th>
+                            <th>Tiempo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vale in vales_pendientes %}
+                        <tr>
+                            <td data-label="Folio">
+                                <span class="folio-badge">{{ vale.folio }}</span>
+                            </td>
+                            <td data-label="Agente">
+                                <div class="agente-info">
+                                    <div class="agente-avatar">
+                                        {{ vale.agente.nombre[0] if vale.agente else '?' }}
+                                    </div>
+                                    <span class="agente-nombre">{{ vale.agente.nombre if vale.agente else '---' }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Fecha">{{ vale.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td data-label="Efectivo" class="monto-cell">
+                                ${{ '{:,.2f}'.format(vale.efectivo_pesos|float) }}
+                            </td>
+                            <td data-label="Dólares">
+                                {% if vale.efectivo_dolares > 0 %}
+                                <span class="monto-cell dolares">${{ '{:,.2f}'.format(vale.efectivo_dolares|float) }} USD</span>
+                                {% else %}
+                                <span style="color: var(--gray-400);">-</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Total" class="monto-cell">
+                                ${{ '{:,.2f}'.format(vale.total_fisico|float) }}
+                            </td>
+                            <td data-label="Tiempo">
+                                {% set horas = ((now - vale.fecha_hora_creacion).total_seconds() / 3600)|int if vale.fecha_hora_creacion else 0 %}
+                                {% if horas < 2 %}
+                                <span class="tiempo-badge reciente"><i class="fas fa-check"></i> Reciente</span>
+                                {% elif horas < 8 %}
+                                <span class="tiempo-badge espera"><i class="fas fa-clock"></i> {{ horas }}h</span>
+                                {% else %}
+                                <span class="tiempo-badge urgente"><i class="fas fa-exclamation-triangle"></i> {{ horas }}h</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Acciones">
+                                <div class="action-buttons">
+                                    <button type="button" class="btn-recibir" onclick="mostrarModalRecibir({{ vale.id }}, '{{ vale.folio }}', '{{ vale.agente.nombre if vale.agente else '---' }}', {{ vale.efectivo_pesos|float }}, {{ vale.efectivo_dolares|float }}, {{ vale.total_fisico|float }})">
+                                        <i class="fas fa-check"></i> Recibir
+                                    </button>
+                                    <a href="{{ url_for('main.ver_entrega', id=vale.id) }}" class="btn-action btn-action--view" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 3rem;">
+                <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+                <div class="empty-state-title">No hay vales pendientes</div>
+                <p class="empty-state-description">Todos los vales han sido recibidos</p>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
 
@@ -691,12 +460,10 @@ function validarFormulario() {
     document.getElementById('btnConfirmar').disabled = !checked;
 }
 
-// Cerrar modal con ESC
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') cerrarModal();
 });
 
-// Cerrar modal al hacer clic fuera
 document.getElementById('modalRecibir').addEventListener('click', function(e) {
     if (e.target === this) cerrarModal();
 });

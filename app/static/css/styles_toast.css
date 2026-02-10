@@ -1,6 +1,7 @@
 /* =============================================================================
    NOTIFICACIONES TOAST - Kinessia Hub
    Sistema de notificaciones contextual con paleta corporativa
+   Usa variables del styles.css maestro
    ============================================================================= */
 
 /* === CONTENEDOR DE NOTIFICACIONES === */
@@ -27,14 +28,14 @@
     background: var(--white);
     box-shadow: var(--shadow-xl);
     pointer-events: auto;
-    animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     position: relative;
     overflow: hidden;
     border-left: 0.25rem solid var(--gray-500);
 }
 
 /* === ANIMACIONES === */
-@keyframes slideIn {
+@keyframes toastSlideIn {
     from {
         transform: translateX(120%);
         opacity: 0;
@@ -46,10 +47,10 @@
 }
 
 .toast.toast-exit {
-    animation: slideOut 0.3s ease-in forwards;
+    animation: toastSlideOut 0.3s ease-in forwards;
 }
 
-@keyframes slideOut {
+@keyframes toastSlideOut {
     from {
         transform: translateX(0);
         opacity: 1;
@@ -68,10 +69,10 @@
     height: 0.1875rem;
     background: currentColor;
     opacity: 0.3;
-    animation: progress 5s linear forwards;
+    animation: toastProgress 5s linear forwards;
 }
 
-@keyframes progress {
+@keyframes toastProgress {
     from { width: 100%; }
     to { width: 0%; }
 }
@@ -137,7 +138,7 @@
 
 /* === TIPOS DE TOAST === */
 
-/* Success - Verde */
+/* Success - Verde Kinessia */
 .toast-success {
     border-left-color: var(--color-success);
 }
@@ -151,7 +152,7 @@
     background: var(--color-success);
 }
 
-/* Danger/Error - Rojo */
+/* Danger/Error - Rojo Kinessia */
 .toast-danger,
 .toast-error {
     border-left-color: var(--brick-ember);
@@ -168,7 +169,7 @@
     background: var(--brick-ember);
 }
 
-/* Warning - Amarillo */
+/* Warning - Amarillo Kinessia */
 .toast-warning {
     border-left-color: var(--color-warning);
 }
@@ -182,7 +183,7 @@
     background: var(--color-warning);
 }
 
-/* Info - Azul */
+/* Info - Azul Kinessia */
 .toast-info {
     border-left-color: var(--color-info);
 }
@@ -209,46 +210,15 @@
     width: calc(100% - 2.5rem);
 }
 
-.alert {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-xl);
-    background: var(--white);
-    box-shadow: var(--shadow-xl);
-    animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    position: relative;
-    border-left: 0.25rem solid var(--gray-500);
-    font-size: var(--text-sm);
-}
+/* Nota: .alert ya está definido en styles.css maestro */
+/* Aquí solo agregamos estilos específicos para flash messages */
 
-.alert-success {
-    border-left-color: var(--color-success);
-    background: linear-gradient(135deg, var(--color-success-light) 0%, rgba(209, 231, 221, 0.5) 100%);
-    color: var(--color-success-dark);
-}
-
-.alert-danger {
-    border-left-color: var(--brick-ember);
-    background: linear-gradient(135deg, var(--status-danger-bg) 0%, rgba(248, 215, 218, 0.5) 100%);
-    color: var(--oxblood);
-}
-
-.alert-warning {
-    border-left-color: var(--color-warning);
-    background: linear-gradient(135deg, var(--status-warning-bg) 0%, rgba(255, 243, 205, 0.5) 100%);
-    color: var(--color-warning-dark);
-}
-
-.alert-info {
-    border-left-color: var(--color-info);
-    background: linear-gradient(135deg, var(--status-info-bg) 0%, rgba(207, 244, 252, 0.5) 100%);
-    color: var(--color-info-dark);
+.flash-messages .alert {
+    animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 /* === RESPONSIVE === */
-@media (max-width: 480px) {
+@media (max-width: 30rem) {
     .toast-container {
         top: 0.625rem;
         right: 0.625rem;
@@ -260,7 +230,7 @@
         padding: 0.875rem 1rem;
     }
     
-    @keyframes slideIn {
+    @keyframes toastSlideIn {
         from {
             transform: translateY(-100%);
             opacity: 0;
@@ -271,7 +241,7 @@
         }
     }
     
-    @keyframes slideOut {
+    @keyframes toastSlideOut {
         from {
             transform: translateY(0);
             opacity: 1;

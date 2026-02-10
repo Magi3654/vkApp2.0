@@ -1,23 +1,27 @@
 {% extends "base.html" %}
 
-{% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylestarjetas.css') }}">
-{% endblock %}
+{% block title %}Tarjetas Corporativas - Kinessia Hub{% endblock %}
 
 {% block content %}
 <div class="crud-container">
     <div class="page-header">
-        <h2>💳 Tarjetas Corporativas</h2>
+        <div class="page-title">
+            <div class="icon"><i class="fas fa-credit-card"></i></div>
+            <div>
+                <h1>Tarjetas Corporativas</h1>
+                <p>Gestión de tarjetas de crédito para operaciones</p>
+            </div>
+        </div>
     </div>
     
     <!-- Formulario para nueva tarjeta -->
-    <div class="card">
+    <div class="card" style="margin-bottom: 2rem;">
         <div class="card-header">
-            <h3>Registrar Nueva Tarjeta</h3>
+            <h3><i class="fas fa-plus-circle"></i> Registrar Nueva Tarjeta</h3>
         </div>
         <div class="card-body">
             <form action="{{ url_for('main.nueva_tarjeta') }}" method="POST">
-                <div class="form-row">
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="numero_tarjeta">Número/Terminación *</label>
                         <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
@@ -34,9 +38,7 @@
                         <label for="banco">Banco</label>
                         <input type="text" id="banco" name="banco" placeholder="Ej: Banamex">
                     </div>
-                </div>
-                
-                <div class="form-row">
+                    
                     <div class="form-group">
                         <label for="titular">Titular</label>
                         <input type="text" id="titular" name="titular" 
@@ -55,20 +57,22 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn-submit">💾 Guardar Tarjeta</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Tarjeta
+                    </button>
                 </div>
             </form>
         </div>
     </div>
     
     <!-- Lista de tarjetas -->
-    <div class="table-container">
-        <div class="card">
-            <div class="card-header">
-                <h3>Tarjetas Registradas</h3>
-            </div>
-            <div class="card-body">
-                {% if tarjetas %}
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-list"></i> Tarjetas Registradas</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if tarjetas %}
+            <div class="table-container" style="border: none; box-shadow: none;">
                 <table>
                     <thead>
                         <tr>
@@ -83,14 +87,14 @@
                     <tbody>
                         {% for tarjeta in tarjetas %}
                         <tr>
-                            <td><strong>{{ tarjeta.numero_tarjeta }}</strong></td>
+                            <td><strong class="folio">{{ tarjeta.numero_tarjeta }}</strong></td>
                             <td>{{ tarjeta.nombre_tarjeta }}</td>
                             <td>{{ tarjeta.banco or '-' }}</td>
                             <td>
                                 {% if tarjeta.sucursal %}
                                     <span class="badge badge-info">{{ tarjeta.sucursal.nombre }}</span>
                                 {% else %}
-                                    <span class="badge">Sin asignar</span>
+                                    <span class="badge badge-secondary">Sin asignar</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -100,23 +104,31 @@
                                     <span class="badge badge-danger">Inactiva</span>
                                 {% endif %}
                             </td>
-                            <td class="actions">
-                                <a href="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" 
-                                   class="btn-sm btn-edit">✏️ Editar</a>
-                                <a href="{{ url_for('main.eliminar_tarjeta', id=tarjeta.id) }}" 
-                                   class="btn-sm btn-delete"
-                                   onclick="return confirm('¿Eliminar esta tarjeta?')">🗑️</a>
+                            <td>
+                                <div class="actions">
+                                    <a href="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" 
+                                       class="btn-accion btn-edit" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('main.eliminar_tarjeta', id=tarjeta.id) }}" 
+                                       class="btn-accion btn-delete"
+                                       onclick="return confirm('¿Eliminar esta tarjeta?')" title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                {% else %}
-                <div class="empty-state">
-                    <p>No hay tarjetas registradas. ¡Agrega la primera!</p>
-                </div>
-                {% endif %}
             </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-credit-card"></i>
+                <h3>Sin tarjetas registradas</h3>
+                <p>¡Agrega la primera tarjeta usando el formulario de arriba!</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

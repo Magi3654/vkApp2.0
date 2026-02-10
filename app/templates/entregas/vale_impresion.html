@@ -7,58 +7,81 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --oxblood: #990100;
+            --brick-ember: #b90504;
+            --graphite: #333333;
+        }
+        
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Noto Sans Display', 'Segoe UI', Arial, sans-serif;
             font-size: 11pt;
-            color: #333;
-            padding: 20px;
-            max-width: 400px;
+            color: var(--graphite);
+            padding: 1.25rem;
+            max-width: 25rem;
             margin: 0 auto;
         }
         
         .vale {
-            border: 2px solid #333;
-            padding: 20px;
+            border: 0.125rem solid var(--graphite);
+            padding: 1.25rem;
+            border-radius: 0.5rem;
         }
         
         .header {
             text-align: center;
-            border-bottom: 2px dashed #333;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
+            border-bottom: 0.125rem dashed var(--graphite);
+            padding-bottom: 0.9375rem;
+            margin-bottom: 0.9375rem;
+        }
+        
+        .header .logo {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
         }
         
         .header h1 {
-            font-size: 18pt;
+            font-size: 1.125rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 0.125rem;
+            color: var(--oxblood);
         }
         
         .header .sucursal {
-            font-size: 9pt;
+            font-size: 0.5625rem;
             color: #666;
-            margin-top: 5px;
+            margin-top: 0.3125rem;
         }
         
         .header .folio {
-            font-size: 14pt;
+            font-size: 0.875rem;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 0.625rem;
             background: #f0f0f0;
-            padding: 5px 10px;
+            padding: 0.3125rem 0.625rem;
             display: inline-block;
+            border-radius: 0.25rem;
         }
         
         .header .fecha {
-            font-size: 10pt;
-            margin-top: 8px;
+            font-size: 0.625rem;
+            margin-top: 0.5rem;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dotted #ccc;
+            padding: 0.5rem 0;
+            border-bottom: 0.0625rem dotted #ccc;
         }
         
         .info-row:last-child {
@@ -68,6 +91,8 @@
         .info-row .label {
             font-weight: bold;
             color: #666;
+            font-size: 0.625rem;
+            text-transform: uppercase;
         }
         
         .info-row .valor {
@@ -76,36 +101,36 @@
         }
         
         .info-row.total {
-            font-size: 14pt;
-            border-top: 2px solid #333;
-            border-bottom: 2px solid #333;
-            margin-top: 10px;
-            padding: 12px 0;
+            font-size: 0.875rem;
+            border-top: 0.125rem solid var(--graphite);
+            border-bottom: 0.125rem solid var(--graphite);
+            margin-top: 0.625rem;
+            padding: 0.75rem 0;
         }
         
         .info-row.total .valor {
-            color: #c00;
+            color: var(--oxblood);
         }
         
         .seccion {
-            margin: 15px 0;
+            margin: 0.9375rem 0;
         }
         
         .seccion-titulo {
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 0.625rem;
             text-transform: uppercase;
             color: #666;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 4px;
+            margin-bottom: 0.5rem;
+            border-bottom: 0.0625rem solid #ccc;
+            padding-bottom: 0.25rem;
         }
         
         .firma-box {
-            margin-top: 30px;
+            margin-top: 1.875rem;
             display: flex;
             justify-content: space-between;
-            gap: 20px;
+            gap: 1.25rem;
         }
         
         .firma {
@@ -114,43 +139,53 @@
         }
         
         .firma .linea {
-            border-top: 1px solid #333;
-            margin-top: 50px;
-            padding-top: 5px;
+            border-top: 0.0625rem solid var(--graphite);
+            margin-top: 3.125rem;
+            padding-top: 0.3125rem;
         }
         
         .firma .nombre {
-            font-size: 9pt;
+            font-size: 0.5625rem;
             font-weight: bold;
         }
         
         .firma .cargo {
-            font-size: 8pt;
+            font-size: 0.5rem;
             color: #666;
         }
         
         .footer {
-            margin-top: 20px;
+            margin-top: 1.25rem;
             text-align: center;
-            font-size: 8pt;
+            font-size: 0.5rem;
             color: #999;
-            border-top: 1px dashed #ccc;
-            padding-top: 10px;
+            border-top: 0.0625rem dashed #ccc;
+            padding-top: 0.625rem;
         }
         
-        .no-print { margin-top: 20px; text-align: center; }
+        .no-print { 
+            margin-top: 1.25rem; 
+            text-align: center; 
+        }
+        
         .no-print button {
-            padding: 10px 30px;
-            font-size: 12pt;
-            background: #333;
+            padding: 0.625rem 1.875rem;
+            font-size: 0.75rem;
+            background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
             color: white;
             border: none;
             cursor: pointer;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .no-print button:hover {
+            opacity: 0.9;
         }
         
         @media print {
             body { padding: 0; }
-            .vale { border: 1px solid #000; }
+            .vale { border: 0.0625rem solid #000; }
             .no-print { display: none; }
         }
     </style>
@@ -158,6 +193,7 @@
 <body>
     <div class="vale">
         <div class="header">
+            <div class="logo">VK</div>
             <h1>Vale de Entrega</h1>
             <div class="sucursal">Viajes Kinessia - Sucursal Matriz</div>
             <div class="folio">{{ entrega.folio }}</div>
@@ -249,7 +285,9 @@
     </div>
     
     <div class="no-print">
-        <button onclick="window.print()">🖨️ Imprimir Vale</button>
+        <button onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir Vale
+        </button>
     </div>
 </body>
 </html>

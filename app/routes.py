@@ -131,7 +131,10 @@ def dashboard():
         mi_efectivo = db.session.query(func.sum(Papeleta.total)).filter(
             Papeleta.usuario_id == current_user.id,
             Papeleta.fecha_venta == fecha_hoy,
-            Papeleta.forma_pago.ilike('%efectivo%')
+            db.or_(
+                Papeleta.forma_pago.ilike('%contado%'),
+                Papeleta.forma_pago.ilike('%efectivo%')
+            )
         ).scalar()
         context['mi_efectivo_hoy'] = float(mi_efectivo or 0)
     except Exception as e:
@@ -159,7 +162,7 @@ def dashboard():
         context['papeletas_urgentes'] = len([p for p in mis_pendientes if p.dias > 3])
         context['mi_efectivo_pendiente'] = sum([
             float(p.total or 0) for p in mis_pendientes 
-            if p.forma_pago and 'efectivo' in p.forma_pago.lower()
+            if p.forma_pago and ('contado' in p.forma_pago.lower() or 'efectivo' in p.forma_pago.lower())
         ])
     except Exception as e:
         print(f"Error papeletas pendientes: {e}")
@@ -182,19 +185,27 @@ def dashboard():
     
     if current_user.es_admin():
         try:
+            # Papeletas pendientes = sin reporte de venta asignado Y de días anteriores
             context['total_papeletas_pendientes'] = Papeleta.query.filter(
                 Papeleta.fecha_venta < fecha_hoy,
-                Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30)
+                Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+                Papeleta.reporte_venta_id.is_(None)
             ).count()
         except Exception as e:
             print(f"Error total pendientes: {e}")
             db.session.rollback()
         
         try:
+            # Efectivo pendiente = papeletas en CONTADO sin reporte
             total_efec = db.session.query(func.sum(Papeleta.total)).filter(
                 Papeleta.fecha_venta < fecha_hoy,
                 Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
-                Papeleta.forma_pago.ilike('%efectivo%')
+                Papeleta.reporte_venta_id.is_(None),
+                db.or_(
+                    Papeleta.forma_pago.ilike('%contado%'),
+                    Papeleta.forma_pago.ilike('%efectivo%'),
+                    Papeleta.forma_pago == 'Contado'
+                )
             ).scalar()
             context['total_efectivo_pendiente'] = float(total_efec or 0)
         except Exception as e:
@@ -233,7 +244,11 @@ def dashboard():
             
             efec_hoy = db.session.query(func.sum(Papeleta.total)).filter(
                 Papeleta.fecha_venta == fecha_hoy,
-                Papeleta.forma_pago.ilike('%efectivo%')
+                db.or_(
+                    Papeleta.forma_pago.ilike('%contado%'),
+                    Papeleta.forma_pago.ilike('%efectivo%'),
+                    Papeleta.forma_pago == 'Contado'
+                )
             ).scalar()
             context['total_efectivo_hoy'] = float(efec_hoy or 0)
         except Exception as e:
@@ -260,17 +275,25 @@ def dashboard():
                         Papeleta.fecha_venta == fecha_hoy
                     ).count()
                     
+                    # Pendientes = sin reporte de venta asignado
                     paps_pend = Papeleta.query.filter(
                         Papeleta.usuario_id == agente.id,
                         Papeleta.fecha_venta < fecha_hoy,
-                        Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30)
+                        Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
+                        Papeleta.reporte_venta_id.is_(None)
                     ).count()
                     
+                    # Efectivo pendiente del agente (sin reporte) - CONTADO
                     efec = db.session.query(func.sum(Papeleta.total)).filter(
                         Papeleta.usuario_id == agente.id,
                         Papeleta.fecha_venta < fecha_hoy,
                         Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
-                        Papeleta.forma_pago.ilike('%efectivo%')
+                        Papeleta.reporte_venta_id.is_(None),
+                        db.or_(
+                            Papeleta.forma_pago.ilike('%contado%'),
+                            Papeleta.forma_pago.ilike('%efectivo%'),
+                            Papeleta.forma_pago == 'Contado'
+                        )
                     ).scalar()
                     
                     resumen.append({
@@ -288,6 +311,67 @@ def dashboard():
         except Exception as e:
             print(f"Error resumen agentes: {e}")
             db.session.rollback()
+        
+        # ============================================================
+        # DATOS DE FACTURACIÓN PARA DASHBOARD
+        # ============================================================
+        try:
+            # Papeletas pendientes de facturar (Low Cost con empresa)
+            context['papeletas_facturacion_pendientes'] = Papeleta.query.filter(
+                Papeleta.empresa_id.isnot(None),
+                Papeleta.numero_factura.is_(None)
+            ).count()
+        except Exception as e:
+            print(f"Error papeletas facturacion: {e}")
+            db.session.rollback()
+            context['papeletas_facturacion_pendientes'] = 0
+        
+        try:
+            # Desgloses BSP pendientes de facturar
+            desgloses_bsp = Desglose.query.join(Aerolinea).filter(
+                Desglose.empresa_id.isnot(None),
+                db.or_(
+                    Desglose.numero_factura.is_(None),
+                    Desglose.estatus_facturacion.in_(['pendiente', None])
+                ),
+                db.or_(
+                    Aerolinea.es_bsp == True,
+                    Aerolinea.nombre.ilike('%aeromexico%'),
+                    Aerolinea.nombre.ilike('%american%'),
+                    Aerolinea.nombre.ilike('%united%'),
+                    Aerolinea.nombre.ilike('%delta%')
+                )
+            ).count()
+            context['desgloses_bsp_pendientes'] = desgloses_bsp
+        except Exception as e:
+            print(f"Error desgloses BSP: {e}")
+            db.session.rollback()
+            context['desgloses_bsp_pendientes'] = 0
+        
+        try:
+            # Total facturación pendiente
+            context['facturacion_pendiente'] = context.get('papeletas_facturacion_pendientes', 0) + context.get('desgloses_bsp_pendientes', 0)
+        except:
+            context['facturacion_pendiente'] = 0
+        
+        try:
+            # Desgloses de hoy
+            context['desgloses_hoy'] = Desglose.query.filter(
+                Desglose.fecha_emision == fecha_hoy
+            ).count()
+        except Exception as e:
+            print(f"Error desgloses hoy: {e}")
+            context['desgloses_hoy'] = 0
+        
+        try:
+            # Últimas facturas registradas
+            context['ultimas_facturas'] = Papeleta.query.filter(
+                Papeleta.numero_factura.isnot(None)
+            ).order_by(Papeleta.fecha_facturacion.desc()).limit(5).all()
+        except Exception as e:
+            print(f"Error ultimas facturas: {e}")
+            context['ultimas_facturas'] = []
+
     # Papeletas pendientes del usuario
 
     papeletas_pendientes = Papeleta.query.filter(

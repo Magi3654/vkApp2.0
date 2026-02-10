@@ -1,89 +1,90 @@
 {% extends "base.html" %}
 
-{% block page_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesautorizaciones.css') }}">
-{% endblock %}
+{% block title %}Autorizaciones - Kinessia Hub{% endblock %}
 
 {% block content %}
 <div class="crud-container">
     <div class="page-header">
-        <h2>
-            🔐 Autorizaciones
-            {% if es_director %}
-                {% set pendientes = autorizaciones|selectattr('estatus', 'equalto', 'pendiente')|list|length %}
-                {% if pendientes > 0 %}
-                    <span class="badge-count">{{ pendientes }} pendientes</span>
-                {% endif %}
-            {% endif %}
-        </h2>
+        <div class="page-title">
+            <div class="icon"><i class="fas fa-key"></i></div>
+            <div>
+                <h1>Autorizaciones
+                    {% if es_director %}
+                        {% set pendientes = autorizaciones|selectattr('estatus', 'equalto', 'pendiente')|list|length %}
+                        {% if pendientes > 0 %}
+                            <span class="badge badge-danger" style="font-size: 0.75rem; margin-left: 0.5rem;">{{ pendientes }} pendientes</span>
+                        {% endif %}
+                    {% endif %}
+                </h1>
+                <p>
+                    {% if es_director %}
+                        Como Director, puedes aprobar o rechazar las solicitudes de uso de tarjetas de otras sucursales.
+                    {% else %}
+                        Aquí puedes ver el estado de tus solicitudes de autorización.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
     </div>
-    
-    {% if es_director %}
-        <p style="color: #666; margin-bottom: 2rem;">
-            Como Director, puedes aprobar o rechazar las solicitudes de uso de tarjetas de otras sucursales.
-        </p>
-    {% else %}
-        <p style="color: #666; margin-bottom: 2rem;">
-            Aquí puedes ver el estado de tus solicitudes de autorización.
-        </p>
-    {% endif %}
     
     {% if autorizaciones %}
         {% for auth in autorizaciones %}
-        <div class="card auth-card {{ auth.estatus }}">
-            <div class="card-header">
-                <div>
-                    <strong>Solicitud #{{ auth.id }}</strong>
-                    <span class="time-ago">
-                        - {{ auth.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+        <div class="card" style="margin-bottom: 1rem; border-left: 4px solid {% if auth.estatus == 'pendiente' %}var(--kn-warning){% elif auth.estatus == 'aprobada' %}var(--kn-success){% else %}var(--kn-danger){% endif %};">
+            <div class="card-header" style="background: var(--kn-gray-50); padding: 1rem 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div>
+                        <strong style="color: var(--kn-graphite);">Solicitud #{{ auth.id }}</strong>
+                        <span style="font-size: 0.85rem; color: var(--kn-text-muted); margin-left: 0.5rem;">
+                            - {{ auth.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                        </span>
+                    </div>
+                    <span class="badge badge-{{ 'warning' if auth.estatus == 'pendiente' else ('success' if auth.estatus == 'aprobada' else 'danger') }}">
+                        {{ auth.estatus|upper }}
                     </span>
                 </div>
-                <span class="badge badge-{{ 'warning' if auth.estatus == 'pendiente' else ('success' if auth.estatus == 'aprobada' else 'danger') }}">
-                    {{ auth.estatus|upper }}
-                </span>
             </div>
             <div class="card-body">
-                <div class="auth-info">
-                    <div class="auth-info-item">
-                        <label>Solicitante</label>
-                        <span>{{ auth.solicitante.nombre }}</span>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--kn-text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Solicitante</label>
+                        <span style="font-weight: 600;">{{ auth.solicitante.nombre }}</span>
                     </div>
-                    <div class="auth-info-item">
-                        <label>Tarjeta</label>
-                        <span>{{ auth.tarjeta.nombre_tarjeta }} ({{ auth.tarjeta.numero_tarjeta }})</span>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--kn-text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Tarjeta</label>
+                        <span style="font-weight: 600;">{{ auth.tarjeta.nombre_tarjeta }} ({{ auth.tarjeta.numero_tarjeta }})</span>
                     </div>
-                    <div class="auth-info-item">
-                        <label>Sucursal de la tarjeta</label>
-                        <span>{{ auth.tarjeta.sucursal.nombre if auth.tarjeta.sucursal else 'Sin asignar' }}</span>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--kn-text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Sucursal de la tarjeta</label>
+                        <span style="font-weight: 600;">{{ auth.tarjeta.sucursal.nombre if auth.tarjeta.sucursal else 'Sin asignar' }}</span>
                     </div>
-                    <div class="auth-info-item">
-                        <label>Tipo</label>
-                        <span>{{ auth.tipo|replace('_', ' ')|title }}</span>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--kn-text-muted); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Tipo</label>
+                        <span style="font-weight: 600;">{{ auth.tipo|replace('_', ' ')|title }}</span>
                     </div>
                 </div>
                 
-                <div class="auth-motivo">
-                    <label>Motivo de la solicitud:</label>
-                    <p>{{ auth.motivo }}</p>
+                <div style="background: var(--kn-gray-50); padding: 1rem 1.25rem; border-radius: var(--radius-lg); margin-bottom: 1rem; border: 1px solid var(--kn-gray-100);">
+                    <label style="display: block; font-size: 0.75rem; color: var(--kn-text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">Motivo de la solicitud:</label>
+                    <p style="margin: 0; color: var(--kn-graphite); line-height: 1.5;">{{ auth.motivo }}</p>
                 </div>
                 
                 {% if auth.estatus != 'pendiente' %}
-                    <div class="auth-motivo" style="background: {% if auth.estatus == 'aprobada' %}#d4edda{% else %}#f8d7da{% endif %}">
-                        <label>Respuesta de {{ auth.autorizador.nombre if auth.autorizador else 'Sistema' }}:</label>
-                        <p>{{ auth.comentario_respuesta or 'Sin comentarios' }}</p>
-                        <small class="time-ago">{{ auth.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if auth.fecha_respuesta else '' }}</small>
+                    <div style="background: {% if auth.estatus == 'aprobada' %}var(--kn-success-light){% else %}var(--kn-danger-light){% endif %}; padding: 1rem 1.25rem; border-radius: var(--radius-lg); margin-bottom: 1rem; border: 1px solid {% if auth.estatus == 'aprobada' %}var(--kn-success){% else %}var(--kn-danger){% endif %};">
+                        <label style="display: block; font-size: 0.75rem; color: {% if auth.estatus == 'aprobada' %}var(--kn-success-dark){% else %}var(--kn-danger-dark){% endif %}; text-transform: uppercase; margin-bottom: 0.5rem;">Respuesta de {{ auth.autorizador.nombre if auth.autorizador else 'Sistema' }}:</label>
+                        <p style="margin: 0; color: var(--kn-graphite); line-height: 1.5;">{{ auth.comentario_respuesta or 'Sin comentarios' }}</p>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--kn-text-muted);">{{ auth.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if auth.fecha_respuesta else '' }}</small>
                     </div>
                 {% endif %}
                 
                 {% if es_director and auth.estatus == 'pendiente' %}
-                <div class="auth-actions">
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--kn-gray-100);">
                     <button type="button" class="btn btn-success" 
                             onclick="abrirModalRespuesta({{ auth.id }}, 'aprobar')">
-                        ✅ Aprobar
+                        <i class="fas fa-check"></i> Aprobar
                     </button>
                     <button type="button" class="btn btn-danger" 
                             onclick="abrirModalRespuesta({{ auth.id }}, 'rechazar')">
-                        ❌ Rechazar
+                        <i class="fas fa-times"></i> Rechazar
                     </button>
                 </div>
                 {% endif %}
@@ -93,7 +94,8 @@
     {% else %}
         <div class="card">
             <div class="empty-state">
-                <div class="icon">📋</div>
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Sin solicitudes</h3>
                 <p>
                     {% if es_director %}
                         No hay solicitudes pendientes de autorización.
@@ -119,13 +121,12 @@
                 
                 <div class="form-group">
                     <label for="comentario">Comentario (opcional):</label>
-                    <textarea name="comentario" id="comentario" 
+                    <textarea name="comentario" id="comentario" rows="4"
                               placeholder="Agrega un comentario para el solicitante..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn" style="background: #6c757d; color: white;" 
-                        onclick="cerrarModal()">Cancelar</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
                 <button type="submit" class="btn" id="btnConfirmar">Confirmar</button>
             </div>
         </form>
@@ -143,13 +144,13 @@ function abrirModalRespuesta(authId, accion) {
     accionInput.value = accion;
     
     if (accion === 'aprobar') {
-        titulo.textContent = '✅ Aprobar Autorización';
+        titulo.innerHTML = '<i class="fas fa-check"></i> Aprobar Autorización';
         btnConfirmar.className = 'btn btn-success';
-        btnConfirmar.textContent = 'Aprobar';
+        btnConfirmar.innerHTML = '<i class="fas fa-check"></i> Aprobar';
     } else {
-        titulo.textContent = '❌ Rechazar Autorización';
+        titulo.innerHTML = '<i class="fas fa-times"></i> Rechazar Autorización';
         btnConfirmar.className = 'btn btn-danger';
-        btnConfirmar.textContent = 'Rechazar';
+        btnConfirmar.innerHTML = '<i class="fas fa-times"></i> Rechazar';
     }
     
     document.getElementById('modalRespuesta').classList.add('active');

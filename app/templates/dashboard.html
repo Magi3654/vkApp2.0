@@ -1,151 +1,871 @@
 {% extends "base.html" %}
 
+{% block title %}Dashboard - Kinessia Hub{% endblock %}
+
 {% block page_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/stylesdash.css') }}">
+<style>
+/* ========================================
+   KINESSIA HUB - DASHBOARD EJECUTIVO
+   Diseño moderno con datos en tiempo real
+   ======================================== */
+
+:root {
+    /* Paleta Kinessia */
+    --kn-snow: #f6f6f6;
+    --kn-alabaster: #e8e8e8;
+    --kn-graphite: #333333;
+    --kn-oxblood: #990100;
+    --kn-ember: #b90504;
+    --kn-white: #ffffff;
+    
+    /* Colores de estado */
+    --kn-success: #059669;
+    --kn-success-light: #d1fae5;
+    --kn-warning: #d97706;
+    --kn-warning-light: #fef3c7;
+    --kn-danger: #dc2626;
+    --kn-danger-light: #fee2e2;
+    --kn-info: #0284c7;
+    --kn-info-light: #e0f2fe;
+    --kn-purple: #7c3aed;
+    --kn-purple-light: #ede9fe;
+}
+
+/* Container Principal */
+.dash-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--kn-snow);
+    min-height: calc(100vh - 60px);
+}
+
+/* Header con saludo */
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 3px solid var(--kn-oxblood);
+}
+
+.dash-greeting h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0 0 0.25rem 0;
+}
+
+.dash-greeting p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.dash-date-badge {
+    background: linear-gradient(135deg, var(--kn-oxblood), var(--kn-ember));
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.3);
+}
+
+/* ========================================
+   ALERTAS URGENTES
+   ======================================== */
+
+.alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    animation: pulse-alert 2s ease-in-out infinite;
+}
+
+.alert-banner.danger {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border-left: 4px solid var(--kn-danger);
+}
+
+.alert-banner.warning {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-left: 4px solid var(--kn-warning);
+}
+
+@keyframes pulse-alert {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+}
+
+.alert-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.alert-banner.danger .alert-icon {
+    background: var(--kn-danger);
+    color: white;
+}
+
+.alert-banner.warning .alert-icon {
+    background: var(--kn-warning);
+    color: white;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-content h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--kn-graphite);
+}
+
+.alert-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.btn-alert {
+    padding: 0.6rem 1.25rem;
+    background: var(--kn-oxblood);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.btn-alert:hover {
+    background: var(--kn-ember);
+    transform: translateY(-1px);
+}
+
+/* ========================================
+   KPI CARDS - ESTADÍSTICAS PRINCIPALES
+   ======================================== */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+    background: var(--kn-white);
+    border-radius: 16px;
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid var(--kn-alabaster);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.kpi-card.success::before { background: var(--kn-success); }
+.kpi-card.warning::before { background: var(--kn-warning); }
+.kpi-card.danger::before { background: var(--kn-danger); }
+.kpi-card.info::before { background: var(--kn-info); }
+.kpi-card.purple::before { background: var(--kn-purple); }
+.kpi-card.oxblood::before { background: var(--kn-oxblood); }
+
+.kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+.kpi-card.success .kpi-icon { background: var(--kn-success-light); color: var(--kn-success); }
+.kpi-card.warning .kpi-icon { background: var(--kn-warning-light); color: var(--kn-warning); }
+.kpi-card.danger .kpi-icon { background: var(--kn-danger-light); color: var(--kn-danger); }
+.kpi-card.info .kpi-icon { background: var(--kn-info-light); color: var(--kn-info); }
+.kpi-card.purple .kpi-icon { background: var(--kn-purple-light); color: var(--kn-purple); }
+.kpi-card.oxblood .kpi-icon { background: #fef2f2; color: var(--kn-oxblood); }
+
+.kpi-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--kn-graphite);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.kpi-extra {
+    font-size: 0.85rem;
+    color: var(--kn-success);
+    font-weight: 600;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--kn-alabaster);
+}
+
+.kpi-card.warning .kpi-extra { color: var(--kn-warning); }
+.kpi-card.danger .kpi-extra { color: var(--kn-danger); }
+
+/* ========================================
+   LAYOUT PRINCIPAL - 3 COLUMNAS
+   ======================================== */
+
+.dash-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr 320px;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .dash-main {
+        grid-template-columns: 1fr 1fr;
+    }
+    .dash-main .sidebar-widgets {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dash-main {
+        grid-template-columns: 1fr;
+    }
+    .dash-main .sidebar-widgets {
+        grid-column: span 1;
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================
+   PANELES DE CONTENIDO
+   ======================================== */
+
+.panel {
+    background: var(--kn-white);
+    border-radius: 16px;
+    border: 1px solid var(--kn-alabaster);
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid var(--kn-alabaster);
+}
+
+.panel-header h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panel-header h3 i {
+    color: var(--kn-oxblood);
+}
+
+.panel-header a {
+    font-size: 0.8rem;
+    color: var(--kn-oxblood);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.panel-header a:hover {
+    text-decoration: underline;
+}
+
+.panel-body {
+    padding: 1rem 1.25rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Tabla Mini */
+.table-mini {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.table-mini th {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--kn-alabaster);
+}
+
+.table-mini td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.table-mini tr:last-child td {
+    border-bottom: none;
+}
+
+.table-mini tr:hover {
+    background: #fafafa;
+}
+
+.agent-name {
+    font-weight: 600;
+    color: var(--kn-graphite);
+}
+
+.badge-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.badge-num.ok {
+    background: var(--kn-success-light);
+    color: var(--kn-success);
+}
+
+.badge-num.warn {
+    background: var(--kn-warning-light);
+    color: var(--kn-warning);
+}
+
+.badge-num.danger {
+    background: var(--kn-danger-light);
+    color: var(--kn-danger);
+}
+
+.money {
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.money.danger { color: var(--kn-danger); }
+.money.success { color: var(--kn-success); }
+
+/* Lista de Items */
+.item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.item-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.item-list li:last-child {
+    border-bottom: none;
+}
+
+.item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.item-icon.papeleta { background: #fef3c7; color: #d97706; }
+.item-icon.desglose { background: #e0f2fe; color: #0284c7; }
+.item-icon.factura { background: #d1fae5; color: #059669; }
+.item-icon.entrega { background: #ede9fe; color: #7c3aed; }
+.item-icon.urgente { background: #fee2e2; color: #dc2626; }
+
+.item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-title {
+    font-weight: 600;
+    color: var(--kn-graphite);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-meta {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.item-amount {
+    font-weight: 700;
+    color: var(--kn-graphite);
+    font-family: 'SF Mono', monospace;
+    font-size: 0.9rem;
+}
+
+.item-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.item-badge.warning {
+    background: var(--kn-warning-light);
+    color: var(--kn-warning);
+}
+
+.item-badge.danger {
+    background: var(--kn-danger-light);
+    color: var(--kn-danger);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   WIDGETS LATERALES
+   ======================================== */
+
+.sidebar-widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.widget {
+    background: var(--kn-white);
+    border-radius: 16px;
+    border: 1px solid var(--kn-alabaster);
+    overflow: hidden;
+}
+
+.widget-header {
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid var(--kn-alabaster);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--kn-graphite);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.widget-header i {
+    color: var(--kn-oxblood);
+}
+
+.widget-body {
+    padding: 1rem;
+}
+
+/* Acciones Rápidas */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.btn-quick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.875rem 0.5rem;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid var(--kn-alabaster);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--kn-graphite);
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-quick:hover {
+    background: var(--kn-oxblood);
+    color: white;
+    border-color: var(--kn-oxblood);
+    transform: translateY(-2px);
+}
+
+.btn-quick i {
+    font-size: 1.1rem;
+}
+
+/* Resumen del Día */
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed var(--kn-alabaster);
+    font-size: 0.85rem;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row span {
+    color: #64748b;
+}
+
+.summary-row strong {
+    color: var(--kn-graphite);
+    font-family: 'SF Mono', monospace;
+}
+
+.summary-row strong.success {
+    color: var(--kn-success);
+}
+
+/* ========================================
+   SECCIÓN DE ADMINISTRACIÓN
+   ======================================== */
+
+.section-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0 1.25rem;
+}
+
+.section-divider h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.section-divider h2 i {
+    color: var(--kn-oxblood);
+}
+
+.section-divider::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(to right, var(--kn-alabaster), transparent);
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.admin-card {
+    background: var(--kn-white);
+    border: 1px solid var(--kn-alabaster);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: block;
+}
+
+.admin-card:hover {
+    border-color: var(--kn-oxblood);
+    box-shadow: 0 4px 12px rgba(153, 1, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.admin-card h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-card h3 i {
+    color: var(--kn-oxblood);
+    font-size: 1.1rem;
+}
+
+.admin-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* ========================================
+   FACTURACIÓN SECCIÓN
+   ======================================== */
+
+.facturacion-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--kn-alabaster);
+}
+
+.fact-stat {
+    text-align: center;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.fact-stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--kn-graphite);
+}
+
+.fact-stat-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.fact-stat.bsp .fact-stat-value { color: var(--kn-info); }
+.fact-stat.lc .fact-stat-value { color: var(--kn-warning); }
+.fact-stat.total .fact-stat-value { color: var(--kn-oxblood); }
+
+/* ========================================
+   RESPONSIVE FINAL
+   ======================================== */
+
+@media (max-width: 640px) {
+    .dash-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .alert-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>Bienvenido, {{ current_user.nombre.split()[0] }}</h1>
-        <p>{{ fecha_hoy.strftime('%A, %d de %B de %Y')|capitalize }}</p>
+<div class="dash-container">
+    <!-- HEADER -->
+    <div class="dash-header">
+        <div class="dash-greeting">
+            <h1>Bienvenido, {{ current_user.nombre.split()[0] }}</h1>
+            <p>Panel de control - Kinessia Hub</p>
+        </div>
+        <div class="dash-date-badge">
+            <i class="fas fa-calendar-alt"></i>
+            {{ fecha_hoy.strftime('%A, %d de %B %Y')|capitalize }}
+        </div>
     </div>
 
-    {# ============================================================ #}
-    {# ALERTAS URGENTES (para todos los roles)                      #}
-    {# ============================================================ #}
-    
+    <!-- ALERTAS URGENTES -->
     {% if papeletas_urgentes > 0 %}
-    <div class="alertas-urgentes">
-        <div class="alerta-icon"><i class="fas fa-exclamation-triangle"></i></div>
-        <div class="alerta-content">
+    <div class="alert-banner danger">
+        <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="alert-content">
             <h3>{{ papeletas_urgentes }} papeleta(s) con más de 3 días sin cerrar</h3>
-            <p>Requieren atención inmediata</p>
+            <p>Requieren atención inmediata para evitar problemas de control</p>
         </div>
         {% if current_user.es_admin() %}
-        <a href="{{ url_for('main.control_papeletas') }}" class="btn-alerta">Ver Control</a>
+        <a href="{{ url_for('main.control_papeletas') }}" class="btn-alert">Ver Control</a>
         {% else %}
-        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alerta">Ver mis pendientes</a>
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alert">Ver Pendientes</a>
         {% endif %}
     </div>
     {% elif papeletas_pendientes > 0 %}
-    <div class="alertas-urgentes warning">
-        <div class="alerta-icon"><i class="fas fa-clock"></i></div>
-        <div class="alerta-content">
-            <h3>{{ papeletas_pendientes }} papeleta(s) pendiente(s) de días anteriores</h3>
-            <p>Recuerda cerrarlas o justificarlas</p>
+    <div class="alert-banner warning">
+        <div class="alert-icon"><i class="fas fa-clock"></i></div>
+        <div class="alert-content">
+            <h3>{{ papeletas_pendientes }} papeleta(s) pendiente(s)</h3>
+            <p>Recuerda cerrarlas o incluirlas en tu reporte de ventas</p>
         </div>
-        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alerta">Ver pendientes</a>
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="btn-alert">Ver Pendientes</a>
     </div>
     {% endif %}
 
-    {# ============================================================ #}
-    {# ESTADÍSTICAS SEGÚN ROL                                       #}
-    {# ============================================================ #}
-    
-    <div class="stats-row">
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
         {% if current_user.es_admin() %}
-        {# === STATS PARA ADMIN === #}
-        <a href="{{ url_for('main.control_papeletas') }}" class="stat-card warning clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
-            </div>
-            <div class="stat-value">{{ total_papeletas_pendientes }}</div>
-            <div class="stat-label">Papeletas Pendientes</div>
-            <div class="stat-extra">${{ '{:,.0f}'.format(total_efectivo_pendiente) }}</div>
+        <!-- KPIs ADMIN -->
+        <a href="{{ url_for('main.control_papeletas') }}" class="kpi-card warning">
+            <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+            <div class="kpi-value">{{ total_papeletas_pendientes }}</div>
+            <div class="kpi-label">Papeletas Pendientes</div>
+            <div class="kpi-extra">${{ '{:,.0f}'.format(total_efectivo_pendiente) }} en efectivo</div>
         </a>
         
-        <a href="{{ url_for('main.lista_entregas') }}" class="stat-card info clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-hand-holding-usd"></i></div>
-            </div>
-            <div class="stat-value">{{ entregas_por_recibir }}</div>
-            <div class="stat-label">Entregas por Recibir</div>
+        <a href="{{ url_for('main.facturacion') }}" class="kpi-card info">
+            <div class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div class="kpi-value">{{ facturacion_pendiente|default(0) }}</div>
+            <div class="kpi-label">Por Facturar</div>
+            <div class="kpi-extra">BSP + Low Cost</div>
         </a>
         
-        <a href="{{ url_for('main.reportes_ventas') }}?estatus=enviado" class="stat-card purple clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-            </div>
-            <div class="stat-value">{{ reportes_por_revisar }}</div>
-            <div class="stat-label">Reportes por Revisar</div>
+        <a href="{{ url_for('main.lista_entregas') }}" class="kpi-card purple">
+            <div class="kpi-icon"><i class="fas fa-hand-holding-usd"></i></div>
+            <div class="kpi-value">{{ entregas_por_recibir }}</div>
+            <div class="kpi-label">Entregas por Recibir</div>
         </a>
         
-        <div class="stat-card success">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-            </div>
-            <div class="stat-value">{{ papeletas_hoy_total }}</div>
-            <div class="stat-label">Papeletas Hoy (Total)</div>
-            <div class="stat-extra">${{ '{:,.0f}'.format(total_ventas_hoy) }}</div>
+        <a href="{{ url_for('main.reportes_ventas') }}?estatus=enviado" class="kpi-card oxblood">
+            <div class="kpi-icon"><i class="fas fa-file-alt"></i></div>
+            <div class="kpi-value">{{ reportes_por_revisar }}</div>
+            <div class="kpi-label">Reportes por Revisar</div>
+        </a>
+        
+        <div class="kpi-card success">
+            <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="kpi-value">{{ papeletas_hoy_total }}</div>
+            <div class="kpi-label">Papeletas Hoy</div>
+            <div class="kpi-extra">${{ '{:,.0f}'.format(total_ventas_hoy) }}</div>
         </div>
         
         {% if autorizaciones_pendientes > 0 %}
-        <a href="{{ url_for('main.autorizaciones') }}" class="stat-card danger clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-key"></i></div>
-            </div>
-            <div class="stat-value">{{ autorizaciones_pendientes }}</div>
-            <div class="stat-label">Autorizaciones Pendientes</div>
+        <a href="{{ url_for('main.autorizaciones') }}" class="kpi-card danger">
+            <div class="kpi-icon"><i class="fas fa-key"></i></div>
+            <div class="kpi-value">{{ autorizaciones_pendientes }}</div>
+            <div class="kpi-label">Autorizaciones</div>
         </a>
         {% endif %}
         
         {% else %}
-        {# === STATS PARA AGENTE === #}
-        <div class="stat-card success">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
-            </div>
-            <div class="stat-value">{{ mis_papeletas_hoy }}</div>
-            <div class="stat-label">Mis Papeletas Hoy</div>
-            <div class="stat-extra">${{ '{:,.0f}'.format(mi_total_hoy) }}</div>
+        <!-- KPIs AGENTE -->
+        <div class="kpi-card success">
+            <div class="kpi-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div class="kpi-value">{{ mis_papeletas_hoy }}</div>
+            <div class="kpi-label">Mis Papeletas Hoy</div>
+            <div class="kpi-extra">${{ '{:,.0f}'.format(mi_total_hoy) }}</div>
         </div>
         
         {% if papeletas_pendientes > 0 %}
-        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="stat-card {{ 'danger' if papeletas_urgentes > 0 else 'warning' }} clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
-            </div>
-            <div class="stat-value">{{ papeletas_pendientes }}</div>
-            <div class="stat-label">Pendientes de Reportar</div>
+        <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="kpi-card {{ 'danger' if papeletas_urgentes > 0 else 'warning' }}">
+            <div class="kpi-icon"><i class="fas fa-clock"></i></div>
+            <div class="kpi-value">{{ papeletas_pendientes }}</div>
+            <div class="kpi-label">Pendientes de Reportar</div>
         </a>
         {% endif %}
         
         {% if mi_efectivo_pendiente > 0 %}
-        <div class="stat-card info">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
-            </div>
-            <div class="stat-value">${{ '{:,.0f}'.format(mi_efectivo_pendiente) }}</div>
-            <div class="stat-label">Efectivo por Entregar</div>
+        <div class="kpi-card info">
+            <div class="kpi-icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="kpi-value">${{ '{:,.0f}'.format(mi_efectivo_pendiente) }}</div>
+            <div class="kpi-label">Efectivo por Entregar</div>
         </div>
         {% endif %}
         
-        <a href="{{ url_for('main.reportes_ventas') }}" class="stat-card purple clickable">
-            <div class="stat-header">
-                <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
-            </div>
-            <div class="stat-value">{{ mis_reportes_mes }}</div>
-            <div class="stat-label">Mis Reportes (Mes)</div>
+        <a href="{{ url_for('main.reportes_ventas') }}" class="kpi-card purple">
+            <div class="kpi-icon"><i class="fas fa-chart-bar"></i></div>
+            <div class="kpi-value">{{ mis_reportes_mes }}</div>
+            <div class="kpi-label">Mis Reportes (Mes)</div>
         </a>
         {% endif %}
     </div>
 
-    {# ============================================================ #}
-    {# CONTENIDO PRINCIPAL                                          #}
-    {# ============================================================ #}
-    
-    <div class="dashboard-grid">
-        <div class="panel-main">
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="dash-main">
+        <!-- PANEL 1: Papeletas/Control -->
+        <div class="panel">
             {% if current_user.es_admin() %}
-            {# === PANEL ADMIN: Resumen por Agente === #}
             <div class="panel-header">
-                <h3><i class="fas fa-users"></i> Papeletas Pendientes por Agente</h3>
-                <a href="{{ url_for('main.control_papeletas') }}">Ver control completo →</a>
+                <h3><i class="fas fa-users"></i> Pendientes por Agente</h3>
+                <a href="{{ url_for('main.control_papeletas') }}">Ver todo →</a>
             </div>
             <div class="panel-body">
                 {% if resumen_agentes %}
-                <table class="tabla-mini">
+                <table class="table-mini">
                     <thead>
                         <tr>
                             <th>Agente</th>
@@ -155,49 +875,51 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for r in resumen_agentes[:8] %}
+                        {% for r in resumen_agentes[:10] %}
                         <tr>
-                            <td class="agente-nombre">{{ r.agente.split()[0] }}</td>
+                            <td class="agent-name">{{ r.agente.split()[0] }}</td>
                             <td>{{ r.papeletas_hoy or 0 }}</td>
                             <td>
-                                {% if r.pendientes > 0 %}
-                                <span class="num-badge">{{ r.pendientes }}</span>
+                                {% if r.pendientes > 5 %}
+                                <span class="badge-num danger">{{ r.pendientes }}</span>
+                                {% elif r.pendientes > 0 %}
+                                <span class="badge-num warn">{{ r.pendientes }}</span>
                                 {% else %}
-                                <span class="num-badge ok">0</span>
+                                <span class="badge-num ok">0</span>
                                 {% endif %}
                             </td>
-                            <td class="font-mono">${{ '{:,.0f}'.format(r.efectivo|float or 0) }}</td>
+                            <td class="money {{ 'danger' if r.efectivo > 5000 else '' }}">
+                                ${{ '{:,.0f}'.format(r.efectivo) }}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
                 {% else %}
-                <div class="empty-mini">
+                <div class="empty-state">
                     <i class="fas fa-check-circle"></i>
-                    <p>No hay papeletas pendientes</p>
+                    <p>Sin agentes con pendientes</p>
                 </div>
                 {% endif %}
             </div>
-            
             {% else %}
-            {# === PANEL AGENTE: Mis Papeletas Pendientes === #}
             <div class="panel-header">
                 <h3><i class="fas fa-file-alt"></i> Mis Papeletas Pendientes</h3>
                 <a href="{{ url_for('main.consulta_papeletas') }}">Ver todas →</a>
             </div>
             <div class="panel-body">
                 {% if mis_papeletas_pendientes %}
-                <ul class="lista-pendientes">
-                    {% for p in mis_papeletas_pendientes[:6] %}
+                <ul class="item-list">
+                    {% for p in mis_papeletas_pendientes[:8] %}
                     <li>
                         <div class="item-icon {{ 'urgente' if p.dias > 3 else 'papeleta' }}">
                             <i class="fas fa-file-alt"></i>
                         </div>
                         <div class="item-info">
-                            <div class="item-titulo">{{ p.folio }} - {{ p.solicito or p.facturar_a or 'Sin detalle' }}</div>
+                            <div class="item-title">{{ p.folio }} - {{ p.solicito or p.facturar_a or 'Sin detalle' }}</div>
                             <div class="item-meta">{{ p.fecha_venta.strftime('%d/%m') if p.fecha_venta else '' }} · {{ p.empresa.nombre_empresa if p.empresa else 'Mostrador' }}</div>
                         </div>
-                        <div class="item-monto">${{ '{:,.0f}'.format(p.total|float) }}</div>
+                        <div class="item-amount">${{ '{:,.0f}'.format(p.total|float) }}</div>
                         {% if p.dias > 3 %}
                         <span class="item-badge danger">{{ p.dias }}d</span>
                         {% elif p.dias > 0 %}
@@ -206,16 +928,9 @@
                     </li>
                     {% endfor %}
                 </ul>
-                {% if mis_papeletas_pendientes|length > 6 %}
-                <div style="text-align:center;padding-top:1rem;">
-                    <a href="{{ url_for('main.consulta_papeletas') }}?pendientes=1" class="text-primary">
-                        Ver {{ mis_papeletas_pendientes|length - 6 }} más →
-                    </a>
-                </div>
-                {% endif %}
                 {% else %}
-                <div class="empty-mini">
-                    <i class="fas fa-check-circle text-success"></i>
+                <div class="empty-state">
+                    <i class="fas fa-check-circle" style="color: var(--kn-success);"></i>
                     <p>¡Sin papeletas pendientes!</p>
                 </div>
                 {% endif %}
@@ -223,120 +938,162 @@
             {% endif %}
         </div>
 
-        {# === PANEL LATERAL === #}
-        <div class="panel-lateral">
-            {# Acciones Rápidas #}
+        <!-- PANEL 2: Facturación / Desgloses -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> Facturación Pendiente</h3>
+                <a href="{{ url_for('main.facturacion') }}">Ir a facturar →</a>
+            </div>
+            <div class="panel-body">
+                <div class="facturacion-stats">
+                    <div class="fact-stat bsp">
+                        <div class="fact-stat-value">{{ desgloses_bsp_pendientes|default(0) }}</div>
+                        <div class="fact-stat-label">BSP</div>
+                    </div>
+                    <div class="fact-stat lc">
+                        <div class="fact-stat-value">{{ papeletas_facturacion_pendientes|default(0) }}</div>
+                        <div class="fact-stat-label">Low Cost</div>
+                    </div>
+                    <div class="fact-stat total">
+                        <div class="fact-stat-value">{{ (desgloses_bsp_pendientes|default(0)) + (papeletas_facturacion_pendientes|default(0)) }}</div>
+                        <div class="fact-stat-label">Total</div>
+                    </div>
+                </div>
+                
+                {% if ultimas_facturas %}
+                <ul class="item-list">
+                    {% for f in ultimas_facturas[:5] %}
+                    <li>
+                        <div class="item-icon factura">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="item-info">
+                            <div class="item-title">{{ f.numero_factura }}</div>
+                            <div class="item-meta">{{ f.empresa.nombre_empresa if f.empresa else '-' }}</div>
+                        </div>
+                        <div class="item-amount">${{ '{:,.0f}'.format(f.monto_factura|float) if f.monto_factura else '-' }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Sin facturas recientes</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SIDEBAR WIDGETS -->
+        <div class="sidebar-widgets">
+            <!-- Acciones Rápidas -->
             <div class="widget">
                 <div class="widget-header">
                     <i class="fas fa-bolt"></i> Acciones Rápidas
                 </div>
                 <div class="widget-body">
-                    <div class="acciones-rapidas">
-                        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-accion-rapida">
+                    <div class="quick-actions">
+                        <a href="{{ url_for('main.nueva_papeleta_form') }}" class="btn-quick">
                             <i class="fas fa-plus-circle"></i>
                             <span>Nueva Papeleta</span>
                         </a>
-                        <a href="{{ url_for('main.calculadora_desglose') }}" class="btn-accion-rapida">
+                        <a href="{{ url_for('main.calculadora_desglose') }}" class="btn-quick">
                             <i class="fas fa-calculator"></i>
-                            <span>Nuevo Desglose</span>
+                            <span>Desglose</span>
                         </a>
-                        <a href="{{ url_for('main.nuevo_reporte_venta') }}" class="btn-accion-rapida">
+                        <a href="{{ url_for('main.nuevo_reporte_venta') }}" class="btn-quick">
                             <i class="fas fa-chart-bar"></i>
-                            <span>Reporte Ventas</span>
+                            <span>Reporte</span>
                         </a>
-                        <a href="{{ url_for('main.lista_entregas') }}" class="btn-accion-rapida">
+                        <a href="{{ url_for('main.lista_entregas') }}" class="btn-quick">
                             <i class="fas fa-hand-holding-usd"></i>
-                            <span>Vale Entrega</span>
+                            <span>Entrega</span>
                         </a>
                     </div>
                 </div>
             </div>
 
-            {% if current_user.es_admin() %}
-            {# Widget Admin: Entregas Recientes #}
+            {% if current_user.es_admin() and entregas_pendientes %}
+            <!-- Entregas por Procesar (Admin) -->
             <div class="widget">
                 <div class="widget-header">
-                    <i class="fas fa-inbox"></i> Entregas por Procesar
+                    <i class="fas fa-inbox"></i> Entregas Pendientes
                 </div>
                 <div class="widget-body">
-                    {% if entregas_pendientes %}
-                    <ul class="lista-pendientes">
+                    <ul class="item-list">
                         {% for e in entregas_pendientes[:4] %}
                         <li>
                             <div class="item-icon entrega">
                                 <i class="fas fa-hand-holding-usd"></i>
                             </div>
                             <div class="item-info">
-                                <div class="item-titulo">{{ e.folio }}</div>
+                                <div class="item-title">{{ e.folio }}</div>
                                 <div class="item-meta">{{ e.agente.nombre.split()[0] if e.agente else '-' }}</div>
                             </div>
-                            <div class="item-monto">${{ '{:,.0f}'.format(e.total_fisico|float) }}</div>
+                            <div class="item-amount">${{ '{:,.0f}'.format(e.total_fisico|float) }}</div>
                         </li>
                         {% endfor %}
                     </ul>
-                    {% else %}
-                    <div class="empty-mini">
-                        <i class="fas fa-check"></i>
-                        <p>Sin entregas pendientes</p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            {# Widget: Mi Resumen del Día #}
+            <!-- Resumen del Día -->
             <div class="widget">
                 <div class="widget-header">
                     <i class="fas fa-calendar-day"></i> Resumen del Día
                 </div>
                 <div class="widget-body">
-                    <div class="resumen-dia-row">
+                    <div class="summary-row">
                         <span>Papeletas:</span>
                         <strong>{{ mis_papeletas_hoy if not current_user.es_admin() else papeletas_hoy_total }}</strong>
                     </div>
-                    <div class="resumen-dia-row">
+                    <div class="summary-row">
                         <span>Ventas:</span>
                         <strong class="success">${{ '{:,.2f}'.format(mi_total_hoy if not current_user.es_admin() else total_ventas_hoy) }}</strong>
                     </div>
-                    <div class="resumen-dia-row">
+                    <div class="summary-row">
                         <span>Efectivo:</span>
                         <strong>${{ '{:,.2f}'.format(mi_efectivo_hoy if not current_user.es_admin() else total_efectivo_hoy) }}</strong>
                     </div>
+                    {% if current_user.es_admin() %}
+                    <div class="summary-row">
+                        <span>Desgloses Hoy:</span>
+                        <strong>{{ desgloses_hoy|default(0) }}</strong>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    {# ============================================================ #}
-    {# SECCIÓN ADMIN (si aplica)                                    #}
-    {# ============================================================ #}
-    
+    <!-- SECCIÓN ADMINISTRACIÓN -->
     {% if current_user.es_admin() %}
-    <div class="section-header">
+    <div class="section-divider">
         <h2><i class="fas fa-cog"></i> Administración</h2>
     </div>
-    <div class="management-grid">
-        <a href="{{ url_for('main.control_papeletas') }}" class="card">
-            <h3><i class="fas fa-clipboard-check"></i> Control de Papeletas</h3>
-            <p>Validar y auditar papeletas pendientes.</p>
+    <div class="admin-grid">
+        <a href="{{ url_for('main.control_papeletas') }}" class="admin-card">
+            <h3><i class="fas fa-clipboard-check"></i> Control Papeletas</h3>
+            <p>Validar y auditar papeletas pendientes de todos los agentes.</p>
         </a>
-        <a href="{{ url_for('main.lista_entregas') }}" class="card">
-            <h3><i class="fas fa-hand-holding-usd"></i> Gestión de Entregas</h3>
+        <a href="{{ url_for('main.facturacion') }}" class="admin-card">
+            <h3><i class="fas fa-file-invoice-dollar"></i> Facturación</h3>
+            <p>Registrar facturas BSP y Low Cost pendientes.</p>
+        </a>
+        <a href="{{ url_for('main.lista_entregas') }}" class="admin-card">
+            <h3><i class="fas fa-hand-holding-usd"></i> Entregas</h3>
             <p>Recibir y procesar cortes de caja.</p>
         </a>
-        <a href="{{ url_for('main.empresas') }}" class="card">
+        <a href="{{ url_for('main.empresas') }}" class="admin-card">
             <h3><i class="fas fa-building"></i> Empresas</h3>
-            <p>Gestionar empresas cliente.</p>
+            <p>Gestionar empresas y esquemas de facturación.</p>
         </a>
-        <a href="{{ url_for('main.usuarios') }}" class="card">
+        <a href="{{ url_for('main.usuarios') }}" class="admin-card">
             <h3><i class="fas fa-users"></i> Usuarios</h3>
             <p>Administrar cuentas de empleados.</p>
         </a>
-        <a href="{{ url_for('main.tarjetas') }}" class="card">
-            <h3><i class="fas fa-credit-card"></i> Tarjetas</h3>
-            <p>Gestionar tarjetas corporativas.</p>
-        </a>
-        <a href="{{ url_for('main.autorizaciones') }}" class="card">
+        <a href="{{ url_for('main.autorizaciones') }}" class="admin-card">
             <h3><i class="fas fa-key"></i> Autorizaciones</h3>
             <p>Aprobar solicitudes pendientes.</p>
         </a>

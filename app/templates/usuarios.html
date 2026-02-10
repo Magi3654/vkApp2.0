@@ -1,87 +1,119 @@
 {% extends "base.html" %}
 
+{% block title %}Gestión de Usuarios - Kinessia Hub{% endblock %}
+
 {% block page_styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/stylesusers.css') }}">
+<style>
+.usuario-cell { display: flex; align-items: center; gap: 0.75rem; }
+.usuario-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--kn-oxblood), var(--kn-ember)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; }
+.usuario-info .nombre { display: block; font-weight: 600; color: var(--kn-graphite); }
+.usuario-info .correo { display: block; font-size: 0.75rem; color: var(--kn-text-muted); }
+.badge-rol { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; }
+.badge-rol.administrador, .badge-rol.admin { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+.badge-rol.director { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #5b21b6; }
+.badge-rol.gerente { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; }
+.badge-rol.agente, .badge-rol.facturacion { background: var(--kn-gray-100); color: var(--kn-gray-700); }
+.badge-rol.sistemas { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #166534; }
+.badge-sucursal { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: var(--kn-info-light); color: var(--kn-info-dark); border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; }
+.badge-tarjetas { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: var(--kn-purple-light); color: var(--kn-purple-dark); border-radius: 0.5rem; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.badge-tarjetas:hover { background: var(--kn-purple); color: white; }
+.sin-asignar, .sin-tarjetas { color: var(--kn-text-light); font-size: 0.8rem; }
+.badge-activo { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: var(--kn-success-light); color: var(--kn-success-dark); border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; }
+.badge-inactivo { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; background: var(--kn-danger-light); color: var(--kn-danger-dark); border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; }
+.btn-action.btn-tarjetas { background: var(--kn-purple-light); color: var(--kn-purple); }
+.btn-action.btn-tarjetas:hover { background: var(--kn-purple); color: white; }
+.btn-action.btn-toggle { background: var(--kn-gray-100); color: var(--kn-gray-600); }
+.btn-action.btn-toggle:hover { background: var(--kn-warning); color: white; }
+.user-header { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--kn-alabaster); margin-bottom: 1rem; }
+.avatar-large { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--kn-oxblood), var(--kn-ember)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem; }
+.user-header .info h2 { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.user-header .info p { margin: 0 0 0.5rem; color: var(--kn-text-muted); font-size: 0.875rem; }
+.detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
+.detail-item { display: flex; flex-direction: column; gap: 0.25rem; }
+.detail-item .label { font-size: 0.75rem; color: var(--kn-text-muted); display: flex; align-items: center; gap: 0.375rem; }
+.detail-item .value { font-weight: 600; color: var(--kn-graphite); }
+.detail-section h4 { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; margin: 1rem 0 0.5rem; padding-top: 1rem; border-top: 1px solid var(--kn-alabaster); }
+.tarjetas-list, .tarjetas-list-detail { display: flex; flex-direction: column; gap: 0.5rem; }
+.tarjeta-item, .tarjeta-detail-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--kn-gray-50); border-radius: 0.5rem; font-size: 0.875rem; }
+.tarjeta-icon { color: var(--kn-purple); }
+.tarjetas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; max-height: 300px; overflow-y: auto; padding: 0.5rem; background: var(--kn-gray-50); border-radius: 0.5rem; }
+.tarjeta-checkbox { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: white; border: 1px solid var(--kn-alabaster); border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
+.tarjeta-checkbox:hover { border-color: var(--kn-purple); }
+.tarjeta-checkbox input:checked + span { color: var(--kn-purple); font-weight: 600; }
+.loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--kn-alabaster); border-top-color: var(--kn-oxblood); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-message { text-align: center; padding: 2rem; color: var(--kn-text-muted); }
+.error { color: var(--kn-danger); text-align: center; padding: 1rem; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="usuarios-page">
-    <!-- Header -->
+<div class="crud-container">
     <div class="page-header">
         <div class="page-title">
-            <span class="icon"><i class="fas fa-users"></i></span>
+            <div class="icon"><i class="fas fa-users"></i></div>
             <div>
                 <h1>Gestión de Usuarios</h1>
                 <p>Administra los usuarios del sistema</p>
             </div>
         </div>
         {% if current_user.es_admin() %}
-        <button type="button" class="btn-primary" onclick="abrirModalNuevo()">
-            <i class="fas fa-plus"></i> Nuevo Usuario
-        </button>
+        <div class="header-actions">
+            <button type="button" class="btn btn-primary" onclick="abrirModalNuevo()">
+                <i class="fas fa-plus"></i> Nuevo Usuario
+            </button>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Filtros -->
-    <div class="filtros-section">
+    <div class="filtros-bar">
         <div class="filtro-group">
-            <label>BUSCAR:</label>
-            <input type="text" id="filtroNombre" placeholder="Nombre o correo..." onkeyup="filtrarUsuarios()" value="">
+            <label><i class="fas fa-search"></i></label>
+            <input type="text" id="filtroNombre" placeholder="Nombre o correo..." onkeyup="filtrarUsuarios()">
         </div>
         <div class="filtro-group">
-            <label>ROL:</label>
+            <label>Rol:</label>
             <select id="filtroRol" onchange="filtrarUsuarios()">
-                <option value="" selected>Todos</option>
-                {% for rol in roles %}
-                <option value="{{ rol.nombre|lower }}">{{ rol.nombre|capitalize }}</option>
-                {% endfor %}
+                <option value="">Todos</option>
+                {% for rol in roles %}<option value="{{ rol.nombre|lower }}">{{ rol.nombre|capitalize }}</option>{% endfor %}
             </select>
         </div>
         <div class="filtro-group">
-            <label>SUCURSAL:</label>
+            <label>Sucursal:</label>
             <select id="filtroSucursal" onchange="filtrarUsuarios()">
-                <option value="" selected>Todas</option>
-                {% for sucursal in sucursales %}
-                <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
-                {% endfor %}
+                <option value="">Todas</option>
+                {% for sucursal in sucursales %}<option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>{% endfor %}
             </select>
         </div>
         <div class="filtro-group">
-            <label>ESTATUS:</label>
+            <label>Estatus:</label>
             <select id="filtroEstatus" onchange="filtrarUsuarios()">
-                <option value="" selected>Todos</option>
+                <option value="">Todos</option>
                 <option value="activo">Activos</option>
                 <option value="inactivo">Inactivos</option>
             </select>
         </div>
     </div>
 
-    <!-- Estadísticas -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <span class="stat-icon"><i class="fas fa-users"></i></span>
-            <div class="stat-info">
-                <span class="stat-number">{{ usuarios|length }}</span>
-                <span class="stat-label">Total Usuarios</span>
-            </div>
+    <div class="stats-grid">
+        <div class="stat-card oxblood">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-value">{{ usuarios|length }}</div>
+            <div class="stat-label">Total Usuarios</div>
         </div>
-        <div class="stat-card">
-            <span class="stat-icon success"><i class="fas fa-check-circle"></i></span>
-            <div class="stat-info">
-                <span class="stat-number">{{ usuarios|selectattr('activo')|list|length }}</span>
-                <span class="stat-label">Activos</span>
-            </div>
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">{{ usuarios|selectattr('activo')|list|length }}</div>
+            <div class="stat-label">Activos</div>
         </div>
-        <div class="stat-card">
-            <span class="stat-icon danger"><i class="fas fa-ban"></i></span>
-            <div class="stat-info">
-                <span class="stat-number">{{ usuarios|rejectattr('activo')|list|length }}</span>
-                <span class="stat-label">Inactivos</span>
-            </div>
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-ban"></i></div>
+            <div class="stat-value">{{ usuarios|rejectattr('activo')|list|length }}</div>
+            <div class="stat-label">Inactivos</div>
         </div>
     </div>
 
-    <!-- Tabla de usuarios -->
     <div class="table-container">
         {% if usuarios|length == 0 %}
         <div class="empty-state">
@@ -90,31 +122,27 @@
             <p>Haz clic en "Nuevo Usuario" para agregar el primero.</p>
         </div>
         {% else %}
-        <table class="usuarios-table" id="tablaUsuarios">
+        <table id="tablaUsuarios">
             <thead>
                 <tr>
                     <th>Usuario</th>
                     <th>Rol</th>
                     <th>Sucursal</th>
-                    <th>Tarjetas Asignadas</th>
+                    <th>Tarjetas</th>
                     <th>Estatus</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for usuario in usuarios %}
-                <tr data-nombre="{{ usuario.nombre|lower }}" 
-                    data-correo="{{ usuario.correo|lower }}"
-                    data-rol="{{ usuario.rol|lower }}"
-                    data-sucursal="{{ usuario.sucursal_id or '' }}"
-                    data-activo="{{ 'activo' if usuario.activo else 'inactivo' }}">
-                    <td class="usuario-cell">
-                        <div class="usuario-avatar">
-                            {{ usuario.nombre[0]|upper }}
-                        </div>
-                        <div class="usuario-info">
-                            <span class="nombre">{{ usuario.nombre }}</span>
-                            <span class="correo">{{ usuario.correo }}</span>
+                <tr data-nombre="{{ usuario.nombre|lower }}" data-correo="{{ usuario.correo|lower }}" data-rol="{{ usuario.rol|lower }}" data-sucursal="{{ usuario.sucursal_id or '' }}" data-activo="{{ 'activo' if usuario.activo else 'inactivo' }}">
+                    <td>
+                        <div class="usuario-cell">
+                            <div class="usuario-avatar">{{ usuario.nombre[0]|upper }}</div>
+                            <div class="usuario-info">
+                                <span class="nombre">{{ usuario.nombre }}</span>
+                                <span class="correo">{{ usuario.correo }}</span>
+                            </div>
                         </div>
                     </td>
                     <td>
@@ -124,49 +152,32 @@
                             {% if usuario.rol == 'gerente' %}<i class="fas fa-chart-line"></i>{% endif %}
                             {% if usuario.rol == 'agente' %}<i class="fas fa-user"></i>{% endif %}
                             {% if usuario.rol == 'sistemas' %}<i class="fas fa-cog"></i>{% endif %}
+                            {% if usuario.rol == 'facturacion' %}<i class="fas fa-file-invoice"></i>{% endif %}
                             {{ usuario.rol|capitalize }}
                         </span>
                     </td>
                     <td>
-                        {% if usuario.sucursal %}
-                            <span class="badge-sucursal"><i class="fas fa-map-marker-alt"></i> {{ usuario.sucursal.nombre }}</span>
-                        {% else %}
-                            <span class="sin-asignar">Sin asignar</span>
-                        {% endif %}
+                        {% if usuario.sucursal %}<span class="badge-sucursal"><i class="fas fa-map-marker-alt"></i> {{ usuario.sucursal.nombre }}</span>
+                        {% else %}<span class="sin-asignar">Sin asignar</span>{% endif %}
                     </td>
                     <td>
                         {% set tarjetas_count = usuario.tarjetas_asignadas|selectattr('activo')|list|length %}
-                        {% if tarjetas_count > 0 %}
-                            <span class="badge-tarjetas" onclick="verTarjetasUsuario({{ usuario.id }}, '{{ usuario.nombre }}')">
-                                <i class="fas fa-credit-card"></i> {{ tarjetas_count }} tarjeta{{ 's' if tarjetas_count > 1 else '' }}
-                            </span>
-                        {% else %}
-                            <span class="sin-tarjetas">Sin tarjetas</span>
-                        {% endif %}
+                        {% if tarjetas_count > 0 %}<span class="badge-tarjetas" onclick="verTarjetasUsuario({{ usuario.id }}, '{{ usuario.nombre }}')"><i class="fas fa-credit-card"></i> {{ tarjetas_count }}</span>
+                        {% else %}<span class="sin-tarjetas">---</span>{% endif %}
                     </td>
                     <td>
-                        {% if usuario.activo %}
-                            <span class="badge-activo"><i class="fas fa-check-circle"></i> Activo</span>
-                        {% else %}
-                            <span class="badge-inactivo"><i class="fas fa-ban"></i> Inactivo</span>
-                        {% endif %}
+                        {% if usuario.activo %}<span class="badge-activo"><i class="fas fa-check-circle"></i> Activo</span>
+                        {% else %}<span class="badge-inactivo"><i class="fas fa-ban"></i> Inactivo</span>{% endif %}
                     </td>
-                    <td class="acciones-cell">
-                        <button type="button" class="btn-action btn-view" title="Ver detalle" 
-                                onclick="verUsuario({{ usuario.id }})"><i class="fas fa-eye"></i></button>
-                        {% if current_user.es_admin() %}
-                        <button type="button" class="btn-action btn-edit" title="Editar" 
-                                onclick="editarUsuario({{ usuario.id }})"><i class="fas fa-edit"></i></button>
-                        <button type="button" class="btn-action btn-tarjetas" title="Asignar tarjetas" 
-                                onclick="asignarTarjetas({{ usuario.id }}, '{{ usuario.nombre }}')"><i class="fas fa-credit-card"></i></button>
-                        {% if usuario.id != current_user.id %}
-                        <button type="button" class="btn-action {{ 'btn-disable' if usuario.activo else 'btn-enable' }}" 
-                                title="{{ 'Desactivar' if usuario.activo else 'Activar' }}"
-                                onclick="toggleEstatus({{ usuario.id }}, {{ 'true' if usuario.activo else 'false' }}, '{{ usuario.nombre }}')">
-                            <i class="fas {{ 'fa-ban' if usuario.activo else 'fa-check' }}"></i>
-                        </button>
-                        {% endif %}
-                        {% endif %}
+                    <td>
+                        <div class="actions">
+                            <button type="button" class="btn-accion btn-ver" title="Ver" onclick="verUsuario({{ usuario.id }})"><i class="fas fa-eye"></i></button>
+                            {% if current_user.es_admin() %}
+                            <button type="button" class="btn-accion btn-edit" title="Editar" onclick="editarUsuario({{ usuario.id }})"><i class="fas fa-edit"></i></button>
+                            <button type="button" class="btn-action btn-tarjetas" title="Tarjetas" onclick="asignarTarjetas({{ usuario.id }}, '{{ usuario.nombre }}')"><i class="fas fa-credit-card"></i></button>
+                            <button type="button" class="btn-action btn-toggle" title="{{ 'Desactivar' if usuario.activo else 'Activar' }}" onclick="toggleEstatus({{ usuario.id }}, {{ 'true' if usuario.activo else 'false' }}, '{{ usuario.nombre }}')"><i class="fas fa-{{ 'ban' if usuario.activo else 'check' }}"></i></button>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -176,422 +187,177 @@
     </div>
 </div>
 
-<!-- Modal Nuevo Usuario -->
-{% if current_user.es_admin() %}
+<!-- Modal: Nuevo Usuario -->
 <div class="modal-overlay" id="modalNuevo">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-user-plus"></i> Nuevo Usuario</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalNuevo')"><i class="fas fa-times"></i></button>
-        </div>
-        <form action="{{ url_for('main.nuevo_usuario') }}" method="POST" id="formNuevoUsuario">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header"><h3><i class="fas fa-user-plus"></i> Nuevo Usuario</h3><button type="button" class="modal-close" onclick="cerrarModal('modalNuevo')">&times;</button></div>
+        <form action="{{ url_for('main.nuevo_usuario') }}" method="POST">
             <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-user"></i> Nombre completo *</label>
-                        <input type="text" name="nombre" required placeholder="Nombre del usuario">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-envelope"></i> Correo electrónico *</label>
-                        <input type="email" name="correo" required placeholder="correo@ejemplo.com">
-                    </div>
+                <div class="form-group"><label class="required">Nombre Completo</label><input type="text" name="nombre" required placeholder="Nombre del usuario"></div>
+                <div class="form-group"><label class="required">Correo Electrónico</label><input type="email" name="correo" required placeholder="correo@ejemplo.com"></div>
+                <div class="form-group"><label>Teléfono</label><input type="text" name="telefono" placeholder="(646) 123-4567"></div>
+                <div class="form-grid" style="gap: 1rem;">
+                    <div class="form-group"><label class="required">Rol</label><select name="rol_id" required><option value="">Seleccionar...</option>{% for rol in roles %}<option value="{{ rol.id }}">{{ rol.nombre|capitalize }}</option>{% endfor %}</select></div>
+                    <div class="form-group"><label>Sucursal</label><select name="sucursal_id"><option value="">Sin asignar</option>{% for sucursal in sucursales %}<option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>{% endfor %}</select></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-lock"></i> Contraseña *</label>
-                        <input type="password" name="contrasena" required minlength="6" placeholder="Mínimo 6 caracteres">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-phone"></i> Teléfono</label>
-                        <input type="text" name="telefono" placeholder="Número de teléfono">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-user-tag"></i> Rol *</label>
-                        <select name="rol_id" required>
-                            <option value="">Seleccione un rol</option>
-                            {% for rol in roles %}
-                            <option value="{{ rol.id }}">{{ rol.nombre|capitalize }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-map-marker-alt"></i> Sucursal</label>
-                        <select name="sucursal_id">
-                            <option value="">Sin asignar</option>
-                            {% for sucursal in sucursales %}
-                            <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-id-badge"></i> Tipo de agente</label>
-                    <input type="text" name="tipo_agente" placeholder="Ej: Senior, Junior, Especialista">
-                </div>
+                <div class="form-group"><label>Tipo de Agente</label><select name="tipo_agente"><option value="">No aplica</option><option value="counter">Counter</option><option value="externo">Externo</option></select></div>
+                <div class="form-group"><label class="required">Contraseña</label><input type="password" name="contrasena" required placeholder="Mínimo 6 caracteres"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalNuevo')">Cancelar</button>
-                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalNuevo')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
         </form>
     </div>
 </div>
 
-<!-- Modal Editar Usuario -->
+<!-- Modal: Editar Usuario -->
 <div class="modal-overlay" id="modalEditar">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-user-edit"></i> Editar Usuario</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalEditar')"><i class="fas fa-times"></i></button>
-        </div>
-        <form action="" method="POST" id="formEditarUsuario">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header"><h3><i class="fas fa-user-edit"></i> Editar Usuario</h3><button type="button" class="modal-close" onclick="cerrarModal('modalEditar')">&times;</button></div>
+        <form id="formEditarUsuario" method="POST">
             <input type="hidden" name="id" id="editar_id">
             <div class="modal-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-user"></i> Nombre completo *</label>
-                        <input type="text" name="nombre" id="editar_nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-envelope"></i> Correo electrónico *</label>
-                        <input type="email" name="correo" id="editar_correo" required>
-                    </div>
+                <div class="form-group"><label class="required">Nombre Completo</label><input type="text" name="nombre" id="editar_nombre" required></div>
+                <div class="form-group"><label class="required">Correo Electrónico</label><input type="email" name="correo" id="editar_correo" required></div>
+                <div class="form-group"><label>Teléfono</label><input type="text" name="telefono" id="editar_telefono"></div>
+                <div class="form-grid" style="gap: 1rem;">
+                    <div class="form-group"><label class="required">Rol</label><select name="rol_id" id="editar_rol" required>{% for rol in roles %}<option value="{{ rol.id }}">{{ rol.nombre|capitalize }}</option>{% endfor %}</select></div>
+                    <div class="form-group"><label>Sucursal</label><select name="sucursal_id" id="editar_sucursal"><option value="">Sin asignar</option>{% for sucursal in sucursales %}<option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>{% endfor %}</select></div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-lock"></i> Nueva contraseña</label>
-                        <input type="password" name="contrasena" id="editar_contrasena" minlength="6" placeholder="Dejar vacío para mantener">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-phone"></i> Teléfono</label>
-                        <input type="text" name="telefono" id="editar_telefono">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-user-tag"></i> Rol *</label>
-                        <select name="rol_id" id="editar_rol" required>
-                            {% for rol in roles %}
-                            <option value="{{ rol.id }}">{{ rol.nombre|capitalize }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-map-marker-alt"></i> Sucursal</label>
-                        <select name="sucursal_id" id="editar_sucursal">
-                            <option value="">Sin asignar</option>
-                            {% for sucursal in sucursales %}
-                            <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-id-badge"></i> Tipo de agente</label>
-                    <input type="text" name="tipo_agente" id="editar_tipo_agente">
-                </div>
+                <div class="form-group"><label>Tipo de Agente</label><select name="tipo_agente" id="editar_tipo_agente"><option value="">No aplica</option><option value="counter">Counter</option><option value="externo">Externo</option></select></div>
+                <div class="form-group"><label>Nueva Contraseña</label><input type="password" name="contrasena" id="editar_contrasena" placeholder="Dejar vacío para no cambiar"><small>Solo completa si deseas cambiar la contraseña</small></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalEditar')">Cancelar</button>
-                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar cambios</button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalEditar')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
         </form>
     </div>
 </div>
 
-<!-- Modal Asignar Tarjetas -->
+<!-- Modal: Ver Usuario -->
+<div class="modal-overlay" id="modalVer">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header"><h3><i class="fas fa-user"></i> Detalle de Usuario</h3><button type="button" class="modal-close" onclick="cerrarModal('modalVer')">&times;</button></div>
+        <div class="modal-body" id="modalVerContent"><div class="loading-spinner"><div class="spinner"></div><p>Cargando...</p></div></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalVer')">Cerrar</button></div>
+    </div>
+</div>
+
+<!-- Modal: Asignar Tarjetas -->
 <div class="modal-overlay" id="modalTarjetas">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-credit-card"></i> Asignar Tarjetas</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalTarjetas')"><i class="fas fa-times"></i></button>
-        </div>
-        <form action="" method="POST" id="formAsignarTarjetas">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header"><h3><i class="fas fa-credit-card"></i> Asignar Tarjetas a <span id="tarjetas_usuario_nombre"></span></h3><button type="button" class="modal-close" onclick="cerrarModal('modalTarjetas')">&times;</button></div>
+        <form id="formAsignarTarjetas" method="POST">
             <input type="hidden" name="usuario_id" id="tarjetas_usuario_id">
             <div class="modal-body">
-                <p class="modal-subtitle">Usuario: <strong id="tarjetas_usuario_nombre"></strong></p>
+                <p style="color: var(--kn-text-muted); margin-bottom: 1rem;">Selecciona las tarjetas:</p>
                 <div class="tarjetas-grid" id="tarjetasGrid">
-                    {% for tarjeta in tarjetas %}
-                    <label class="tarjeta-checkbox">
-                        <input type="checkbox" name="tarjetas[]" value="{{ tarjeta.id }}">
-                        <span class="tarjeta-label">
-                            <i class="fas fa-credit-card"></i>
-                            <span class="tarjeta-nombre">{{ tarjeta.nombre_tarjeta }}</span>
-                            <span class="tarjeta-numero">**** {{ tarjeta.numero_tarjeta }}</span>
-                        </span>
-                    </label>
-                    {% endfor %}
+                    {% for tarjeta in tarjetas %}<label class="tarjeta-checkbox"><input type="checkbox" name="tarjetas_ids" value="{{ tarjeta.id }}"><span><i class="fas fa-credit-card"></i> {{ tarjeta.nombre_tarjeta }} (*{{ tarjeta.numero_tarjeta }})</span></label>{% endfor %}
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalTarjetas')">Cancelar</button>
-                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalTarjetas')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
         </form>
     </div>
 </div>
 
-<!-- Modal Ver Usuario -->
-<div class="modal-overlay" id="modalVer">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3><i class="fas fa-user"></i> Detalle de Usuario</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalVer')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body" id="modalVerContent">
-            <div class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Cargando...</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Ver Tarjetas -->
+<!-- Modal: Ver Tarjetas -->
 <div class="modal-overlay" id="modalVerTarjetas">
-    <div class="modal-content modal-sm">
-        <div class="modal-header">
-            <h3><i class="fas fa-credit-card"></i> Tarjetas de <span id="ver_tarjetas_nombre"></span></h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalVerTarjetas')"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="modal-body" id="modalVerTarjetasContent">
-        </div>
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header"><h3><i class="fas fa-credit-card"></i> Tarjetas de <span id="ver_tarjetas_nombre"></span></h3><button type="button" class="modal-close" onclick="cerrarModal('modalVerTarjetas')">&times;</button></div>
+        <div class="modal-body" id="modalVerTarjetasContent"></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalVerTarjetas')">Cerrar</button></div>
     </div>
 </div>
 
-<!-- Modal Toggle Estatus -->
+<!-- Modal: Toggle Estatus -->
 <div class="modal-overlay" id="modalToggleEstatus">
-    <div class="modal-content modal-sm">
-        <div class="modal-header" id="toggle_header">
-            <h3 id="toggle_titulo"><i class="fas fa-ban"></i> Desactivar Usuario</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalToggleEstatus')"><i class="fas fa-times"></i></button>
-        </div>
-        <form action="" method="POST" id="formToggleEstatus">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header"><h3 id="toggle_titulo"><i class="fas fa-user-slash"></i> Cambiar Estatus</h3><button type="button" class="modal-close" onclick="cerrarModal('modalToggleEstatus')">&times;</button></div>
+        <form id="formToggleEstatus" method="POST">
             <input type="hidden" name="accion" id="toggle_accion">
             <div class="modal-body">
-                <p id="toggle_mensaje" class="confirm-message"></p>
-                <div class="form-group">
-                    <label>Motivo (mínimo 10 caracteres) *</label>
-                    <textarea name="motivo" id="toggle_motivo" rows="3" required minlength="10" placeholder="Explique el motivo..."></textarea>
-                </div>
+                <p id="toggle_mensaje" style="margin-bottom: 1rem;"></p>
+                <div class="form-group"><label>Motivo (opcional)</label><textarea name="motivo" id="toggle_motivo" rows="3" placeholder="Razón del cambio..."></textarea></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal('modalToggleEstatus')">Cancelar</button>
-                <button type="submit" class="btn-danger" id="toggle_btn">Desactivar</button>
-            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalToggleEstatus')">Cancelar</button><button type="submit" class="btn" id="toggle_btn">Confirmar</button></div>
         </form>
     </div>
 </div>
-{% endif %}
 
 <script>
-// === FILTROS ===
 function filtrarUsuarios() {
     const nombre = document.getElementById('filtroNombre').value.toLowerCase();
-    const rol = document.getElementById('filtroRol').value.toLowerCase();
+    const rol = document.getElementById('filtroRol').value;
     const sucursal = document.getElementById('filtroSucursal').value;
     const estatus = document.getElementById('filtroEstatus').value;
-    
-    const filas = document.querySelectorAll('#tablaUsuarios tbody tr');
-    
-    filas.forEach(fila => {
-        const dataNombre = fila.dataset.nombre;
-        const dataCorreo = fila.dataset.correo;
-        const dataRol = fila.dataset.rol;
-        const dataSucursal = fila.dataset.sucursal;
-        const dataActivo = fila.dataset.activo;
-        
-        let mostrar = true;
-        
-        if (nombre && !dataNombre.includes(nombre) && !dataCorreo.includes(nombre)) mostrar = false;
-        if (rol && dataRol !== rol) mostrar = false;
-        if (sucursal && dataSucursal !== sucursal) mostrar = false;
-        if (estatus && dataActivo !== estatus) mostrar = false;
-        
-        fila.style.display = mostrar ? '' : 'none';
+    document.querySelectorAll('#tablaUsuarios tbody tr').forEach(fila => {
+        const ok = (fila.dataset.nombre.includes(nombre) || fila.dataset.correo.includes(nombre)) && (!rol || fila.dataset.rol === rol) && (!sucursal || fila.dataset.sucursal === sucursal) && (!estatus || fila.dataset.activo === estatus);
+        fila.style.display = ok ? '' : 'none';
     });
 }
-
-// === MODALES ===
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
-function abrirModalNuevo() { document.getElementById('formNuevoUsuario').reset(); abrirModal('modalNuevo'); }
+function abrirModalNuevo() { abrirModal('modalNuevo'); }
 
-// === VER USUARIO ===
 function verUsuario(id) {
     abrirModal('modalVer');
     document.getElementById('modalVerContent').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Cargando...</p></div>';
-    
-    fetch(`/api/usuario/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById('modalVerContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> ${data.error}</p>`;
-                return;
-            }
-            
-            document.getElementById('modalVerContent').innerHTML = `
-                <div class="usuario-detail">
-                    <div class="detail-header">
-                        <div class="avatar-large">${data.nombre[0].toUpperCase()}</div>
-                        <div class="info">
-                            <h2>${data.nombre}</h2>
-                            <p>${data.correo}</p>
-                            <span class="badge-rol ${data.rol.toLowerCase()}">${data.rol}</span>
-                            ${data.activo ? '<span class="badge-activo"><i class="fas fa-check-circle"></i> Activo</span>' : '<span class="badge-inactivo"><i class="fas fa-ban"></i> Inactivo</span>'}
-                        </div>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-map-marker-alt"></i> Sucursal</span>
-                            <span class="value">${data.sucursal || 'Sin asignar'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-phone"></i> Teléfono</span>
-                            <span class="value">${data.telefono || 'No registrado'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-id-badge"></i> Tipo Agente</span>
-                            <span class="value">${data.tipo_agente || 'No aplica'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-credit-card"></i> Tarjetas</span>
-                            <span class="value">${data.tarjetas_count} tarjeta(s)</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-calendar-plus"></i> Registro</span>
-                            <span class="value">${data.created_at}</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="label"><i class="fas fa-sync"></i> Actualización</span>
-                            <span class="value">${data.updated_at}</span>
-                        </div>
-                    </div>
-                    ${data.tarjetas.length > 0 ? `
-                    <div class="detail-section">
-                        <h4><i class="fas fa-credit-card"></i> Tarjetas Asignadas</h4>
-                        <div class="tarjetas-list">
-                            ${data.tarjetas.map(t => `
-                                <div class="tarjeta-item">
-                                    <i class="fas fa-credit-card"></i>
-                                    <span>${t.nombre} (**** ${t.numero})</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-        })
-        .catch(error => {
-            document.getElementById('modalVerContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> Error: ${error.message}</p>`;
-        });
+    fetch(`/api/usuario/${id}`).then(r => r.json()).then(data => {
+        if (data.error) { document.getElementById('modalVerContent').innerHTML = `<p class="error">${data.error}</p>`; return; }
+        document.getElementById('modalVerContent').innerHTML = `
+            <div class="user-header"><div class="avatar-large">${data.nombre[0].toUpperCase()}</div><div class="info"><h2>${data.nombre}</h2><p>${data.correo}</p><span class="badge-rol ${data.rol.toLowerCase()}">${data.rol}</span> ${data.activo ? '<span class="badge-activo"><i class="fas fa-check-circle"></i> Activo</span>' : '<span class="badge-inactivo"><i class="fas fa-ban"></i> Inactivo</span>'}</div></div>
+            <div class="detail-grid"><div class="detail-item"><span class="label"><i class="fas fa-map-marker-alt"></i> Sucursal</span><span class="value">${data.sucursal || 'Sin asignar'}</span></div><div class="detail-item"><span class="label"><i class="fas fa-phone"></i> Teléfono</span><span class="value">${data.telefono || 'No registrado'}</span></div><div class="detail-item"><span class="label"><i class="fas fa-id-badge"></i> Tipo</span><span class="value">${data.tipo_agente || 'No aplica'}</span></div><div class="detail-item"><span class="label"><i class="fas fa-credit-card"></i> Tarjetas</span><span class="value">${data.tarjetas_count} tarjeta(s)</span></div></div>
+            ${data.tarjetas.length > 0 ? `<div class="detail-section"><h4><i class="fas fa-credit-card"></i> Tarjetas Asignadas</h4><div class="tarjetas-list">${data.tarjetas.map(t => `<div class="tarjeta-item"><i class="fas fa-credit-card"></i><span>${t.nombre} (**** ${t.numero})</span></div>`).join('')}</div></div>` : ''}`;
+    }).catch(err => { document.getElementById('modalVerContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> Error: ${err.message}</p>`; });
 }
 
-// === EDITAR USUARIO ===
 function editarUsuario(id) {
-    fetch(`/api/usuario/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) { alert('Error: ' + data.error); return; }
-            
-            document.getElementById('editar_id').value = data.id;
-            document.getElementById('editar_nombre').value = data.nombre;
-            document.getElementById('editar_correo').value = data.correo;
-            document.getElementById('editar_telefono').value = data.telefono || '';
-            document.getElementById('editar_tipo_agente').value = data.tipo_agente || '';
-            document.getElementById('editar_rol').value = data.rol_id;
-            document.getElementById('editar_sucursal').value = data.sucursal_id || '';
-            document.getElementById('editar_contrasena').value = '';
-            document.getElementById('formEditarUsuario').action = `/usuarios/editar/${data.id}`;
-            
-            abrirModal('modalEditar');
-        })
-        .catch(error => { alert('Error al cargar usuario: ' + error.message); });
+    fetch(`/api/usuario/${id}`).then(r => r.json()).then(data => {
+        if (data.error) { alert('Error: ' + data.error); return; }
+        document.getElementById('editar_id').value = data.id;
+        document.getElementById('editar_nombre').value = data.nombre;
+        document.getElementById('editar_correo').value = data.correo;
+        document.getElementById('editar_telefono').value = data.telefono || '';
+        document.getElementById('editar_tipo_agente').value = data.tipo_agente || '';
+        document.getElementById('editar_rol').value = data.rol_id;
+        document.getElementById('editar_sucursal').value = data.sucursal_id || '';
+        document.getElementById('editar_contrasena').value = '';
+        document.getElementById('formEditarUsuario').action = `/usuarios/editar/${data.id}`;
+        abrirModal('modalEditar');
+    }).catch(err => { alert('Error al cargar usuario: ' + err.message); });
 }
 
-// === ASIGNAR TARJETAS ===
 function asignarTarjetas(usuarioId, nombre) {
     document.getElementById('tarjetas_usuario_id').value = usuarioId;
     document.getElementById('tarjetas_usuario_nombre').textContent = nombre;
     document.getElementById('formAsignarTarjetas').action = `/usuarios/${usuarioId}/tarjetas`;
-    
     document.querySelectorAll('#tarjetasGrid input[type="checkbox"]').forEach(cb => { cb.checked = false; });
-    
-    fetch(`/api/usuario/${usuarioId}/tarjetas`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.tarjetas) {
-                data.tarjetas.forEach(tarjetaId => {
-                    const cb = document.querySelector(`#tarjetasGrid input[value="${tarjetaId}"]`);
-                    if (cb) cb.checked = true;
-                });
-            }
-            abrirModal('modalTarjetas');
-        })
-        .catch(() => { abrirModal('modalTarjetas'); });
+    fetch(`/api/usuario/${usuarioId}/tarjetas`).then(r => r.json()).then(data => {
+        if (data.tarjetas) { data.tarjetas.forEach(tarjetaId => { const cb = document.querySelector(`#tarjetasGrid input[value="${tarjetaId}"]`); if (cb) cb.checked = true; }); }
+        abrirModal('modalTarjetas');
+    }).catch(() => { abrirModal('modalTarjetas'); });
 }
 
-// === VER TARJETAS DE USUARIO ===
 function verTarjetasUsuario(usuarioId, nombre) {
     document.getElementById('ver_tarjetas_nombre').textContent = nombre;
     abrirModal('modalVerTarjetas');
     document.getElementById('modalVerTarjetasContent').innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Cargando...</p></div>';
-    
-    fetch(`/api/usuario/${usuarioId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.tarjetas && data.tarjetas.length > 0) {
-                document.getElementById('modalVerTarjetasContent').innerHTML = `
-                    <div class="tarjetas-list-detail">
-                        ${data.tarjetas.map(t => `
-                            <div class="tarjeta-detail-item">
-                                <div class="tarjeta-icon"><i class="fas fa-credit-card"></i></div>
-                                <div class="tarjeta-info">
-                                    <span class="nombre">${t.nombre}</span>
-                                    <span class="numero">**** ${t.numero}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else {
-                document.getElementById('modalVerTarjetasContent').innerHTML = '<p class="empty-message">Este usuario no tiene tarjetas asignadas.</p>';
-            }
-        })
-        .catch(error => {
-            document.getElementById('modalVerTarjetasContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> Error: ${error.message}</p>`;
-        });
+    fetch(`/api/usuario/${usuarioId}`).then(r => r.json()).then(data => {
+        if (data.tarjetas && data.tarjetas.length > 0) {
+            document.getElementById('modalVerTarjetasContent').innerHTML = `<div class="tarjetas-list-detail">${data.tarjetas.map(t => `<div class="tarjeta-detail-item"><div class="tarjeta-icon"><i class="fas fa-credit-card"></i></div><div class="tarjeta-info"><span class="nombre">${t.nombre}</span><span class="numero">**** ${t.numero}</span></div></div>`).join('')}</div>`;
+        } else { document.getElementById('modalVerTarjetasContent').innerHTML = '<p class="empty-message">Este usuario no tiene tarjetas asignadas.</p>'; }
+    }).catch(err => { document.getElementById('modalVerTarjetasContent').innerHTML = `<p class="error"><i class="fas fa-exclamation-circle"></i> Error: ${err.message}</p>`; });
 }
 
-// === TOGGLE ESTATUS ===
 function toggleEstatus(usuarioId, activo, nombre) {
     const accion = activo ? 'desactivar' : 'activar';
-    
     document.getElementById('toggle_accion').value = accion;
     document.getElementById('toggle_titulo').innerHTML = activo ? '<i class="fas fa-ban"></i> Desactivar Usuario' : '<i class="fas fa-check"></i> Activar Usuario';
     document.getElementById('toggle_mensaje').textContent = `¿Estás seguro de ${accion} a ${nombre}?`;
     document.getElementById('toggle_btn').textContent = activo ? 'Desactivar' : 'Activar';
-    document.getElementById('toggle_btn').className = activo ? 'btn-danger' : 'btn-success';
+    document.getElementById('toggle_btn').className = activo ? 'btn btn-danger' : 'btn btn-success';
     document.getElementById('toggle_motivo').value = '';
     document.getElementById('formToggleEstatus').action = `/usuarios/${usuarioId}/toggle-estatus`;
-    
     abrirModal('modalToggleEstatus');
 }
 
-// === CERRAR MODALES ===
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.active').forEach(modal => { modal.classList.remove('active'); });
-    }
-});
-
-document.querySelectorAll('.modal-overlay').forEach(modal => {
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) { this.classList.remove('active'); }
-    });
-});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.active').forEach(m => { m.classList.remove('active'); }); } });
+document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', function(e) { if (e.target === this) { this.classList.remove('active'); } }); });
 </script>
 {% endblock %}

@@ -4,132 +4,52 @@
 
 {% block page_styles %}
 <style>
-.vale-container {
-    max-width: 900px;
+/* Estilos específicos para vista de vale */
+.vale-view-container {
+    max-width: 56.25rem;
     margin: 0 auto;
-    padding: 1.5rem;
 }
-
-.vale-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.vale-header {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.vale-header-info h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.vale-header-info p {
-    margin: 0.25rem 0 0;
-    opacity: 0.9;
-    font-size: 0.9rem;
-}
-
-.vale-header .badge-estatus {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
-}
-
-.badge-pendiente { background: #fef3c7; color: #92400e; }
-.badge-entregado { background: #dbeafe; color: #1e40af; }
-.badge-en_custodia { background: #e0e7ff; color: #4338ca; }
-.badge-retirado { background: #fae8ff; color: #a21caf; }
-.badge-depositado { background: #d1fae5; color: #065f46; }
-.badge-revisado { background: #dcfce7; color: #166534; }
-
-.vale-body {
-    padding: 2rem;
-}
-
-.seccion {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.seccion:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.seccion-titulo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-}
-
-.seccion-titulo i {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-}
-
-.seccion-titulo.info i { background: #e0e7ff; color: #4f46e5; }
-.seccion-titulo.efectivo i { background: #d1fae5; color: #059669; }
-.seccion-titulo.dolares i { background: #cffafe; color: #0891b2; }
-.seccion-titulo.otros i { background: #fef3c7; color: #d97706; }
 
 .datos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
     gap: 1rem;
 }
 
 .dato-item {
-    background: #f9fafb;
-    border-radius: 8px;
+    background: var(--bright-snow);
+    border-radius: var(--radius-md);
     padding: 1rem;
 }
 
 .dato-item .label {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: var(--text-xs);
+    color: var(--gray-500);
     text-transform: uppercase;
     margin-bottom: 0.25rem;
 }
 
 .dato-item .valor {
-    font-size: 1.1rem;
+    font-size: var(--text-lg);
     font-weight: 600;
-    color: #1f2937;
+    color: var(--graphite);
 }
 
 .dato-item .valor.grande {
-    font-size: 1.5rem;
-    color: #059669;
+    font-size: var(--text-2xl);
+    color: var(--color-success);
+    font-family: var(--font-mono);
 }
 
 .dato-item .valor.dolares {
-    color: #0891b2;
+    color: var(--color-info);
+    font-family: var(--font-mono);
 }
 
 .resumen-box {
     background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-    color: white;
-    border-radius: 12px;
+    color: var(--white);
+    border-radius: var(--radius-xl);
     padding: 1.5rem;
 }
 
@@ -137,25 +57,22 @@
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 0.0625rem solid rgba(255,255,255,0.1);
 }
 
-.resumen-row:last-child {
-    border-bottom: none;
-}
+.resumen-row:last-child { border-bottom: none; }
 
 .resumen-row.total {
-    font-size: 1.5rem;
+    font-size: var(--text-2xl);
     font-weight: 700;
     padding-top: 1rem;
     margin-top: 0.5rem;
-    border-top: 2px solid rgba(255,255,255,0.2);
+    border-top: 0.125rem solid rgba(255,255,255,0.2);
 }
 
-.resumen-row .valor {
-    font-family: 'Monaco', 'Consolas', monospace;
-}
+.resumen-row .valor { font-family: var(--font-mono); }
 
+/* Timeline */
 .timeline {
     position: relative;
     padding-left: 2rem;
@@ -164,11 +81,11 @@
 .timeline::before {
     content: '';
     position: absolute;
-    left: 7px;
+    left: 0.4375rem;
     top: 0;
     bottom: 0;
-    width: 2px;
-    background: #e5e7eb;
+    width: 0.125rem;
+    background: var(--gray-200);
 }
 
 .timeline-item {
@@ -176,120 +93,207 @@
     padding-bottom: 1.5rem;
 }
 
-.timeline-item:last-child {
-    padding-bottom: 0;
-}
+.timeline-item:last-child { padding-bottom: 0; }
 
 .timeline-item::before {
     content: '';
     position: absolute;
     left: -2rem;
-    top: 4px;
-    width: 12px;
-    height: 12px;
+    top: 0.25rem;
+    width: 0.75rem;
+    height: 0.75rem;
     border-radius: 50%;
-    background: #d1d5db;
-    border: 2px solid white;
+    background: var(--gray-300);
+    border: 0.125rem solid var(--white);
 }
 
-.timeline-item.completado::before {
-    background: #059669;
-}
+.timeline-item.completado::before { background: var(--color-success); }
 
 .timeline-item .fecha {
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: var(--text-xs);
+    color: var(--gray-500);
 }
 
 .timeline-item .descripcion {
     font-weight: 500;
-    color: #374151;
+    color: var(--graphite);
 }
 
 .timeline-item .usuario {
-    font-size: 0.85rem;
-    color: #6b7280;
+    font-size: var(--text-sm);
+    color: var(--gray-500);
 }
 
-.acciones-section {
-    background: #f9fafb;
-    padding: 1.5rem 2rem;
-    border-top: 1px solid #e5e7eb;
-}
-
+/* Sección de acciones */
 .acciones-grid {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
 }
 
-.btn-accion {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.btn-recibir { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
-.btn-retirar { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
-.btn-depositar { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; }
-.btn-aprobar { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-.btn-imprimir { background: white; color: #374151; border: 2px solid #d1d5db; }
-.btn-volver { background: white; color: #6b7280; border: 2px solid #e5e7eb; }
-
-.btn-accion:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
+/* Reporte vinculado */
 .reporte-vinculado {
-    background: #eff6ff;
-    border: 2px solid #3b82f6;
-    border-radius: 8px;
-    padding: 1rem;
+    background: var(--color-info-light);
+    border: 0.125rem solid var(--color-info);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+}
+
+.reporte-vinculado .info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.reporte-vinculado .info i {
+    color: var(--color-info);
+    font-size: 1.25rem;
+}
+
+.reporte-vinculado .folio {
+    font-weight: 700;
+    color: var(--color-info-dark);
+}
+
+/* Modal estilos */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 28rem;
+    box-shadow: 0 1.25rem 3.75rem rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 { margin: 0; font-size: var(--text-lg); }
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body { padding: 1.5rem; }
+
+.modal-body .form-group { margin-bottom: 1rem; }
+
+.modal-body .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--graphite);
+}
+
+.modal-body .form-group input,
+.modal-body .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 0.125rem solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    background: var(--bright-snow);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    display: flex;
+    justify-content: flex-end;
     gap: 1rem;
 }
 
-.reporte-vinculado i { font-size: 1.5rem; color: #3b82f6; }
-.reporte-vinculado .info { flex: 1; }
-.reporte-vinculado .folio { font-weight: 700; color: #1e40af; }
-.reporte-vinculado .detalle { font-size: 0.85rem; color: #6b7280; }
-.reporte-vinculado a { color: #3b82f6; text-decoration: none; font-weight: 600; }
+.btn-confirmar {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-dark) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+}
 
-@media print {
-    .acciones-section, .btn-volver { display: none; }
-    .vale-card { box-shadow: none; }
+.btn-cancelar {
+    padding: 0.75rem 1.5rem;
+    background: var(--white);
+    border: 0.125rem solid var(--gray-300);
+    border-radius: var(--radius-md);
+    cursor: pointer;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="vale-container">
-    <div class="vale-card">
-        <div class="vale-header">
-            <div class="vale-header-info">
-                <h1><i class="fas fa-file-invoice-dollar"></i> {{ entrega.folio }}</h1>
-                <p>Vale de Entrega - {{ entrega.fecha.strftime('%d de %B de %Y') }}</p>
+<div class="page-container vale-view-container">
+    <!-- Card Principal -->
+    <div class="card">
+        <div class="card-header card-header--primary" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-file-invoice-dollar" style="font-size: 1.5rem;"></i>
+                <div>
+                    <h1 style="margin: 0; font-size: 1.25rem;">{{ entrega.folio }}</h1>
+                    <p style="margin: 0; opacity: 0.9; font-size: var(--text-sm);">{{ entrega.fecha.strftime('%d de %B de %Y') }}</p>
+                </div>
             </div>
-            <span class="badge-estatus badge-{{ entrega.estatus }}">
-                {{ entrega.estatus_descripcion }}
-            </span>
+            {% if entrega.estatus == 'pendiente' %}
+                <span class="badge badge--warning" style="font-size: var(--text-sm); padding: 0.5rem 1rem;">{{ entrega.estatus_descripcion }}</span>
+            {% elif entrega.estatus == 'en_custodia' %}
+                <span class="badge badge--info" style="font-size: var(--text-sm); padding: 0.5rem 1rem;">{{ entrega.estatus_descripcion }}</span>
+            {% elif entrega.estatus == 'retirado' %}
+                <span class="badge badge--primary" style="font-size: var(--text-sm); padding: 0.5rem 1rem;">{{ entrega.estatus_descripcion }}</span>
+            {% elif entrega.estatus == 'depositado' or entrega.estatus == 'revisado' %}
+                <span class="badge badge--success" style="font-size: var(--text-sm); padding: 0.5rem 1rem;">{{ entrega.estatus_descripcion }}</span>
+            {% else %}
+                <span class="badge badge--neutral" style="font-size: var(--text-sm); padding: 0.5rem 1rem;">{{ entrega.estatus_descripcion }}</span>
+            {% endif %}
         </div>
 
-        <div class="vale-body">
-            <div class="seccion">
-                <div class="seccion-titulo info">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Información General</span>
+        <div class="card-body">
+            <!-- Reporte vinculado -->
+            {% if entrega.reporte_venta %}
+            <div class="reporte-vinculado">
+                <div class="info">
+                    <i class="fas fa-link"></i>
+                    <span>Vinculado a reporte:</span>
+                    <span class="folio">{{ entrega.reporte_venta.folio }}</span>
+                </div>
+                <a href="{{ url_for('main.ver_reporte_venta', id=entrega.reporte_venta.id) }}" class="btn btn--info btn--sm">
+                    <i class="fas fa-external-link-alt"></i> Ver Reporte
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Sección Información General -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="fas fa-info-circle"></i> Información General
                 </div>
                 <div class="datos-grid">
                     <div class="dato-item">
@@ -297,115 +301,73 @@
                         <div class="valor">{{ entrega.agente.nombre if entrega.agente else '---' }}</div>
                     </div>
                     <div class="dato-item">
-                        <div class="label">Fecha</div>
-                        <div class="valor">{{ entrega.fecha.strftime('%d/%m/%Y') }}</div>
-                    </div>
-                    <div class="dato-item">
-                        <div class="label">Creado</div>
+                        <div class="label">Fecha de Creación</div>
                         <div class="valor">{{ entrega.fecha_hora_creacion.strftime('%d/%m/%Y %H:%M') if entrega.fecha_hora_creacion else '---' }}</div>
                     </div>
                 </div>
-
-                {% if entrega.reporte_venta %}
-                <div class="reporte-vinculado" style="margin-top: 1rem;">
-                    <i class="fas fa-link"></i>
-                    <div class="info">
-                        <div class="folio">{{ entrega.reporte_venta.folio }}</div>
-                        <div class="detalle">Reporte de Ventas vinculado</div>
-                    </div>
-                    <a href="{{ url_for('main.ver_reporte_venta', id=entrega.reporte_venta.id) }}">
-                        <i class="fas fa-external-link-alt"></i> Ver Reporte
-                    </a>
-                </div>
-                {% endif %}
             </div>
 
-            <div class="seccion">
-                <div class="seccion-titulo efectivo">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Efectivo en Pesos (MXN)</span>
+            <!-- Sección Efectivo -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="fas fa-money-bill-wave"></i> Detalle de Efectivo
                 </div>
                 <div class="datos-grid">
                     <div class="dato-item">
-                        <div class="label">Monto</div>
+                        <div class="label">Efectivo (MXN)</div>
                         <div class="valor grande">${{ '{:,.2f}'.format(entrega.efectivo_pesos|float) }}</div>
                     </div>
-                </div>
-            </div>
-
-            {% if entrega.efectivo_dolares > 0 %}
-            <div class="seccion">
-                <div class="seccion-titulo dolares">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>Dólares (USD)</span>
-                </div>
-                <div class="datos-grid">
+                    {% if entrega.efectivo_dolares > 0 %}
                     <div class="dato-item">
-                        <div class="label">Cantidad USD</div>
+                        <div class="label">Dólares (USD)</div>
                         <div class="valor dolares">${{ '{:,.2f}'.format(entrega.efectivo_dolares|float) }} USD</div>
                     </div>
                     <div class="dato-item">
                         <div class="label">Tipo de Cambio</div>
-                        <div class="valor">{{ '{:,.4f}'.format(entrega.tipo_cambio|float) }}</div>
+                        <div class="valor">${{ '{:,.4f}'.format(entrega.tipo_cambio|float) }}</div>
                     </div>
                     <div class="dato-item">
                         <div class="label">Equivalente MXN</div>
-                        <div class="valor">${{ '{:,.2f}'.format(entrega.equivalente_pesos|float) }}</div>
+                        <div class="valor grande">${{ '{:,.2f}'.format(entrega.equivalente_pesos|float) }}</div>
                     </div>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if entrega.cheques > 0 or entrega.vouchers_tc > 0 %}
-            <div class="seccion">
-                <div class="seccion-titulo otros">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Cheques y Vouchers</span>
-                </div>
-                <div class="datos-grid">
+                    {% endif %}
                     {% if entrega.cheques > 0 %}
                     <div class="dato-item">
                         <div class="label">Cheques</div>
                         <div class="valor">${{ '{:,.2f}'.format(entrega.cheques|float) }}</div>
                     </div>
                     {% endif %}
-                    {% if entrega.vouchers_tc > 0 %}
-                    <div class="dato-item">
-                        <div class="label">Vouchers TC (Referencia)</div>
-                        <div class="valor" style="color: #9ca3af;">${{ '{:,.2f}'.format(entrega.vouchers_tc|float) }}</div>
+                </div>
+
+                <!-- Resumen -->
+                <div class="resumen-box" style="margin-top: var(--space-lg);">
+                    <div class="resumen-row">
+                        <span>Efectivo Pesos</span>
+                        <span class="valor">${{ '{:,.2f}'.format(entrega.efectivo_pesos|float) }}</span>
+                    </div>
+                    {% if entrega.efectivo_dolares > 0 %}
+                    <div class="resumen-row">
+                        <span>Dólares → Pesos</span>
+                        <span class="valor">${{ '{:,.2f}'.format(entrega.equivalente_pesos|float) }}</span>
                     </div>
                     {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="resumen-box">
-                <div class="resumen-row">
-                    <span>Efectivo Pesos</span>
-                    <span class="valor">${{ '{:,.2f}'.format(entrega.efectivo_pesos|float) }}</span>
-                </div>
-                {% if entrega.efectivo_dolares > 0 %}
-                <div class="resumen-row">
-                    <span>Dólares → Pesos</span>
-                    <span class="valor">${{ '{:,.2f}'.format(entrega.equivalente_pesos|float) }}</span>
-                </div>
-                {% endif %}
-                {% if entrega.cheques > 0 %}
-                <div class="resumen-row">
-                    <span>Cheques</span>
-                    <span class="valor">${{ '{:,.2f}'.format(entrega.cheques|float) }}</span>
-                </div>
-                {% endif %}
-                <div class="resumen-row total">
-                    <span>TOTAL FÍSICO</span>
-                    <span class="valor">${{ '{:,.2f}'.format(entrega.total_fisico|float) }}</span>
+                    {% if entrega.cheques > 0 %}
+                    <div class="resumen-row">
+                        <span>Cheques</span>
+                        <span class="valor">${{ '{:,.2f}'.format(entrega.cheques|float) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="resumen-row total">
+                        <span>TOTAL FÍSICO</span>
+                        <span class="valor">${{ '{:,.2f}'.format(entrega.total_fisico|float) }}</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="seccion" style="margin-top: 2rem;">
-                <div class="seccion-titulo info">
-                    <i class="fas fa-history"></i>
-                    <span>Historial de Estados</span>
+            <!-- Timeline de Estados -->
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="fas fa-history"></i> Historial de Estados
                 </div>
                 <div class="timeline">
                     <div class="timeline-item completado">
@@ -448,62 +410,58 @@
                 </div>
             </div>
 
+            <!-- Notas -->
             {% if entrega.notas %}
-            <div class="seccion">
-                <div class="seccion-titulo">
-                    <i class="fas fa-sticky-note"></i>
-                    <span>Notas</span>
+            <div class="form-section">
+                <div class="form-section-title">
+                    <i class="fas fa-sticky-note"></i> Notas
                 </div>
-                <p style="color: #6b7280;">{{ entrega.notas }}</p>
+                <p style="color: var(--gray-500);">{{ entrega.notas }}</p>
             </div>
             {% endif %}
         </div>
 
-        <div class="acciones-section">
+        <!-- Footer con Acciones -->
+        <div class="card-footer">
             <div class="acciones-grid">
-                <a href="{{ url_for('main.lista_entregas') }}" class="btn-accion btn-volver">
+                <a href="{{ url_for('main.lista_entregas') }}" class="btn btn--secondary">
                     <i class="fas fa-arrow-left"></i> Volver
                 </a>
                 
-                <a href="{{ url_for('main.imprimir_vale', id=entrega.id) }}" class="btn-accion btn-imprimir" target="_blank">
+                <a href="{{ url_for('main.imprimir_vale', id=entrega.id) }}" class="btn btn--outline" target="_blank">
                     <i class="fas fa-print"></i> Imprimir Vale
                 </a>
 
-                {# Info para agente: Vale pendiente de recepción #}
                 {% if entrega.estatus == 'pendiente' and not current_user.es_admin() %}
-                <span class="btn-accion" style="background: #fef3c7; color: #92400e; cursor: default;">
-                    <i class="fas fa-clock"></i> Pendiente de recepción por Administración
+                <span class="btn btn--warning" style="cursor: default;">
+                    <i class="fas fa-clock"></i> Pendiente de recepción
                 </span>
                 {% endif %}
 
-                {# Admin: Link a panel de recepción #}
                 {% if entrega.estatus == 'pendiente' and current_user.es_admin() %}
-                <a href="{{ url_for('main.recepcion_vales') }}" class="btn-accion btn-recibir">
-                    <i class="fas fa-hand-holding-usd"></i> Ir a Recepción de Vales
+                <a href="{{ url_for('main.recepcion_vales') }}" class="btn btn--info">
+                    <i class="fas fa-hand-holding-usd"></i> Ir a Recepción
                 </a>
                 {% endif %}
 
-                {# Paso 3: Retirar para depositar (en_custodia → retirado) #}
                 {% if entrega.estatus == 'en_custodia' and current_user.es_admin() %}
                 <form action="{{ url_for('main.retirar_para_deposito', id=entrega.id) }}" method="POST" style="display: inline;">
-                    <button type="submit" class="btn-accion btn-retirar">
+                    <button type="submit" class="btn btn--primary">
                         <i class="fas fa-sign-out-alt"></i> Retirar para Depósito
                     </button>
                 </form>
                 {% endif %}
 
-                {# Paso 4: Registrar depósito (retirado → depositado) #}
                 {% if entrega.estatus == 'retirado' and current_user.es_admin() %}
-                <button type="button" class="btn-accion btn-depositar" onclick="mostrarModalDeposito()">
+                <button type="button" class="btn btn--success" onclick="mostrarModalDeposito()">
                     <i class="fas fa-university"></i> Registrar Depósito
                 </button>
                 {% endif %}
 
-                {# Paso 5: Revisar y aprobar (depositado → revisado) #}
                 {% if entrega.estatus == 'depositado' and current_user.es_gerente_o_superior() %}
                 <form action="{{ url_for('main.revisar_entrega', id=entrega.id) }}" method="POST" style="display: inline;">
                     <input type="hidden" name="accion" value="aprobar">
-                    <button type="submit" class="btn-accion btn-aprobar">
+                    <button type="submit" class="btn btn--success">
                         <i class="fas fa-check-circle"></i> Aprobar
                     </button>
                 </form>
@@ -513,7 +471,7 @@
     </div>
 </div>
 
-{# Modal para Registrar Depósito #}
+<!-- Modal para Registrar Depósito -->
 {% if entrega.estatus == 'retirado' %}
 <div id="modalDeposito" class="modal-overlay" style="display: none;">
     <div class="modal-content">
@@ -546,85 +504,6 @@
     </div>
 </div>
 {% endif %}
-
-<style>
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-.modal-content {
-    background: white;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 450px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-.modal-header {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 12px 12px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.modal-header h3 { margin: 0; font-size: 1.1rem; }
-.modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-.modal-body { padding: 1.5rem; }
-.modal-body .form-group { margin-bottom: 1rem; }
-.modal-body .form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #374151;
-}
-.modal-body .form-group input,
-.modal-body .form-group textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-.modal-footer {
-    padding: 1rem 1.5rem;
-    background: #f9fafb;
-    border-radius: 0 0 12px 12px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-}
-.btn-cancelar {
-    padding: 0.75rem 1.5rem;
-    background: white;
-    border: 2px solid #d1d5db;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.btn-confirmar {
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-}
-</style>
 
 <script>
 function mostrarModalDeposito() {
