@@ -341,7 +341,7 @@
 .table-mini th {
     text-align: left;
     padding: 0.6rem 0.5rem;
-    color: #64748b;
+    color: #ffffff;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.7rem;
@@ -743,11 +743,11 @@
     <div class="dash-header">
         <div class="dash-greeting">
             <h1>Bienvenido, {{ current_user.nombre.split()[0] }}</h1>
-            <p>Panel de control - Kinessia Hub</p>
+            <p>Panel de control</p>
         </div>
         <div class="dash-date-badge">
             <i class="fas fa-calendar-alt"></i>
-            {{ fecha_hoy.strftime('%A, %d de %B %Y')|capitalize }}
+            {{ fecha_hoy_texto }}
         </div>
     </div>
 

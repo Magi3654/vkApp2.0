@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}Boletos BSP - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+:root {
+    --kn-snow: #f6f6f6;
+    --kn-alabaster: #e8e8e8;
+    --kn-graphite: #333333;
+    --kn-oxblood: #990100;
+    --kn-ember: #b90504;
+    --kn-white: #ffffff;
+    --kn-success: #059669;
+    --kn-success-light: #d1fae5;
+    --kn-warning: #d97706;
+    --kn-warning-light: #fef3c7;
+    --kn-danger: #dc2626;
+    --kn-danger-light: #fee2e2;
+    --kn-info: #0284c7;
+    --kn-info-light: #e0f2fe;
+}
+
+.boletos-page {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--kn-snow);
+    min-height: calc(100vh - 60px);
+}
+
+/* Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-header h1 i { color: var(--kn-oxblood); }
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* KPI Cards */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.kpi-mini {
+    background: var(--kn-white);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--kn-alabaster);
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-mini::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+}
+
+.kpi-mini.total::before { background: var(--kn-oxblood); }
+.kpi-mini.ok::before { background: var(--kn-success); }
+.kpi-mini.pending::before { background: var(--kn-warning); }
+
+.kpi-mini .kpi-num {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--kn-graphite);
+    line-height: 1;
+}
+
+.kpi-mini .kpi-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 0.25rem;
+}
+
+/* Filtros */
+.filtros-panel {
+    background: var(--kn-white);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--kn-alabaster);
+}
+
+.filtros-grid {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.filtros-grid .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filtros-grid label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.filtros-grid select,
+.filtros-grid input {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--kn-alabaster);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: var(--kn-snow);
+    color: var(--kn-graphite);
+    min-width: 140px;
+}
+
+.filtros-grid select:focus,
+.filtros-grid input:focus {
+    outline: none;
+    border-color: var(--kn-oxblood);
+    box-shadow: 0 0 0 2px rgba(153, 1, 0, 0.1);
+}
+
+/* Botones */
+.btn-kn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-kn.primary {
+    background: var(--kn-oxblood);
+    color: white;
+}
+
+.btn-kn.primary:hover {
+    background: var(--kn-ember);
+    transform: translateY(-1px);
+}
+
+.btn-kn.secondary {
+    background: var(--kn-alabaster);
+    color: var(--kn-graphite);
+}
+
+.btn-kn.secondary:hover { background: #d1d1d1; }
+
+.btn-kn.success {
+    background: var(--kn-success);
+    color: white;
+}
+
+.btn-kn.success:hover { background: #047857; }
+
+.btn-kn.sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+}
+
+/* Tabla */
+.tabla-container {
+    background: var(--kn-white);
+    border-radius: 12px;
+    border: 1px solid var(--kn-alabaster);
+    overflow: hidden;
+}
+
+.tabla-boletos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.tabla-boletos thead th {
+    background: var(--kn-oxblood);
+    color: white;
+    padding: 0.75rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.tabla-boletos tbody td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.tabla-boletos tbody tr:hover {
+    background: #fafafa;
+}
+
+.tabla-boletos .mono {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+}
+
+.tabla-boletos .monto {
+    text-align: right;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+}
+
+/* Badges */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge-status.conciliado {
+    background: var(--kn-success-light);
+    color: var(--kn-success);
+}
+
+.badge-status.pendiente {
+    background: var(--kn-warning-light);
+    color: var(--kn-warning);
+}
+
+.badge-status.emitido {
+    background: var(--kn-info-light);
+    color: var(--kn-info);
+}
+
+.badge-status.cancelado {
+    background: var(--kn-danger-light);
+    color: var(--kn-danger);
+}
+
+/* Modal BSP */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-box {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-box h2 {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--kn-graphite);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-box h2 i { color: var(--kn-oxblood); }
+
+.modal-box p {
+    color: #64748b;
+    font-size: 0.85rem;
+    margin: 0 0 1.5rem 0;
+}
+
+.upload-zone {
+    border: 2px dashed var(--kn-alabaster);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+.upload-zone:hover {
+    border-color: var(--kn-oxblood);
+    background: #fef2f2;
+}
+
+.upload-zone i {
+    font-size: 2rem;
+    color: var(--kn-oxblood);
+    margin-bottom: 0.5rem;
+}
+
+.upload-zone p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.upload-zone .filename {
+    font-weight: 600;
+    color: var(--kn-graphite);
+    margin-top: 0.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+/* Paginación */
+.paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+}
+
+.paginacion a, .paginacion span {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: var(--kn-graphite);
+    border: 1px solid var(--kn-alabaster);
+}
+
+.paginacion a:hover {
+    background: var(--kn-oxblood);
+    color: white;
+    border-color: var(--kn-oxblood);
+}
+
+.paginacion .active {
+    background: var(--kn-oxblood);
+    color: white;
+    border-color: var(--kn-oxblood);
+}
+
+/* Empty state */
+.empty-boletos {
+    text-align: center;
+    padding: 3rem;
+    color: #94a3b8;
+}
+
+.empty-boletos i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .tabla-container { overflow-x: auto; }
+    .filtros-grid { flex-direction: column; }
+    .filtros-grid .campo { width: 100%; }
+    .filtros-grid select, .filtros-grid input { width: 100%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="boletos-page">
+    <!-- HEADER -->
+    <div class="page-header">
+        <h1><i class="fas fa-plane-departure"></i> Boletos BSP</h1>
+        <div class="header-actions">
+            <button class="btn-kn primary" onclick="document.getElementById('modalBSP').classList.add('active')">
+                <i class="fas fa-file-upload"></i> Conciliar con BSP
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="kpi-mini total">
+            <div class="kpi-num">{{ total_boletos }}</div>
+            <div class="kpi-label">Total Boletos</div>
+        </div>
+        <div class="kpi-mini ok">
+            <div class="kpi-num">{{ total_conciliados }}</div>
+            <div class="kpi-label">Conciliados</div>
+        </div>
+        <div class="kpi-mini pending">
+            <div class="kpi-num">{{ total_sin_conciliar }}</div>
+            <div class="kpi-label">Sin Conciliar</div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-panel">
+        <form method="GET" action="{{ url_for('main.listado_boletos') }}">
+            <div class="filtros-grid">
+                <div class="campo">
+                    <label>Buscar</label>
+                    <input type="text" name="buscar" value="{{ filtro_buscar }}" placeholder="Nº boleto, pasajero, ruta...">
+                </div>
+                <div class="campo">
+                    <label>Aerolínea</label>
+                    <select name="aerolinea_id">
+                        <option value="">Todas</option>
+                        {% for a in aerolineas %}
+                        <option value="{{ a.id }}" {{ 'selected' if filtro_aerolinea == a.id }}>{{ a.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Conciliación</label>
+                    <select name="conciliada">
+                        <option value="">Todos</option>
+                        <option value="si" {{ 'selected' if filtro_conciliada == 'si' }}>Conciliados</option>
+                        <option value="no" {{ 'selected' if filtro_conciliada == 'no' }}>Sin conciliar</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ filtro_fecha_desde }}">
+                </div>
+                <div class="campo">
+                    <label>Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}">
+                </div>
+                <div class="campo" style="display: flex; flex-direction: row; gap: 0.5rem; align-self: flex-end;">
+                    <button type="submit" class="btn-kn primary"><i class="fas fa-search"></i> Filtrar</button>
+                    <a href="{{ url_for('main.listado_boletos') }}" class="btn-kn secondary"><i class="fas fa-times"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLA -->
+    <div class="tabla-container">
+        {% if boletos %}
+        <table class="tabla-boletos">
+            <thead>
+                <tr>
+                    <th>Nº Boleto</th>
+                    <th>Aerolínea</th>
+                    <th>Pasajero</th>
+                    <th>Ruta</th>
+                    <th>Fecha Emisión</th>
+                    <th>Total</th>
+                    <th>Estatus</th>
+                    <th>Conciliación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in boletos %}
+                <tr>
+                    <td class="mono">{{ b.numero_boleto or '-' }}</td>
+                    <td>{{ b.aerolinea.nombre if b.aerolinea else '-' }}</td>
+                    <td>{{ b.pasajero_nombre or '-' }}</td>
+                    <td>{{ b.ruta or '-' }}</td>
+                    <td>{{ b.fecha_emision.strftime('%d/%m/%Y') if b.fecha_emision else '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(b.total|float) }}</td>
+                    <td>
+                        {% if b.estatus == 'emitido' %}
+                        <span class="badge-status emitido"><i class="fas fa-check"></i> Emitido</span>
+                        {% elif b.estatus == 'cancelado' %}
+                        <span class="badge-status cancelado"><i class="fas fa-ban"></i> Cancelado</span>
+                        {% elif b.estatus == 'reembolsado' %}
+                        <span class="badge-status cancelado"><i class="fas fa-undo"></i> Reembolsado</span>
+                        {% else %}
+                        <span class="badge-status pendiente"><i class="fas fa-clock"></i> Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if b.conciliada %}
+                        <span class="badge-status conciliado" title="Conciliado el {{ b.fecha_conciliacion.strftime('%d/%m/%Y') if b.fecha_conciliacion else '' }}">
+                            <i class="fas fa-check-circle"></i> Conciliado
+                        </span>
+                        {% else %}
+                        <span class="badge-status pendiente"><i class="fas fa-exclamation-circle"></i> Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if b.conciliada %}
+                        <form method="POST" action="{{ url_for('main.desconciliar_boleto') }}" style="display:inline;">
+                            <input type="hidden" name="folio" value="{{ b.folio }}">
+                            <button type="submit" class="btn-kn sm secondary" title="Quitar conciliación" 
+                                    onclick="return confirm('¿Quitar conciliación de este boleto?')">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('main.conciliar_boleto') }}" style="display:inline;">
+                            <input type="hidden" name="folio" value="{{ b.folio }}">
+                            <button type="submit" class="btn-kn sm success" title="Conciliar manualmente">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Paginación -->
+        {% if total_paginas > 1 %}
+        <div class="paginacion">
+            {% if pagina > 1 %}
+            <a href="{{ url_for('main.listado_boletos', pagina=pagina-1, aerolinea_id=filtro_aerolinea, estatus=filtro_estatus, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for p in range(1, total_paginas + 1) %}
+                {% if p == pagina %}
+                <span class="active">{{ p }}</span>
+                {% elif p <= 3 or p >= total_paginas - 2 or (p >= pagina - 1 and p <= pagina + 1) %}
+                <a href="{{ url_for('main.listado_boletos', pagina=p, aerolinea_id=filtro_aerolinea, estatus=filtro_estatus, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}">{{ p }}</a>
+                {% elif p == 4 or p == total_paginas - 3 %}
+                <span>...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagina < total_paginas %}
+            <a href="{{ url_for('main.listado_boletos', pagina=pagina+1, aerolinea_id=filtro_aerolinea, estatus=filtro_estatus, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div style="padding: 0.75rem 1.25rem; font-size: 0.8rem; color: #64748b; border-top: 1px solid #f1f5f9;">
+            Mostrando {{ boletos|length }} de {{ total }} boletos
+        </div>
+
+        {% else %}
+        <div class="empty-boletos">
+            <i class="fas fa-plane"></i>
+            <p>No se encontraron boletos con los filtros seleccionados</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MODAL CONCILIACIÓN BSP -->
+<div class="modal-overlay" id="modalBSP">
+    <div class="modal-box">
+        <h2><i class="fas fa-file-invoice"></i> Conciliar con BSP</h2>
+        <p>Sube el archivo FCAGBILLDETSIMP (.txt) que envía IATA para cruzar automáticamente los boletos.</p>
+        
+        <form method="POST" action="{{ url_for('main.conciliar_bsp') }}" enctype="multipart/form-data" id="formBSP">
+            <div class="upload-zone" onclick="document.getElementById('inputBSP').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Haz clic para seleccionar el archivo</p>
+                <p class="filename" id="bspFilename" style="display:none;"></p>
+                <input type="file" name="archivo_bsp" id="inputBSP" accept=".txt,.csv" style="display:none;" 
+                       onchange="mostrarNombreArchivo(this)">
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-kn secondary" onclick="document.getElementById('modalBSP').classList.remove('active')">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-kn primary" id="btnConciliar" disabled>
+                    <i class="fas fa-sync-alt"></i> Conciliar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function mostrarNombreArchivo(input) {
+    var filename = input.files[0] ? input.files[0].name : '';
+    var el = document.getElementById('bspFilename');
+    var btn = document.getElementById('btnConciliar');
+    if (filename) {
+        el.textContent = filename;
+        el.style.display = 'block';
+        btn.disabled = false;
+    } else {
+        el.style.display = 'none';
+        btn.disabled = true;
+    }
+}
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('modalBSP').classList.remove('active');
+    }
+});
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('modalBSP').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('active');
+    }
+});
+</script>
+{% endblock %}

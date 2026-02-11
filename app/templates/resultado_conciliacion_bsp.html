@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado Conciliación BSP - Kinessia Hub{% endblock %}
+
+{% block page_styles %}
+<style>
+:root {
+    --kn-snow: #f6f6f6;
+    --kn-alabaster: #e8e8e8;
+    --kn-graphite: #333333;
+    --kn-oxblood: #990100;
+    --kn-ember: #b90504;
+    --kn-white: #ffffff;
+    --kn-success: #059669;
+    --kn-success-light: #d1fae5;
+    --kn-warning: #d97706;
+    --kn-warning-light: #fef3c7;
+    --kn-danger: #dc2626;
+    --kn-danger-light: #fee2e2;
+}
+
+.resultado-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: var(--kn-snow);
+    min-height: calc(100vh - 60px);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--kn-graphite);
+    margin: 0;
+}
+
+.page-header h1 i { color: var(--kn-oxblood); }
+
+.resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.resumen-card {
+    background: var(--kn-white);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--kn-alabaster);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.resumen-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+}
+
+.resumen-card.total::before { background: var(--kn-oxblood); }
+.resumen-card.ok::before { background: var(--kn-success); }
+.resumen-card.ya::before { background: #7c3aed; }
+.resumen-card.nuevo::before { background: var(--kn-info); }
+.resumen-card.falta::before { background: var(--kn-danger); }
+
+.resumen-card .num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--kn-graphite);
+}
+
+.resumen-card .label {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+}
+
+/* Tabla faltantes */
+.faltantes-section {
+    background: var(--kn-white);
+    border-radius: 12px;
+    border: 1px solid var(--kn-alabaster);
+    overflow: hidden;
+}
+
+.faltantes-header {
+    padding: 1rem 1.25rem;
+    background: var(--kn-danger-light);
+    border-bottom: 1px solid #fca5a5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.faltantes-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--kn-danger);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tabla-faltantes {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.tabla-faltantes thead th {
+    background: var(--kn-graphite);
+    color: white;
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.tabla-faltantes tbody td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.tabla-faltantes .mono {
+    font-family: 'SF Mono', monospace;
+    font-size: 0.8rem;
+}
+
+.tabla-faltantes .monto {
+    text-align: right;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+}
+
+.btn-kn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-kn.primary { background: var(--kn-oxblood); color: white; }
+.btn-kn.primary:hover { background: var(--kn-ember); }
+.btn-kn.secondary { background: var(--kn-alabaster); color: var(--kn-graphite); }
+
+.success-section {
+    background: var(--kn-success-light);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.success-section i {
+    font-size: 3rem;
+    color: var(--kn-success);
+    margin-bottom: 0.75rem;
+}
+
+.success-section h2 {
+    color: var(--kn-success);
+    margin: 0 0 0.5rem 0;
+}
+
+.aerolinea-map {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #f1f5f9;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="resultado-page">
+    <div class="page-header">
+        <h1><i class="fas fa-clipboard-check"></i> Resultado Conciliación BSP</h1>
+        <a href="{{ url_for('main.listado_boletos') }}" class="btn-kn secondary">
+            <i class="fas fa-arrow-left"></i> Volver a Boletos
+        </a>
+    </div>
+
+    {% if resultado.periodo %}
+    <p style="color: #64748b; margin-bottom: 1.5rem;">Periodo BSP: <strong>{{ resultado.periodo }}</strong></p>
+    {% endif %}
+
+    <!-- RESUMEN -->
+    <div class="resumen-grid">
+        <div class="resumen-card total">
+            <div class="num">{{ resultado.total_bsp }}</div>
+            <div class="label">Documentos BSP</div>
+        </div>
+        <div class="resumen-card ok">
+            <div class="num">{{ resultado.encontrados }}</div>
+            <div class="label">Encontrados</div>
+        </div>
+        <div class="resumen-card nuevo">
+            <div class="num">{{ resultado.conciliados_ahora }}</div>
+            <div class="label">Conciliados Ahora</div>
+        </div>
+        <div class="resumen-card ya">
+            <div class="num">{{ resultado.ya_conciliados }}</div>
+            <div class="label">Ya Conciliados</div>
+        </div>
+        <div class="resumen-card falta">
+            <div class="num">{{ resultado.no_encontrados|length }}</div>
+            <div class="label">No Encontrados</div>
+        </div>
+    </div>
+
+    {% if resultado.conciliados_ahora > 0 and not resultado.no_encontrados %}
+    <div class="success-section">
+        <i class="fas fa-check-circle"></i>
+        <h2>¡Conciliación exitosa!</h2>
+        <p>Todos los boletos del BSP fueron encontrados y conciliados en el sistema.</p>
+    </div>
+    {% endif %}
+
+    <!-- FALTANTES -->
+    {% if resultado.no_encontrados %}
+    <div class="faltantes-section">
+        <div class="faltantes-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Boletos NO encontrados en el sistema ({{ resultado.no_encontrados|length }})</h2>
+        </div>
+        <table class="tabla-faltantes">
+            <thead>
+                <tr>
+                    <th>Aerolínea</th>
+                    <th>Tipo</th>
+                    <th>Nº Documento</th>
+                    <th>Nº Completo</th>
+                    <th>Forma Pago</th>
+                    <th>Monto</th>
+                    <th>Neto a Pagar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in resultado.no_encontrados %}
+                <tr>
+                    <td>
+                        <span class="aerolinea-map">{{ doc.airline_code }}</span>
+                        {% if doc.airline_code == '139' %}Aeromexico
+                        {% elif doc.airline_code == '001' %}American Airlines
+                        {% elif doc.airline_code == '006' %}Delta
+                        {% elif doc.airline_code == '016' %}United Airlines
+                        {% elif doc.airline_code == '230' %}Copa Airlines
+                        {% else %}{{ doc.airline_code }}{% endif %}
+                    </td>
+                    <td>{{ doc.trnc }}</td>
+                    <td class="mono">{{ doc.document_number }}</td>
+                    <td class="mono">{{ doc.airline_code }}{{ doc.document_number }}</td>
+                    <td>{{ doc.fop }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(doc.transaction_amount) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(doc.balance_payable) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: #f8fafc; font-weight: 700;">
+                    <td colspan="5" style="text-align: right; padding: 0.75rem;">TOTAL FALTANTES:</td>
+                    <td class="monto" style="padding: 0.75rem;">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='transaction_amount')) }}</td>
+                    <td class="monto" style="padding: 0.75rem;">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='balance_payable')) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

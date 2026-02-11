@@ -27,7 +27,8 @@ def login():
             return redirect(url_for('auth.login'))
 
         # Si las credenciales son válidas, iniciamos la sesión.
-        login_user(usuario)
+        remember = request.form.get('remember')
+        login_user(usuario, remember=bool(remember))
         flash('¡Has iniciado sesión con éxito!', 'success')
         return redirect(url_for('main.index'))
 
@@ -92,4 +93,3 @@ def register():
     roles = Rol.query.all()
     # LÍNEA CORRECTA
     return render_template('usuarios.html', roles=roles)
-

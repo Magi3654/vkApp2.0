@@ -801,6 +801,12 @@ class Desglose(db.Model):
     aprobada_por_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
     fecha_aprobacion = db.Column(db.DateTime(timezone=True))
     comentario_revision = db.Column(db.String(500))
+    
+    # Campos de conciliación BSP
+    conciliada = db.Column(db.Boolean, default=False)
+    fecha_conciliacion = db.Column(db.Date)
+    conciliada_por_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
+    periodo_bsp = db.Column(db.String(10))
 
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -821,6 +827,8 @@ class Desglose(db.Model):
     facturada_por = db.relationship('Usuario', foreign_keys=[facturada_por_id])
     
     aprobada_por = db.relationship('Usuario', foreign_keys=[aprobada_por_id])
+    
+    conciliada_por = db.relationship('Usuario', foreign_keys=[conciliada_por_id])
 
     def __repr__(self):
 

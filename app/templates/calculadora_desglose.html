@@ -712,14 +712,14 @@
                         </div>
                     </div>
 
-                    <!-- Campo Número de Boleto - Solo Aeromexico (oculto por defecto) -->
+                    <!-- Campo Número de Boleto - Aerolíneas BSP (oculto por defecto) -->
                     <div class="form-row" id="row_numero_boleto" style="display: none;">
                         <div class="form-group" style="flex: 1;">
-                            <label><i class="fas fa-ticket-alt" style="color: #0ea5e9;"></i> Número de Boleto (Aeromexico)</label>
+                            <label><i class="fas fa-ticket-alt" style="color: #0ea5e9;"></i> Número de Boleto</label>
                             <input type="text" id="numero_boleto" name="numero_boleto" 
-                                   class="input-entry input-aeromexico" placeholder="Ej: 1392112345678" maxlength="20">
+                                   class="input-entry input-aeromexico" placeholder="Ej: 1395463633094" maxlength="20">
                             <small style="color: #666; font-size: 0.75rem;">
-                                Número de 13 dígitos del boleto electrónico
+                                Código de aerolínea + número de documento (13 dígitos). Ej: 139 + 5463633094
                             </small>
                         </div>
                     </div>
@@ -1815,9 +1815,9 @@ function verificarAerolineaBSP() {
         removerBoleto();
     }
     
-    // Campo Número de Boleto - solo para Aeromexico
+    // Campo Número de Boleto - para todas las BSP
     if (rowNumeroBoleto) {
-        if (esAeromexico(nombreAerolinea)) {
+        if (esAerolineaBSP(nombreAerolinea)) {
             rowNumeroBoleto.style.display = 'flex';
         } else {
             rowNumeroBoleto.style.display = 'none';

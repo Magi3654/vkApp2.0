@@ -2253,6 +2253,7 @@ def editar_desglose(folio):
             desglose.clave_reserva = request.form.get('clave_reserva')
             desglose.pasajero_nombre = request.form.get('pasajero_nombre') or None
             desglose.ruta = request.form.get('ruta') or None
+            desglose.numero_boleto = request.form.get('numero_boleto', '').strip() or None
             db.session.commit()
             flash(f'Desglose {desglose.folio} actualizado con éxito.', 'success')
             return redirect(url_for('main.consulta_desgloses'))
@@ -4580,6 +4581,7 @@ def guardar_desglose_calculadora():
             total=float(request.form.get('total') or 0),
             clave_reserva=clave_reserva,
             clave_sabre=request.form.get('clave_sabre') or None,
+            numero_boleto=request.form.get('numero_boleto', '').strip() or None,
             pasajero_nombre=request.form.get('pasajero_nombre') or None,
             ruta=request.form.get('ruta') or None,
             archivo_boleto=archivo_boleto_nombre,
@@ -4610,4 +4612,598 @@ def guardar_desglose_calculadora():
         return jsonify({
             'success': False,
             'error': str(e)
-        }), 500
+        }), 500# ============================================
+# MÓDULO DE BOLETOS - Listado y Conciliación BSP
+# Agregar estas rutas al final de routes.py
+# ============================================
+
+# ============================================================
+# LISTADO DE BOLETOS (DESGLOSES)
+# ============================================================
+
+@main.route('/boletos')
+@login_required
+def listado_boletos():
+    """Listado de todos los boletos (desgloses) con filtros"""
+    from datetime import date, timedelta
+    
+    fecha_hoy = fecha_mexico()
+    
+    # Parámetros de filtro
+    aerolinea_id = request.args.get('aerolinea_id', type=int)
+    estatus = request.args.get('estatus', '')  # pendiente, emitido, conciliado
+    conciliada = request.args.get('conciliada', '')  # si, no
+    fecha_desde = request.args.get('fecha_desde', '')
+    fecha_hasta = request.args.get('fecha_hasta', '')
+    buscar = request.args.get('buscar', '').strip()
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = 50
+    
+    # Query base - solo aerolíneas BSP
+    query = Desglose.query.join(Aerolinea).filter(Aerolinea.es_bsp == True)
+    
+    # Filtros
+    if aerolinea_id:
+        query = query.filter(Desglose.aerolinea_id == aerolinea_id)
+    
+    if estatus:
+        query = query.filter(Desglose.estatus == estatus)
+    
+    if conciliada == 'si':
+        query = query.filter(Desglose.conciliada == True)
+    elif conciliada == 'no':
+        query = query.filter(db.or_(Desglose.conciliada == False, Desglose.conciliada.is_(None)))
+    
+    if fecha_desde:
+        try:
+            fd = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+            query = query.filter(Desglose.fecha_emision >= fd)
+        except:
+            pass
+    
+    if fecha_hasta:
+        try:
+            fh = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            query = query.filter(Desglose.fecha_emision <= fh)
+        except:
+            pass
+    
+    if buscar:
+        query = query.filter(db.or_(
+            Desglose.numero_boleto.ilike(f'%{buscar}%'),
+            Desglose.pasajero_nombre.ilike(f'%{buscar}%'),
+            Desglose.clave_reserva.ilike(f'%{buscar}%'),
+            Desglose.ruta.ilike(f'%{buscar}%')
+        ))
+    
+    # Ordenar y paginar
+    query = query.order_by(Desglose.fecha_emision.desc(), Desglose.folio.desc())
+    
+    total = query.count()
+    boletos = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    total_paginas = (total + por_pagina - 1) // por_pagina
+    
+    # Stats (solo BSP)
+    total_boletos = Desglose.query.join(Aerolinea).filter(Aerolinea.es_bsp == True).count()
+    total_conciliados = Desglose.query.join(Aerolinea).filter(Aerolinea.es_bsp == True, Desglose.conciliada == True).count()
+    total_sin_conciliar = total_boletos - total_conciliados
+    
+    # Aerolíneas para filtro
+    aerolineas = Aerolinea.query.filter_by(activa=True, es_bsp=True).order_by(Aerolinea.nombre).all()
+    
+    return render_template('listado_boletos.html',
+        boletos=boletos,
+        aerolineas=aerolineas,
+        total=total,
+        total_boletos=total_boletos,
+        total_conciliados=total_conciliados,
+        total_sin_conciliar=total_sin_conciliar,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        # Filtros actuales
+        filtro_aerolinea=aerolinea_id,
+        filtro_estatus=estatus,
+        filtro_conciliada=conciliada,
+        filtro_fecha_desde=fecha_desde,
+        filtro_fecha_hasta=fecha_hasta,
+        filtro_buscar=buscar
+    )
+
+
+@main.route('/boletos/conciliar', methods=['POST'])
+@login_required
+def conciliar_boleto():
+    """Conciliar un boleto individual"""
+    folio = request.form.get('folio', type=int)
+    if not folio:
+        flash('Folio no válido', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    desglose = Desglose.query.get(folio)
+    if not desglose:
+        flash('Desglose no encontrado', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    desglose.conciliada = True
+    desglose.fecha_conciliacion = fecha_mexico()
+    desglose.conciliada_por_id = current_user.id
+    db.session.commit()
+    
+    flash(f'Boleto {desglose.numero_boleto or desglose.folio} conciliado correctamente', 'success')
+    return redirect(request.referrer or url_for('main.listado_boletos'))
+
+
+@main.route('/boletos/desconciliar', methods=['POST'])
+@login_required
+def desconciliar_boleto():
+    """Quitar conciliación de un boleto"""
+    folio = request.form.get('folio', type=int)
+    if not folio:
+        flash('Folio no válido', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    desglose = Desglose.query.get(folio)
+    if not desglose:
+        flash('Desglose no encontrado', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    desglose.conciliada = False
+    desglose.fecha_conciliacion = None
+    desglose.conciliada_por_id = None
+    desglose.periodo_bsp = None
+    db.session.commit()
+    
+    flash(f'Conciliación removida para boleto {desglose.numero_boleto or desglose.folio}', 'warning')
+    return redirect(request.referrer or url_for('main.listado_boletos'))
+
+
+@main.route('/boletos/conciliar-bsp', methods=['POST'])
+@login_required
+def conciliar_bsp():
+    """Subir archivo BSP y conciliar automáticamente"""
+    import csv
+    import io
+    
+    archivo = request.files.get('archivo_bsp')
+    if not archivo:
+        flash('No se seleccionó ningún archivo', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    filename = archivo.filename.lower()
+    
+    if filename.endswith('.txt') or filename.endswith('.csv'):
+        resultado = _parsear_bsp_txt(archivo)
+    else:
+        flash('Formato no soportado. Sube el archivo .txt (FCAGBILLDETSIMP)', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    if not resultado['documentos']:
+        flash('No se encontraron documentos en el archivo', 'error')
+        return redirect(url_for('main.listado_boletos'))
+    
+    # Cruzar con desgloses
+    encontrados = 0
+    no_encontrados = []
+    ya_conciliados = 0
+    conciliados_ahora = 0
+    periodo = resultado.get('periodo', '')
+    
+    for doc in resultado['documentos']:
+        # Armar número completo: codigo_aerolinea + document_number
+        numero_completo = doc['airline_code'] + doc['document_number']
+        
+        # Buscar en desgloses
+        desglose = Desglose.query.filter(
+            Desglose.numero_boleto == numero_completo
+        ).first()
+        
+        # También buscar solo con el document_number por si no tiene prefijo
+        if not desglose:
+            desglose = Desglose.query.filter(
+                Desglose.numero_boleto == doc['document_number']
+            ).first()
+        
+        # También buscar con guión
+        if not desglose:
+            numero_con_guion = doc['airline_code'] + '-' + doc['document_number']
+            desglose = Desglose.query.filter(
+                Desglose.numero_boleto == numero_con_guion
+            ).first()
+        
+        if desglose:
+            encontrados += 1
+            if desglose.conciliada:
+                ya_conciliados += 1
+            else:
+                desglose.conciliada = True
+                desglose.fecha_conciliacion = fecha_mexico()
+                desglose.conciliada_por_id = current_user.id
+                desglose.periodo_bsp = periodo
+                conciliados_ahora += 1
+        else:
+            no_encontrados.append(doc)
+    
+    db.session.commit()
+    
+    # Guardar resultados en sesión para mostrar
+    from flask import session
+    session['bsp_resultado'] = {
+        'total_bsp': len(resultado['documentos']),
+        'encontrados': encontrados,
+        'ya_conciliados': ya_conciliados,
+        'conciliados_ahora': conciliados_ahora,
+        'no_encontrados': no_encontrados,
+        'periodo': periodo
+    }
+    
+    flash(
+        f'Conciliación BSP completada: {conciliados_ahora} conciliados, '
+        f'{ya_conciliados} ya estaban conciliados, '
+        f'{len(no_encontrados)} no encontrados en el sistema',
+        'success' if not no_encontrados else 'warning'
+    )
+    
+    return redirect(url_for('main.resultado_conciliacion_bsp'))
+
+
+@main.route('/boletos/resultado-bsp')
+@login_required
+def resultado_conciliacion_bsp():
+    """Mostrar resultado de la conciliación BSP"""
+    from flask import session
+    resultado = session.pop('bsp_resultado', None)
+    
+    if not resultado:
+        return redirect(url_for('main.listado_boletos'))
+    
+    return render_template('resultado_conciliacion_bsp.html', resultado=resultado)
+
+
+def _parsear_bsp_txt(archivo):
+    """Parsear archivo FCAGBILLDETSIMP (.txt/.csv)"""
+    import csv
+    import io
+    
+    contenido = archivo.read().decode('utf-8', errors='ignore')
+    lineas = contenido.strip().split('\n')
+    
+    resultado = {
+        'periodo': '',
+        'documentos': []
+    }
+    
+    for linea in lineas:
+        linea = linea.strip()
+        
+        # Extraer Agent Code (primera línea)
+        if linea.startswith('Agent Code'):
+            continue
+        
+        # Saltar header
+        if linea.startswith('Airline Code,'):
+            continue
+        
+        # Parsear línea de datos
+        if not linea or linea.startswith('#'):
+            continue
+        
+        campos = linea.split(',')
+        if len(campos) < 8:
+            continue
+        
+        airline_code = campos[0].strip().zfill(3)  # Asegurar 3 dígitos: 001, 006, etc.
+        trnc = campos[1].strip()
+        document_number = campos[2].strip()
+        fop = campos[3].strip()
+        
+        try:
+            transaction_amount = float(campos[4].strip())
+        except:
+            transaction_amount = 0.0
+        
+        try:
+            tax_on_commission = float(campos[5].strip())
+        except:
+            tax_on_commission = 0.0
+        
+        try:
+            balance_payable = float(campos[6].strip())
+        except:
+            balance_payable = 0.0
+        
+        currency = campos[7].strip() if len(campos) > 7 else 'MXN'
+        
+        # Solo incluir TKTT (boletos) y EMD (servicios), ignorar CANX (cancelaciones con monto 0)
+        if trnc == 'CANX':
+            continue
+        
+        resultado['documentos'].append({
+            'airline_code': airline_code,
+            'trnc': trnc,
+            'document_number': document_number,
+            'fop': fop,
+            'transaction_amount': transaction_amount,
+            'tax_on_commission': tax_on_commission,
+            'balance_payable': balance_payable,
+            'currency': currency
+        })
+    
+    # Extraer periodo del nombre del archivo si posible
+    # Formato: FCAGBILLDETSIMP_MX_86506696_260104.txt
+    try:
+        nombre = archivo.filename
+        partes = nombre.replace('.txt', '').replace('.csv', '').split('_')
+        for p in partes:
+            if len(p) == 6 and p.isdigit():
+                resultado['periodo'] = p
+                break
+    except:
+        pass
+    
+    return resultado# ============================================
+# MÓDULO LOW COST - Listado Papeletas y Conciliación Volaris
+# Agregar estas rutas al final de routes.py
+# ============================================
+
+# ============================================================
+# LISTADO DE PAPELETAS LOW COST
+# ============================================================
+
+@main.route('/papeletas-lowcost')
+@login_required
+def listado_papeletas_lowcost():
+    """Listado de papeletas de aerolíneas low cost con filtros"""
+    
+    fecha_hoy = fecha_mexico()
+    
+    # Parámetros de filtro
+    aerolinea_id = request.args.get('aerolinea_id', type=int)
+    conciliada = request.args.get('conciliada', '')
+    fecha_desde = request.args.get('fecha_desde', '')
+    fecha_hasta = request.args.get('fecha_hasta', '')
+    buscar = request.args.get('buscar', '').strip()
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = 50
+    
+    # Query base - solo aerolíneas LOW COST (es_bsp = False)
+    query = Papeleta.query.join(Aerolinea).filter(Aerolinea.es_bsp == False)
+    
+    # Filtros
+    if aerolinea_id:
+        query = query.filter(Papeleta.aerolinea_id == aerolinea_id)
+    
+    if conciliada == 'si':
+        query = query.filter(Papeleta.conciliada == True)
+    elif conciliada == 'no':
+        query = query.filter(db.or_(Papeleta.conciliada == False, Papeleta.conciliada.is_(None)))
+    
+    if fecha_desde:
+        try:
+            fd = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+            query = query.filter(Papeleta.fecha_venta >= fd)
+        except:
+            pass
+    
+    if fecha_hasta:
+        try:
+            fh = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            query = query.filter(Papeleta.fecha_venta <= fh)
+        except:
+            pass
+    
+    if buscar:
+        query = query.filter(db.or_(
+            Papeleta.clave_sabre.ilike(f'%{buscar}%'),
+            Papeleta.facturar_a.ilike(f'%{buscar}%'),
+            Papeleta.solicito.ilike(f'%{buscar}%'),
+            Papeleta.folio.ilike(f'%{buscar}%')
+        ))
+    
+    # Ordenar y paginar
+    query = query.order_by(Papeleta.fecha_venta.desc(), Papeleta.id.desc())
+    
+    total = query.count()
+    papeletas = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    total_paginas = (total + por_pagina - 1) // por_pagina
+    
+    # Stats (solo low cost)
+    base_query = Papeleta.query.join(Aerolinea).filter(Aerolinea.es_bsp == False)
+    total_papeletas = base_query.count()
+    total_conciliadas = base_query.filter(Papeleta.conciliada == True).count()
+    total_sin_conciliar = total_papeletas - total_conciliadas
+    
+    # Aerolíneas low cost para filtro
+    aerolineas = Aerolinea.query.filter_by(activa=True, es_bsp=False).order_by(Aerolinea.nombre).all()
+    
+    return render_template('listado_papeletas_lowcost.html',
+        papeletas=papeletas,
+        aerolineas=aerolineas,
+        total=total,
+        total_papeletas=total_papeletas,
+        total_conciliadas=total_conciliadas,
+        total_sin_conciliar=total_sin_conciliar,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        filtro_aerolinea=aerolinea_id,
+        filtro_conciliada=conciliada,
+        filtro_fecha_desde=fecha_desde,
+        filtro_fecha_hasta=fecha_hasta,
+        filtro_buscar=buscar
+    )
+
+
+@main.route('/papeletas-lowcost/conciliar', methods=['POST'])
+@login_required
+def conciliar_papeleta_lc():
+    """Conciliar una papeleta individual"""
+    papeleta_id = request.form.get('papeleta_id', type=int)
+    if not papeleta_id:
+        flash('ID no válido', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    papeleta = Papeleta.query.get(papeleta_id)
+    if not papeleta:
+        flash('Papeleta no encontrada', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    papeleta.conciliada = True
+    papeleta.fecha_conciliacion = fecha_mexico()
+    papeleta.conciliada_por_id = current_user.id
+    db.session.commit()
+    
+    flash(f'Papeleta {papeleta.folio} conciliada correctamente', 'success')
+    return redirect(request.referrer or url_for('main.listado_papeletas_lowcost'))
+
+
+@main.route('/papeletas-lowcost/desconciliar', methods=['POST'])
+@login_required
+def desconciliar_papeleta_lc():
+    """Quitar conciliación de una papeleta"""
+    papeleta_id = request.form.get('papeleta_id', type=int)
+    if not papeleta_id:
+        flash('ID no válido', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    papeleta = Papeleta.query.get(papeleta_id)
+    if not papeleta:
+        flash('Papeleta no encontrada', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    papeleta.conciliada = False
+    papeleta.fecha_conciliacion = None
+    papeleta.conciliada_por_id = None
+    papeleta.periodo_conciliacion = None
+    db.session.commit()
+    
+    flash(f'Conciliación removida para papeleta {papeleta.folio}', 'warning')
+    return redirect(request.referrer or url_for('main.listado_papeletas_lowcost'))
+
+
+@main.route('/papeletas-lowcost/conciliar-volaris', methods=['POST'])
+@login_required
+def conciliar_volaris():
+    """Subir reporte de ventas de Volaris (.xlsx) y conciliar automáticamente"""
+    import openpyxl
+    
+    archivo = request.files.get('archivo_volaris')
+    if not archivo:
+        flash('No se seleccionó ningún archivo', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    filename = archivo.filename.lower()
+    if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
+        flash('Formato no soportado. Sube el archivo Excel (.xlsx) de Volaris', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    try:
+        wb = openpyxl.load_workbook(archivo, data_only=True)
+    except Exception as e:
+        flash(f'Error al leer el archivo: {str(e)}', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    # Parsear todas las hojas del reporte
+    documentos = []
+    periodo = ''
+    
+    for ws in wb.worksheets:
+        # Leer título del período (fila 1)
+        titulo = ws.cell(row=1, column=1).value or ''
+        if not periodo and titulo:
+            periodo = titulo.replace('REPORTE DE VENTAS DEL ', '').strip()
+        
+        # Datos empiezan después de los headers
+        # Fila 1 = título, filas 2-4 pueden ser headers/vacías, datos desde fila 5+
+        for row_num in range(2, ws.max_row + 1):
+            fecha = ws.cell(row=row_num, column=1).value
+            pnr = ws.cell(row=row_num, column=2).value
+            agente = ws.cell(row=row_num, column=3).value
+            pasajero = ws.cell(row=row_num, column=4).value
+            pago = ws.cell(row=row_num, column=6).value
+            
+            # Saltar filas vacías, headers o de totales
+            if not pnr or not isinstance(pnr, str) or len(pnr.strip()) < 3:
+                continue
+            
+            pnr = pnr.strip().upper()
+            
+            # Saltar si es header o fórmula
+            if pnr.startswith('=') or pnr == 'PNR':
+                continue
+            
+            # Validar que pago sea numérico
+            try:
+                pago_num = float(pago) if pago else 0.0
+            except (ValueError, TypeError):
+                continue
+            
+            documentos.append({
+                'fecha': fecha.strftime('%d/%m/%Y') if hasattr(fecha, 'strftime') else str(fecha or ''),
+                'pnr': pnr,
+                'agente': str(agente or '').strip(),
+                'pasajero': str(pasajero or '').strip(),
+                'pago': pago_num
+            })
+    
+    if not documentos:
+        flash('No se encontraron registros en el archivo', 'error')
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    # Cruzar con papeletas por clave_sabre
+    encontrados = 0
+    no_encontrados = []
+    ya_conciliados = 0
+    conciliados_ahora = 0
+    
+    for doc in documentos:
+        # Buscar papeleta por clave_sabre (PNR)
+        papeleta = Papeleta.query.filter(
+            db.func.upper(Papeleta.clave_sabre) == doc['pnr']
+        ).first()
+        
+        if papeleta:
+            encontrados += 1
+            if papeleta.conciliada:
+                ya_conciliados += 1
+            else:
+                papeleta.conciliada = True
+                papeleta.fecha_conciliacion = fecha_mexico()
+                papeleta.conciliada_por_id = current_user.id
+                papeleta.periodo_conciliacion = periodo
+                conciliados_ahora += 1
+        else:
+            no_encontrados.append(doc)
+    
+    db.session.commit()
+    
+    # Guardar resultados en sesión
+    from flask import session
+    session['volaris_resultado'] = {
+        'total_reporte': len(documentos),
+        'encontrados': encontrados,
+        'ya_conciliados': ya_conciliados,
+        'conciliados_ahora': conciliados_ahora,
+        'no_encontrados': no_encontrados,
+        'periodo': periodo
+    }
+    
+    flash(
+        f'Conciliación Volaris completada: {conciliados_ahora} conciliados, '
+        f'{ya_conciliados} ya estaban conciliados, '
+        f'{len(no_encontrados)} no encontrados en el sistema',
+        'success' if not no_encontrados else 'warning'
+    )
+    
+    return redirect(url_for('main.resultado_conciliacion_volaris'))
+
+
+@main.route('/papeletas-lowcost/resultado-volaris')
+@login_required
+def resultado_conciliacion_volaris():
+    """Mostrar resultado de la conciliación Volaris"""
+    from flask import session
+    resultado = session.pop('volaris_resultado', None)
+    
+    if not resultado:
+        return redirect(url_for('main.listado_papeletas_lowcost'))
+    
+    return render_template('resultado_conciliacion_volaris.html', resultado=resultado)
