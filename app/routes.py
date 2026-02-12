@@ -142,12 +142,15 @@ def dashboard():
         db.session.rollback()
     
     try:
-        # Papeletas pendientes = MOSTRADOR no asignadas a un reporte de ventas
-        # Solo mostrador = sin empresa asignada o facturar_a = 'MOSTRADOR'
+        # Papeletas pendientes = MOSTRADOR sin reporte Y sin factura
         mis_pendientes = Papeleta.query.filter(
             Papeleta.usuario_id == current_user.id,
             Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
             Papeleta.reporte_venta_id.is_(None),
+            db.or_(
+                Papeleta.numero_factura.is_(None),
+                Papeleta.numero_factura == ''
+            ),
             db.or_(
                 Papeleta.empresa_id.is_(None),
                 Papeleta.facturar_a.ilike('%MOSTRADOR%')
@@ -185,11 +188,15 @@ def dashboard():
     
     if current_user.es_admin():
         try:
-            # Papeletas pendientes = sin reporte de venta asignado Y de días anteriores
+            # Papeletas pendientes = sin reporte Y sin factura
             context['total_papeletas_pendientes'] = Papeleta.query.filter(
                 Papeleta.fecha_venta < fecha_hoy,
                 Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
-                Papeleta.reporte_venta_id.is_(None)
+                Papeleta.reporte_venta_id.is_(None),
+                db.or_(
+                    Papeleta.numero_factura.is_(None),
+                    Papeleta.numero_factura == ''
+                )
             ).count()
         except Exception as e:
             print(f"Error total pendientes: {e}")
@@ -275,12 +282,16 @@ def dashboard():
                         Papeleta.fecha_venta == fecha_hoy
                     ).count()
                     
-                    # Pendientes = sin reporte de venta asignado
+                    # Pendientes = sin reporte Y sin factura
                     paps_pend = Papeleta.query.filter(
                         Papeleta.usuario_id == agente.id,
                         Papeleta.fecha_venta < fecha_hoy,
                         Papeleta.fecha_venta >= fecha_hoy - timedelta(days=30),
-                        Papeleta.reporte_venta_id.is_(None)
+                        Papeleta.reporte_venta_id.is_(None),
+                        db.or_(
+                            Papeleta.numero_factura.is_(None),
+                            Papeleta.numero_factura == ''
+                        )
                     ).count()
                     
                     # Efectivo pendiente del agente (sin reporte) - CONTADO
