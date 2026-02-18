@@ -1547,6 +1547,16 @@ def subir_boleto_desglose(folio):
     return redirect(request.referrer or url_for('main.facturacion'))
 
 
+@main.route('/uploads/boletos/<filename>')
+@login_required
+def ver_boleto(filename):
+    """Servir archivos de boletos PDF"""
+    import os
+    from flask import send_from_directory
+    upload_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads', 'boletos')
+    return send_from_directory(upload_folder, filename)
+
+
 @main.route('/revision-facturas')
 @login_required
 def revision_facturas():
@@ -4553,8 +4563,12 @@ def guardar_desglose_calculadora():
         
         # Procesar archivo de boleto BSP si se subió
         archivo_boleto_nombre = None
+        print(f"=== DEBUG ARCHIVO ===", file=sys.stderr)
+        print(f"request.files keys: {list(request.files.keys())}", file=sys.stderr)
         if 'archivo_boleto' in request.files:
             archivo = request.files['archivo_boleto']
+            print(f"archivo.filename: '{archivo.filename}'", file=sys.stderr)
+            print(f"archivo.content_length: {archivo.content_length}", file=sys.stderr)
             if archivo and archivo.filename:
                 # Validar extensión
                 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
@@ -4572,6 +4586,14 @@ def guardar_desglose_calculadora():
                     ruta_completa = os.path.join(upload_folder, archivo_boleto_nombre)
                     archivo.save(ruta_completa)
                     print(f"Archivo boleto guardado: {archivo_boleto_nombre}", file=sys.stderr)
+                    print(f"Ruta completa: {ruta_completa}", file=sys.stderr)
+                    print(f"Existe: {os.path.exists(ruta_completa)}", file=sys.stderr)
+                else:
+                    print(f"Extension no permitida: '{extension}'", file=sys.stderr)
+        else:
+            print(f"'archivo_boleto' NO está en request.files", file=sys.stderr)
+        
+        print(f"archivo_boleto_nombre final: {archivo_boleto_nombre}", file=sys.stderr)
         
         print(f"Creando desglose...", file=sys.stderr)
         
@@ -4765,12 +4787,19 @@ def desconciliar_boleto():
     return redirect(request.referrer or url_for('main.listado_boletos'))
 
 
+# =============================================================================
+# CONCILIACIÓN BSP - Parser PDF + Lógica de conciliación
+# Reemplaza: conciliar_bsp() + _parsear_bsp_txt()
+# Requiere: pip install pdfplumber
+# =============================================================================
+
+
 @main.route('/boletos/conciliar-bsp', methods=['POST'])
 @login_required
 def conciliar_bsp():
-    """Subir archivo BSP y conciliar automáticamente"""
-    import csv
-    import io
+    """Subir archivo BSP (PDF o TXT) y conciliar automáticamente"""
+    import tempfile
+    import os
     
     archivo = request.files.get('archivo_bsp')
     if not archivo:
@@ -4779,15 +4808,29 @@ def conciliar_bsp():
     
     filename = archivo.filename.lower()
     
-    if filename.endswith('.txt') or filename.endswith('.csv'):
+    # Determinar tipo de archivo y parsear
+    if filename.endswith('.pdf'):
+        # Guardar temporalmente para pdfplumber
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+        archivo.save(tmp.name)
+        tmp.close()
+        try:
+            resultado = _parsear_bsp_pdf(tmp.name)
+        finally:
+            os.unlink(tmp.name)
+    elif filename.endswith('.txt') or filename.endswith('.csv'):
         resultado = _parsear_bsp_txt(archivo)
     else:
-        flash('Formato no soportado. Sube el archivo .txt (FCAGBILLDETSIMP)', 'error')
+        flash('Formato no soportado. Sube el archivo PDF o TXT del FCAGBILLDET', 'error')
         return redirect(url_for('main.listado_boletos'))
     
     if not resultado['documentos']:
         flash('No se encontraron documentos en el archivo', 'error')
         return redirect(url_for('main.listado_boletos'))
+    
+    # Filtrar CANX (cancelaciones) — no se concilian
+    docs_a_conciliar = [d for d in resultado['documentos'] if d['trnc'] != 'CANX']
+    docs_canx = [d for d in resultado['documentos'] if d['trnc'] == 'CANX']
     
     # Cruzar con desgloses
     encontrados = 0
@@ -4796,22 +4839,21 @@ def conciliar_bsp():
     conciliados_ahora = 0
     periodo = resultado.get('periodo', '')
     
-    for doc in resultado['documentos']:
-        # Armar número completo: codigo_aerolinea + document_number
-        numero_completo = doc['airline_code'] + doc['document_number']
+    for doc in docs_a_conciliar:
+        numero_completo = doc['numero_completo']  # Ej: "1395463633094"
         
-        # Buscar en desgloses
+        # Búsqueda principal: numero_boleto exacto
         desglose = Desglose.query.filter(
             Desglose.numero_boleto == numero_completo
         ).first()
         
-        # También buscar solo con el document_number por si no tiene prefijo
+        # Fallback: solo document_number sin prefijo
         if not desglose:
             desglose = Desglose.query.filter(
                 Desglose.numero_boleto == doc['document_number']
             ).first()
         
-        # También buscar con guión
+        # Fallback: con guión
         if not desglose:
             numero_con_guion = doc['airline_code'] + '-' + doc['document_number']
             desglose = Desglose.query.filter(
@@ -4833,38 +4875,141 @@ def conciliar_bsp():
     
     db.session.commit()
     
-    # Guardar resultados en sesión para mostrar
+    # Guardar resultados en sesión
     from flask import session
     session['bsp_resultado'] = {
         'total_bsp': len(resultado['documentos']),
+        'total_a_conciliar': len(docs_a_conciliar),
+        'cancelaciones': len(docs_canx),
         'encontrados': encontrados,
         'ya_conciliados': ya_conciliados,
         'conciliados_ahora': conciliados_ahora,
         'no_encontrados': no_encontrados,
-        'periodo': periodo
+        'periodo': periodo,
+        'por_tipo': {
+            'TKTT': sum(1 for d in docs_a_conciliar if d['trnc'] == 'TKTT'),
+            'EMDS': sum(1 for d in docs_a_conciliar if d['trnc'] == 'EMDS'),
+            'EMDA': sum(1 for d in docs_a_conciliar if d['trnc'] == 'EMDA'),
+        },
+        'revisados': sum(1 for d in docs_a_conciliar if d.get('es_revisado'))
     }
     
     flash(
         f'Conciliación BSP completada: {conciliados_ahora} conciliados, '
         f'{ya_conciliados} ya estaban conciliados, '
-        f'{len(no_encontrados)} no encontrados en el sistema',
+        f'{len(no_encontrados)} no encontrados',
         'success' if not no_encontrados else 'warning'
     )
     
     return redirect(url_for('main.resultado_conciliacion_bsp'))
 
 
-@main.route('/boletos/resultado-bsp')
-@login_required
-def resultado_conciliacion_bsp():
-    """Mostrar resultado de la conciliación BSP"""
-    from flask import session
-    resultado = session.pop('bsp_resultado', None)
+def _parsear_bsp_pdf(filepath):
+    """Parsear archivo FCAGBILLDET en formato PDF"""
+    import pdfplumber
+    import re
     
-    if not resultado:
-        return redirect(url_for('main.listado_boletos'))
+    documentos = []
+    periodo = ''
+    ultimo_doc = None
     
-    return render_template('resultado_conciliacion_bsp.html', resultado=resultado)
+    # Regex para línea de documento
+    doc_pattern = re.compile(
+        r'^(\d{3})\s+'                    # CIA (3 dígitos)
+        r'(TKTT|EMDS|EMDA|CANX)\s+'       # TRNC
+        r'(\d{7,10})\s+'                   # NO. DOCUMENTO
+        r'(\d{2}[A-Z]{3}\d{2})\s+'        # FECHA EMISION
+        r'(\S+)\s+'                        # CPN
+    )
+    
+    rtdn_pattern = re.compile(r'^\+RTDN:\s*(\d{7,10})')
+    periodo_pattern = re.compile(r'Billing Period:(\d{6})')
+    
+    # Líneas a ignorar
+    skip_prefixes = (
+        'ESAC:', 'ISSUES TOTAL', 'FCAGBILLDET', 'SCOPE', 'CIA ', 'NO. DE',
+        '***', 'GRAND TOTAL', 'DOMESTIC TOTAL', 'INTERNATIONAL TOTAL',
+        'ISSUES', 'CA ', 'CC ', '**'
+    )
+    
+    with pdfplumber.open(filepath) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if not text:
+                continue
+            
+            for line in text.split('\n'):
+                line = line.strip()
+                
+                # Extraer periodo
+                pm = periodo_pattern.search(line)
+                if pm:
+                    periodo = pm.group(1)
+                    continue
+                
+                # Detectar +RTDN (revisado/cambio)
+                rm = rtdn_pattern.match(line)
+                if rm and ultimo_doc:
+                    ultimo_doc['rtdn'] = rm.group(1)
+                    ultimo_doc['es_revisado'] = True
+                    continue
+                
+                # Saltar líneas no relevantes
+                if any(line.startswith(p) for p in skip_prefixes) or 'Page :' in line:
+                    continue
+                
+                # Parsear documento
+                dm = doc_pattern.match(line)
+                if not dm:
+                    continue
+                
+                airline_code = dm.group(1)
+                trnc = dm.group(2)
+                document_number = dm.group(3)
+                fecha_emision = dm.group(4)
+                
+                # Extraer montos del resto de la línea
+                rest = line[dm.end():]
+                montos = re.findall(r'-?[\d,]+\.\d{2}', rest)
+                
+                transaction_amount = float(montos[0].replace(',', '')) if montos else 0.0
+                tarifa = float(montos[1].replace(',', '')) if len(montos) >= 2 else 0.0
+                balance_payable = float(montos[-1].replace(',', '')) if montos else 0.0
+                
+                # FOP y Scope
+                fop = 'CA'
+                fop_match = re.search(r'\s[ID]\s+(CA|CC)\s', line)
+                if fop_match:
+                    fop = fop_match.group(1)
+                
+                scope = 'Doméstico'
+                scope_match = re.search(r'\s([ID])\s+(?:CA|CC)\s', line)
+                if scope_match and scope_match.group(1) == 'I':
+                    scope = 'Internacional'
+                
+                doc = {
+                    'airline_code': airline_code,
+                    'trnc': trnc,
+                    'document_number': document_number,
+                    'numero_completo': airline_code + document_number,
+                    'fecha_emision': fecha_emision,
+                    'fop': fop,
+                    'scope': scope,
+                    'transaction_amount': transaction_amount,
+                    'tarifa': tarifa,
+                    'balance_payable': balance_payable,
+                    'es_revisado': False,
+                    'rtdn': None
+                }
+                
+                documentos.append(doc)
+                ultimo_doc = doc
+    
+    return {
+        'periodo': periodo,
+        'documentos': documentos
+    }
+
 
 
 def _parsear_bsp_txt(archivo):
@@ -4949,8 +5094,6 @@ def _parsear_bsp_txt(archivo):
         pass
     
     return resultado
-    
-
 
 
 # ============================================

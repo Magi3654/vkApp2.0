@@ -1256,6 +1256,7 @@ const expedientesBSP = {
         ruta: "{{ d.ruta or 'N/A' }}",
         clase: "{{ d.clase or 'N/A' }}",
         numeroBoleto: "{{ d.numero_boleto or '' }}",
+        archivoBoleto: "{{ d.archivo_boleto or '' }}",
         agente: "{{ d.usuario.nombre if d.usuario else 'N/A' }}",
         tarifaBase: {{ d.tarifa_base or 0 }},
         iva: {{ d.iva or 0 }},
@@ -1551,7 +1552,7 @@ function abrirExpediente(tipo, id) {
         
         // PDF
         if (exp.archivoBoleto) {
-            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
+            const pdfUrl = '/uploads/boletos/' + exp.archivoBoleto;
             document.getElementById('pdfViewer').src = pdfUrl;
             document.getElementById('pdfViewer').style.display = 'block';
             document.getElementById('noPdfMsg').style.display = 'none';
@@ -1645,12 +1646,22 @@ function abrirExpediente(tipo, id) {
             </div>
         `;
         
-        // BSP no tiene PDF de boleto en el sistema (generalmente)
-        document.getElementById('pdfViewer').style.display = 'none';
-        document.getElementById('pdfViewer').src = '';
-        document.getElementById('noPdfMsg').innerHTML = '<i class="fas fa-plane"></i><p>Boleto BSP<br>(sin documento adjunto)</p>';
-        document.getElementById('noPdfMsg').style.display = 'flex';
-        document.getElementById('pdfActions').style.display = 'none';
+        // BSP - Mostrar PDF si existe archivo_boleto
+        if (exp.archivoBoleto) {
+            const pdfUrl = '/uploads/boletos/' + exp.archivoBoleto;
+            document.getElementById('pdfViewer').src = pdfUrl;
+            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('noPdfMsg').style.display = 'none';
+            document.getElementById('pdfActions').style.display = 'flex';
+            document.getElementById('btnAbrirPdf').href = pdfUrl;
+            document.getElementById('btnDescargarPdf').href = pdfUrl;
+        } else {
+            document.getElementById('pdfViewer').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
+            document.getElementById('noPdfMsg').innerHTML = '<i class="fas fa-plane"></i><p>Boleto BSP<br>(sin documento adjunto)</p>';
+            document.getElementById('noPdfMsg').style.display = 'flex';
+            document.getElementById('pdfActions').style.display = 'none';
+        }
         
         // Form - monto total del desglose
         document.getElementById('monto_factura').value = exp.total.toFixed(2);
