@@ -10475,3 +10475,337 @@ th strong {
         padding: var(--space-md);
     }
 }
+
+/* =============================================================================
+   EMPRESA EDIT - Solo estilos específicos de esta página
+   Usa el sistema unificado de styles.css (tabs, forms, cards, buttons)
+   ============================================================================= */
+
+/* === CARD LAYOUT — Override para empresa edit === */
+.empresa-page .card {
+    max-width: none;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+}
+
+/* Tabs: más padding lateral y separación visual */
+.empresa-page .tabs {
+    padding: 0 var(--space-lg);
+    gap: var(--space-xs);
+    border-bottom: 0.125rem solid var(--alabaster-grey);
+}
+
+.empresa-page .tab {
+    padding: var(--space-md) var(--space-lg);
+}
+
+/* Tab content: padding generoso para que respire */
+.empresa-page .tab-content {
+    padding: var(--space-2xl) var(--space-2xl);
+}
+
+/* Secciones internas con buen espaciado */
+.empresa-page .form-section {
+    margin-bottom: var(--space-2xl);
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--bright-snow);
+    border-radius: var(--radius-lg);
+    border: 0.0625rem solid var(--alabaster-grey);
+}
+
+.empresa-page .form-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Section titles con más aire */
+.empresa-page .form-section-title {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+}
+
+/* Form rows: más gap entre campos */
+.empresa-page .form-row {
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.empresa-page .form-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Form groups: más espacio entre label e input */
+.empresa-page .form-group {
+    gap: var(--space-sm);
+}
+
+/* Inputs más altos y cómodos */
+.empresa-page .form-group input,
+.empresa-page .form-group select,
+.empresa-page .form-group textarea {
+    padding: 0.7rem var(--space-md);
+}
+
+/* Footer con más padding */
+.empresa-page .empresa-form-footer {
+    padding: var(--space-lg) var(--space-2xl);
+}
+
+/* === ESQUEMA BADGES === */
+.esquema-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02rem;
+    vertical-align: middle;
+    margin-left: var(--space-xs);
+}
+
+.esquema-badge.tarifa_fija { background: var(--color-success-light); color: var(--color-success-dark); }
+.esquema-badge.cargo_servicio { background: var(--color-info-light); color: var(--color-info-dark); }
+.esquema-badge.bonificacion { background: var(--color-warning-light); color: var(--color-warning-dark); }
+.esquema-badge.desglose_especial { background: var(--color-danger-light); color: var(--color-danger-dark); }
+.esquema-badge.mixto { background: var(--gray-200); color: var(--gray-700); }
+
+/* === INFO BOX (específico empresa) === */
+.info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: var(--color-info-light);
+    border: 0.0625rem solid #93c5fd;
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    font-size: var(--text-sm);
+    color: var(--color-info-dark);
+    margin-bottom: var(--space-lg);
+}
+
+.info-box i {
+    color: #3b82f6;
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+
+/* === ESQUEMA RADIO CARDS === */
+.esquema-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: var(--space-md);
+}
+
+.esquema-card {
+    position: relative;
+    border: 0.125rem solid var(--alabaster-grey);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    background: var(--white);
+}
+
+.esquema-card:hover {
+    border-color: var(--brick-ember);
+    background: #fef2f2;
+}
+
+.esquema-card.selected {
+    border-color: var(--brick-ember);
+    background: #fef2f2;
+    box-shadow: 0 0 0 0.1875rem rgba(185, 5, 4, 0.1);
+}
+
+.esquema-card input[type="radio"] {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    accent-color: var(--brick-ember);
+    width: 1rem;
+    height: 1rem;
+}
+
+.esquema-card .card-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-base);
+    margin-bottom: var(--space-sm);
+}
+
+.esquema-card h4 { font-size: var(--text-sm); font-weight: 600; color: var(--graphite); margin: 0 0 var(--space-xs); }
+.esquema-card p { font-size: var(--text-xs); color: var(--gray-500); margin: 0; line-height: 1.4; }
+
+/* === TARIFA CARDS === */
+.tarifas-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.tarifa-card {
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--bright-snow);
+}
+
+.tarifa-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.tarifa-card-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--brick-ember);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.btn-remove-tarifa {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+    border: none;
+    padding: 0.35rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-remove-tarifa:hover {
+    background: #fecaca;
+}
+
+.btn-add-tarifa {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--white);
+    color: var(--brick-ember);
+    border: 0.125rem dashed var(--brick-ember);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    margin-top: var(--space-md);
+}
+
+.btn-add-tarifa:hover {
+    background: #fef2f2;
+}
+
+.no-tarifas {
+    text-align: center;
+    color: var(--gray-400);
+    font-size: var(--text-sm);
+    padding: var(--space-xl);
+    background: var(--bright-snow);
+    border-radius: var(--radius-md);
+    border: 0.0625rem dashed var(--alabaster-grey);
+}
+
+/* === CHECKBOX GROUP (estilo empresa) === */
+.checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.6rem var(--space-md);
+    background: var(--bright-snow);
+    border-radius: var(--radius-md);
+    border: 0.0625rem solid var(--alabaster-grey);
+}
+
+.checkbox-inline input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    accent-color: var(--brick-ember);
+    flex-shrink: 0;
+}
+
+.checkbox-inline label {
+    margin: 0;
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--graphite);
+}
+
+/* === CRÉDITO RESTRINGIDO ALERT === */
+.credito-alert {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 0.0625rem solid #fca5a5;
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+
+.credito-alert strong {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+/* === FORM FOOTER dentro del card === */
+.empresa-form-footer {
+    background: var(--bright-snow);
+    padding: var(--space-lg) var(--space-2xl);
+    border-top: 0.0625rem solid var(--alabaster-grey);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+/* === TARIFA CARD FORM-ROW: 4 columnas === */
+.tarifa-card .form-row {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 48rem) {
+    .empresa-page .tab-content {
+        padding: var(--space-lg);
+    }
+    .empresa-page .tabs {
+        padding: 0 var(--space-sm);
+    }
+    .empresa-form-footer {
+        flex-direction: column-reverse;
+        padding: var(--space-md) var(--space-lg);
+    }
+    .empresa-form-footer .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .tarifa-card .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .page-header-text h1 {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 30rem) {
+    .tarifa-card .form-row {
+        grid-template-columns: 1fr;
+    }
+}

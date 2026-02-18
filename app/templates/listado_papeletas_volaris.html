@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Papeletas Volaris - Kinessia Hub{% endblock %}
+{% block page_styles %}
+<style>
+:root { --kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-graphite:#333;--kn-white:#fff;--kn-success:#059669;--kn-success-light:#d1fae5;--kn-warning:#d97706;--kn-warning-light:#fef3c7;--kn-purple:#6B2D8B; }
+.lc-page{max-width:1600px;margin:0 auto;padding:1.5rem;background:var(--kn-snow);min-height:calc(100vh - 60px)}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.page-header h1{font-size:1.5rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.page-header h1 i{color:var(--kn-purple)}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi-mini{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--kn-alabaster);position:relative;overflow:hidden}
+.kpi-mini::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-mini.total::before{background:var(--kn-purple)}.kpi-mini.ok::before{background:var(--kn-success)}.kpi-mini.pending::before{background:var(--kn-warning)}
+.kpi-mini .kpi-num{font-size:1.75rem;font-weight:800;color:var(--kn-graphite);line-height:1}
+.kpi-mini .kpi-label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-top:.25rem}
+.filtros-panel{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;border:1px solid var(--kn-alabaster)}
+.filtros-grid{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end}
+.filtros-grid .campo{display:flex;flex-direction:column;gap:.25rem}
+.filtros-grid label{font-size:.7rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.filtros-grid select,.filtros-grid input{padding:.5rem .75rem;border:1px solid var(--kn-alabaster);border-radius:8px;font-size:.85rem;background:var(--kn-snow);color:var(--kn-graphite);min-width:140px}
+.filtros-grid select:focus,.filtros-grid input:focus{outline:none;border-color:var(--kn-purple);box-shadow:0 0 0 2px rgba(107,45,139,.1)}
+.btn-kn{padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;transition:all .2s}
+.btn-kn.primary{background:var(--kn-purple);color:#fff}.btn-kn.primary:hover{background:#5a2576;transform:translateY(-1px)}
+.btn-kn.volaris{background:var(--kn-purple);color:#fff}.btn-kn.volaris:hover{background:#5a2576;transform:translateY(-1px)}
+.btn-kn.secondary{background:var(--kn-alabaster);color:var(--kn-graphite)}.btn-kn.secondary:hover{background:#d1d1d1}
+.btn-kn.success{background:var(--kn-success);color:#fff}.btn-kn.success:hover{background:#047857}
+.btn-kn.sm{padding:.3rem .6rem;font-size:.75rem}
+.tabla-container{background:var(--kn-white);border-radius:12px;border:1px solid var(--kn-alabaster);overflow:hidden}
+.tabla-paps{width:100%;border-collapse:collapse;font-size:.85rem}
+.tabla-paps thead th{background:var(--kn-purple);color:#fff;padding:.75rem;text-align:left;font-weight:600;font-size:.75rem;text-transform:uppercase;white-space:nowrap}
+.tabla-paps tbody td{padding:.6rem .75rem;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tabla-paps tbody tr:hover{background:#faf5ff}
+.tabla-paps .mono{font-family:'SF Mono','Consolas',monospace;font-size:.8rem}
+.tabla-paps .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
+.badge-status{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .6rem;border-radius:6px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.badge-status.conciliado{background:var(--kn-success-light);color:var(--kn-success)}.badge-status.pendiente{background:var(--kn-warning-light);color:var(--kn-warning)}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;border-radius:16px;padding:2rem;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-box h2{font-size:1.25rem;margin:0 0 .5rem;color:var(--kn-graphite);display:flex;align-items:center;gap:.5rem}
+.modal-box h2 i{color:var(--kn-purple)}.modal-box p{color:#64748b;font-size:.85rem;margin:0 0 1.5rem}
+.upload-zone{border:2px dashed var(--kn-alabaster);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1rem}
+.upload-zone:hover{border-color:var(--kn-purple);background:#faf5ff}
+.upload-zone i{font-size:2rem;color:var(--kn-purple);margin-bottom:.5rem}.upload-zone p{margin:0;font-size:.85rem}
+.upload-zone .filename{font-weight:600;color:var(--kn-graphite);margin-top:.5rem}
+.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
+.paginacion{display:flex;justify-content:center;align-items:center;gap:.5rem;padding:1rem}
+.paginacion a,.paginacion span{padding:.4rem .75rem;border-radius:6px;font-size:.85rem;text-decoration:none;color:var(--kn-graphite);border:1px solid var(--kn-alabaster)}
+.paginacion a:hover{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
+.paginacion .active{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
+.empty-paps{text-align:center;padding:3rem;color:#94a3b8}.empty-paps i{font-size:3rem;margin-bottom:1rem;opacity:.4}
+@media(max-width:768px){.page-header{flex-direction:column;align-items:flex-start}.kpi-row{grid-template-columns:repeat(3,1fr)}.tabla-container{overflow-x:auto}.filtros-grid{flex-direction:column}.filtros-grid .campo{width:100%}.filtros-grid select,.filtros-grid input{width:100%}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lc-page">
+    <div class="page-header">
+        <h1><i class="fas fa-plane"></i> Papeletas Volaris</h1>
+        <button class="btn-kn volaris" onclick="document.getElementById('modalVolaris').classList.add('active')"><i class="fas fa-file-upload"></i> Conciliar con Archivo</button>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-mini total"><div class="kpi-num">{{ total_papeletas }}</div><div class="kpi-label">Total Papeletas</div></div>
+        <div class="kpi-mini ok"><div class="kpi-num">{{ total_conciliadas }}</div><div class="kpi-label">Conciliadas</div></div>
+        <div class="kpi-mini pending"><div class="kpi-num">{{ total_sin_conciliar }}</div><div class="kpi-label">Sin Conciliar</div></div>
+    </div>
+
+    <div class="filtros-panel">
+        <form method="GET" action="{{ url_for('main.listado_papeletas_volaris') }}">
+            <div class="filtros-grid">
+                <div class="campo"><label>Buscar</label><input type="text" name="buscar" value="{{ filtro_buscar }}" placeholder="PNR, pasajero, folio..."></div>
+                <div class="campo"><label>Conciliación</label><select name="conciliada"><option value="">Todos</option><option value="si" {{ 'selected' if filtro_conciliada == 'si' }}>Conciliadas</option><option value="no" {{ 'selected' if filtro_conciliada == 'no' }}>Sin conciliar</option></select></div>
+                <div class="campo"><label>Desde</label><input type="date" name="fecha_desde" value="{{ filtro_fecha_desde }}"></div>
+                <div class="campo"><label>Hasta</label><input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}"></div>
+                <div class="campo" style="display:flex;flex-direction:row;gap:.5rem;align-self:flex-end;">
+                    <button type="submit" class="btn-kn primary"><i class="fas fa-search"></i> Filtrar</button>
+                    <a href="{{ url_for('main.listado_papeletas_volaris') }}" class="btn-kn secondary"><i class="fas fa-times"></i></a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="tabla-container">
+        {% if papeletas %}
+        <table class="tabla-paps">
+            <thead><tr><th>Folio</th><th>PNR</th><th>Pasajero / Facturar a</th><th>Fecha Venta</th><th>Total</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
+            <tbody>
+                {% for p in papeletas %}
+                <tr>
+                    <td class="mono">{{ p.folio }}</td>
+                    <td class="mono" style="font-weight:600;">{{ p.clave_sabre or '-' }}</td>
+                    <td>{{ p.facturar_a or p.solicito or '-' }}</td>
+                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
+                    <td>{{ p.forma_pago or '-' }}</td>
+                    <td>{% if p.conciliada %}<span class="badge-status conciliado"><i class="fas fa-check-circle"></i> Conciliada</span>{% else %}<span class="badge-status pendiente"><i class="fas fa-exclamation-circle"></i> Pendiente</span>{% endif %}</td>
+                    <td>
+                        {% if p.conciliada %}
+                        <form method="POST" action="{{ url_for('main.desconciliar_papeleta_volaris') }}" style="display:inline;"><input type="hidden" name="papeleta_id" value="{{ p.id }}"><button type="submit" class="btn-kn sm secondary" title="Quitar conciliación" onclick="return confirm('¿Quitar conciliación?')"><i class="fas fa-undo"></i></button></form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('main.conciliar_papeleta_volaris') }}" style="display:inline;"><input type="hidden" name="papeleta_id" value="{{ p.id }}"><button type="submit" class="btn-kn sm success" title="Conciliar"><i class="fas fa-check"></i></button></form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if total_paginas > 1 %}
+        <div class="paginacion">
+            {% if pagina > 1 %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pagina-1, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}"><i class="fas fa-chevron-left"></i></a>{% endif %}
+            {% for pg in range(1, total_paginas + 1) %}{% if pg == pagina %}<span class="active">{{ pg }}</span>{% elif pg <= 3 or pg >= total_paginas - 2 or (pg >= pagina - 1 and pg <= pagina + 1) %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pg, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}">{{ pg }}</a>{% elif pg == 4 or pg == total_paginas - 3 %}<span>...</span>{% endif %}{% endfor %}
+            {% if pagina < total_paginas %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pagina+1, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}"><i class="fas fa-chevron-right"></i></a>{% endif %}
+        </div>
+        {% endif %}
+        <div style="padding:.75rem 1.25rem;font-size:.8rem;color:#64748b;border-top:1px solid #f1f5f9;">Mostrando {{ papeletas|length }} de {{ total }} papeletas</div>
+        {% else %}
+        <div class="empty-paps"><i class="fas fa-plane"></i><p>No se encontraron papeletas de Volaris</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalVolaris">
+    <div class="modal-box">
+        <h2><i class="fas fa-file-excel"></i> Conciliar con Volaris</h2>
+        <p>Sube el Reporte de Ventas de Volaris (.xlsx) para cruzar automáticamente los PNRs con las papeletas del sistema.</p>
+        <form method="POST" action="{{ url_for('main.conciliar_volaris') }}" enctype="multipart/form-data">
+            <div class="upload-zone" onclick="document.getElementById('inputVolaris').click()">
+                <i class="fas fa-cloud-upload-alt"></i><p>Haz clic para seleccionar el archivo</p>
+                <p class="filename" id="volarisFilename" style="display:none;"></p>
+                <input type="file" name="archivo_volaris" id="inputVolaris" accept=".xlsx,.xls" style="display:none;" onchange="mostrarNombre(this)">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-kn secondary" onclick="document.getElementById('modalVolaris').classList.remove('active')">Cancelar</button>
+                <button type="submit" class="btn-kn volaris" id="btnConciliar" disabled><i class="fas fa-sync-alt"></i> Conciliar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function mostrarNombre(i){var f=i.files[0]?i.files[0].name:'';var e=document.getElementById('volarisFilename');var b=document.getElementById('btnConciliar');if(f){e.textContent=f;e.style.display='block';b.disabled=false}else{e.style.display='none';b.disabled=true}}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('modalVolaris').classList.remove('active')});
+document.getElementById('modalVolaris').addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')});
+</script>
+{% endblock %}

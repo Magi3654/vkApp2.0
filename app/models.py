@@ -265,6 +265,20 @@ class Empresa(db.Model):
 
     activa = db.Column(db.Boolean, default=True)
 
+    # Campos de restricción de crédito
+    credito_restringido = db.Column(db.Boolean, default=False)
+    motivo_restriccion = db.Column(db.Text)
+    fecha_restriccion = db.Column(db.Date)
+    fecha_probable_pago = db.Column(db.Date)
+    restringido_por_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'))
+    notas_cobranza = db.Column(db.Text)
+
+    # Campos de contrato
+    monto_contrato = db.Column(db.Numeric(14, 2))
+    fecha_inicio_contrato = db.Column(db.Date)
+    fecha_fin_contrato = db.Column(db.Date)
+    numero_contrato = db.Column(db.String(100))
+
     created_at = db.Column(db.DateTime(timezone=True), default=func.now())
 
     updated_at = db.Column(db.DateTime(timezone=True), default=func.now(), onupdate=func.now())

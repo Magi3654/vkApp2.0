@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Crédito Empresas - Kinessia Hub{% endblock %}
+{% block page_styles %}
+<style>
+:root{--kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-graphite:#333;--kn-oxblood:#990100;--kn-white:#fff;--kn-success:#059669;--kn-success-light:#d1fae5;--kn-warning:#d97706;--kn-warning-light:#fef3c7;--kn-danger:#dc2626;--kn-danger-light:#fee2e2;--kn-info:#0284c7;--kn-info-light:#e0f2fe}
+.credit-page{max-width:1400px;margin:0 auto;padding:1.5rem;background:var(--kn-snow);min-height:calc(100vh - 60px)}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.page-header h1{font-size:1.5rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.page-header h1 i{color:var(--kn-oxblood)}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.kpi-mini{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--kn-alabaster);position:relative;overflow:hidden}
+.kpi-mini::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-mini.total::before{background:var(--kn-info)}.kpi-mini.danger::before{background:var(--kn-danger)}.kpi-mini.ok::before{background:var(--kn-success)}
+.kpi-mini .kpi-num{font-size:1.75rem;font-weight:800;color:var(--kn-graphite);line-height:1}
+.kpi-mini .kpi-label{font-size:.75rem;color:#64748b;text-transform:uppercase;margin-top:.25rem}
+
+.emp-card{background:var(--kn-white);border-radius:12px;border:1px solid var(--kn-alabaster);margin-bottom:.75rem;overflow:hidden}
+.emp-card.rest{border-left:4px solid var(--kn-danger)}
+.emp-card.ok{border-left:4px solid var(--kn-success)}
+.emp-header{display:flex;justify-content:space-between;align-items:center;padding:.85rem 1.25rem;cursor:pointer}
+.emp-header:hover{background:#fafafa}
+.emp-name{font-weight:700;font-size:.95rem;color:var(--kn-graphite);display:flex;align-items:center;gap:.5rem}
+.badge-sm{padding:.15rem .5rem;border-radius:4px;font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;gap:.2rem}
+.badge-sm.red{background:#fee2e2;color:#dc2626}.badge-sm.green{background:#d1fae5;color:#059669}.badge-sm.yellow{background:#fef3c7;color:#d97706}
+.emp-stats{display:flex;gap:1.25rem;align-items:center;font-size:.8rem}
+.emp-stats .s-val{font-weight:700;font-family:'SF Mono',monospace}.emp-stats .s-lbl{color:#94a3b8;font-size:.65rem}
+.emp-detail{display:none;padding:1rem 1.25rem;border-top:1px solid #f1f5f9}
+.emp-card.open .emp-detail{display:block}
+.toggle-icon{color:#94a3b8;transition:transform .2s;font-size:.75rem}.emp-card.open .toggle-icon{transform:rotate(180deg)}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.detail-box{padding:.85rem;background:#f8fafc;border-radius:8px}
+.detail-box h4{font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;margin:0 0 .6rem;letter-spacing:.03em}
+.d-row{display:flex;justify-content:space-between;padding:.3rem 0;font-size:.8rem;border-bottom:1px solid #f1f5f9}
+.d-row:last-child{border:none}
+.d-row .lbl{color:#64748b}.d-row .val{font-weight:600;color:var(--kn-graphite)}
+.d-row .val.red{color:#dc2626}.d-row .val.green{color:#059669}
+
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin:.4rem 0}
+.progress-fill{height:100%;border-radius:3px}
+.pf-green{background:#059669}.pf-yellow{background:#d97706}.pf-red{background:#dc2626}
+
+.rest-alert{background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:8px;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#dc2626}
+.rest-alert strong{display:block;margin-bottom:.15rem}
+
+.card-actions{display:flex;gap:.5rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid #f1f5f9}
+.btn-kn{padding:.4rem .85rem;border-radius:8px;font-size:.8rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;text-decoration:none}
+.btn-kn.danger{background:#dc2626;color:#fff}.btn-kn.success{background:#059669;color:#fff}
+.btn-kn.secondary{background:#e8e8e8;color:#333}
+
+@media(max-width:768px){.kpi-row{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.emp-header{flex-direction:column;align-items:flex-start;gap:.5rem}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="credit-page">
+    <div class="page-header">
+        <h1><i class="fas fa-shield-alt"></i> Crédito y Contratos</h1>
+        <a href="{{ url_for('main.empresas') }}" class="btn-kn secondary"><i class="fas fa-building"></i> Ir a Empresas</a>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-mini total"><div class="kpi-num">{{ total_empresas }}</div><div class="kpi-label">Empresas con Crédito</div></div>
+        <div class="kpi-mini danger"><div class="kpi-num">{{ restringidas }}</div><div class="kpi-label">Restringidas</div></div>
+        <div class="kpi-mini ok"><div class="kpi-num">{{ total_empresas - restringidas }}</div><div class="kpi-label">Al Corriente</div></div>
+    </div>
+
+    {% for item in empresas_data %}
+    {% set emp = item.empresa %}
+    <div class="emp-card {{ 'rest' if emp.credito_restringido else 'ok' }}" id="ec-{{ emp.id }}">
+        <div class="emp-header" onclick="document.getElementById('ec-{{ emp.id }}').classList.toggle('open')">
+            <div class="emp-name">
+                {{ emp.nombre_empresa }}
+                {% if emp.credito_restringido %}<span class="badge-sm red"><i class="fas fa-ban"></i> RESTRINGIDA</span>
+                {% else %}<span class="badge-sm green"><i class="fas fa-check"></i> Activa</span>{% endif %}
+                {% if item.dias_contrato_restantes is not none and item.dias_contrato_restantes <= 30 %}<span class="badge-sm yellow"><i class="fas fa-clock"></i> {{ item.dias_contrato_restantes }}d</span>{% endif %}
+            </div>
+            <div class="emp-stats">
+                <div><div class="s-val">${{ '{:,.0f}'.format(item.consumo_6m) }}</div><div class="s-lbl">Consumo 6M</div></div>
+                <div><div class="s-val">{{ item.facturas_pendientes }}</div><div class="s-lbl">Fact Pend</div></div>
+                <div><div class="s-val">${{ '{:,.0f}'.format((emp.credito_disponible or 0)|float) }}</div><div class="s-lbl">Disponible</div></div>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+        </div>
+        <div class="emp-detail">
+            {% if emp.credito_restringido %}
+            <div class="rest-alert">
+                <strong><i class="fas fa-exclamation-triangle"></i> Crédito restringido desde {{ emp.fecha_restriccion.strftime('%d/%m/%Y') if emp.fecha_restriccion else '-' }}</strong>
+                {{ emp.motivo_restriccion or 'Sin motivo' }}
+                {% if emp.fecha_probable_pago %}<br>Pago estimado: <strong>{{ emp.fecha_probable_pago.strftime('%d/%m/%Y') }}</strong>{% endif %}
+                {% if emp.notas_cobranza %}<br><em>{{ emp.notas_cobranza }}</em>{% endif %}
+            </div>
+            {% endif %}
+            <div class="detail-grid">
+                <div class="detail-box">
+                    <h4><i class="fas fa-credit-card"></i> Crédito</h4>
+                    <div class="d-row"><span class="lbl">Límite</span><span class="val">${{ '{:,.2f}'.format((emp.limite_credito or 0)|float) }}</span></div>
+                    <div class="d-row"><span class="lbl">Disponible</span><span class="val {{ 'red' if (emp.credito_disponible or 0)|float <= 0 else 'green' }}">${{ '{:,.2f}'.format((emp.credito_disponible or 0)|float) }}</span></div>
+                    <div class="d-row"><span class="lbl">Utilizado</span><span class="val">${{ '{:,.2f}'.format(emp.credito_utilizado()) }}</span></div>
+                    <div class="d-row"><span class="lbl">Días crédito</span><span class="val">{{ emp.dias_credito or 0 }}d</span></div>
+                    <div class="d-row"><span class="lbl">Pend. facturar</span><span class="val {{ 'red' if item.monto_pendiente > 0 }}">${{ '{:,.2f}'.format(item.monto_pendiente) }}</span></div>
+                </div>
+                <div class="detail-box">
+                    <h4><i class="fas fa-file-contract"></i> Contrato</h4>
+                    <div class="d-row"><span class="lbl">Número</span><span class="val">{{ emp.numero_contrato or '-' }}</span></div>
+                    <div class="d-row"><span class="lbl">Monto</span><span class="val">{{ '$'+'{:,.2f}'.format((emp.monto_contrato)|float) if emp.monto_contrato else '-' }}</span></div>
+                    <div class="d-row"><span class="lbl">Vigencia</span><span class="val">{{ emp.fecha_inicio_contrato.strftime('%d/%m/%y') if emp.fecha_inicio_contrato else '-' }} → {{ emp.fecha_fin_contrato.strftime('%d/%m/%y') if emp.fecha_fin_contrato else '-' }}</span></div>
+                    {% if emp.monto_contrato and (emp.monto_contrato)|float > 0 %}
+                    <div style="margin-top:.4rem;">
+                        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;"><span>Consumido</span><span>{{ item.progreso_contrato }}%</span></div>
+                        <div class="progress-bar"><div class="progress-fill {{ 'pf-red' if item.progreso_contrato > 90 else 'pf-yellow' if item.progreso_contrato > 70 else 'pf-green' }}" style="width:{{ item.progreso_contrato }}%"></div></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-actions">
+                {% if emp.credito_restringido %}
+                <form method="POST" action="{{ url_for('main.desrestringir_empresa', id=emp.id) }}"><button type="submit" class="btn-kn success" onclick="return confirm('¿Reactivar crédito?')"><i class="fas fa-unlock"></i> Reactivar</button></form>
+                {% else %}
+                <form method="POST" action="{{ url_for('main.restringir_empresa', id=emp.id) }}">
+                    <input type="hidden" name="motivo_restriccion" value="Atraso en pagos mayor a 2 meses">
+                    <button type="submit" class="btn-kn danger" onclick="return confirm('¿Restringir crédito de {{ emp.nombre_empresa }}?')"><i class="fas fa-ban"></i> Restringir</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

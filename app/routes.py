@@ -2516,9 +2516,6 @@ def expedientes():
 @main.route('/empresas', methods=['GET'])
 @login_required
 def empresas():
-    if current_user.rol_relacion.nombre not in ['administrador', 'admin', 'director', 'gerente']:
-        flash('Acceso no autorizado.', 'danger')
-        return redirect(url_for('main.dashboard'))
     lista_empresas = Empresa.query.order_by(Empresa.nombre_empresa).all()
     return render_template('empresas.html', empresas_registradas=lista_empresas)
 
@@ -4951,24 +4948,22 @@ def _parsear_bsp_txt(archivo):
     except:
         pass
     
-    return resultado# ============================================
-# MÓDULO LOW COST - Listado Papeletas y Conciliación Volaris
-# Agregar estas rutas al final de routes.py
+    return resultado
+    
+
+
+
+# ============================================
+# MÓDULO VOLARIS - Listado y Conciliación
 # ============================================
 
-# ============================================================
-# LISTADO DE PAPELETAS LOW COST
-# ============================================================
-
-@main.route('/papeletas-lowcost')
+@main.route('/papeletas-volaris')
 @login_required
-def listado_papeletas_lowcost():
-    """Listado de papeletas de aerolíneas low cost con filtros"""
+def listado_papeletas_volaris():
+    """Listado de papeletas de Volaris con filtros"""
     
     fecha_hoy = fecha_mexico()
     
-    # Parámetros de filtro
-    aerolinea_id = request.args.get('aerolinea_id', type=int)
     conciliada = request.args.get('conciliada', '')
     fecha_desde = request.args.get('fecha_desde', '')
     fecha_hasta = request.args.get('fecha_hasta', '')
@@ -4976,12 +4971,8 @@ def listado_papeletas_lowcost():
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 50
     
-    # Query base - solo aerolíneas LOW COST (es_bsp = False)
-    query = Papeleta.query.join(Aerolinea).filter(Aerolinea.es_bsp == False)
-    
-    # Filtros
-    if aerolinea_id:
-        query = query.filter(Papeleta.aerolinea_id == aerolinea_id)
+    # Solo Volaris
+    query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%volaris%'))
     
     if conciliada == 'si':
         query = query.filter(Papeleta.conciliada == True)
@@ -5010,32 +5001,25 @@ def listado_papeletas_lowcost():
             Papeleta.folio.ilike(f'%{buscar}%')
         ))
     
-    # Ordenar y paginar
     query = query.order_by(Papeleta.fecha_venta.desc(), Papeleta.id.desc())
     
     total = query.count()
     papeletas = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
     total_paginas = (total + por_pagina - 1) // por_pagina
     
-    # Stats (solo low cost)
-    base_query = Papeleta.query.join(Aerolinea).filter(Aerolinea.es_bsp == False)
+    base_query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%volaris%'))
     total_papeletas = base_query.count()
     total_conciliadas = base_query.filter(Papeleta.conciliada == True).count()
     total_sin_conciliar = total_papeletas - total_conciliadas
     
-    # Aerolíneas low cost para filtro
-    aerolineas = Aerolinea.query.filter_by(activa=True, es_bsp=False).order_by(Aerolinea.nombre).all()
-    
-    return render_template('listado_papeletas_lowcost.html',
+    return render_template('listado_papeletas_volaris.html',
         papeletas=papeletas,
-        aerolineas=aerolineas,
         total=total,
         total_papeletas=total_papeletas,
         total_conciliadas=total_conciliadas,
         total_sin_conciliar=total_sin_conciliar,
         pagina=pagina,
         total_paginas=total_paginas,
-        filtro_aerolinea=aerolinea_id,
         filtro_conciliada=conciliada,
         filtro_fecha_desde=fecha_desde,
         filtro_fecha_hasta=fecha_hasta,
@@ -5043,19 +5027,19 @@ def listado_papeletas_lowcost():
     )
 
 
-@main.route('/papeletas-lowcost/conciliar', methods=['POST'])
+@main.route('/papeletas-volaris/conciliar', methods=['POST'])
 @login_required
-def conciliar_papeleta_lc():
-    """Conciliar una papeleta individual"""
+def conciliar_papeleta_volaris():
+    """Conciliar una papeleta de Volaris manualmente"""
     papeleta_id = request.form.get('papeleta_id', type=int)
     if not papeleta_id:
         flash('ID no válido', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     papeleta = Papeleta.query.get(papeleta_id)
     if not papeleta:
         flash('Papeleta no encontrada', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     papeleta.conciliada = True
     papeleta.fecha_conciliacion = fecha_mexico()
@@ -5063,22 +5047,22 @@ def conciliar_papeleta_lc():
     db.session.commit()
     
     flash(f'Papeleta {papeleta.folio} conciliada correctamente', 'success')
-    return redirect(request.referrer or url_for('main.listado_papeletas_lowcost'))
+    return redirect(request.referrer or url_for('main.listado_papeletas_volaris'))
 
 
-@main.route('/papeletas-lowcost/desconciliar', methods=['POST'])
+@main.route('/papeletas-volaris/desconciliar', methods=['POST'])
 @login_required
-def desconciliar_papeleta_lc():
-    """Quitar conciliación de una papeleta"""
+def desconciliar_papeleta_volaris():
+    """Quitar conciliación de una papeleta de Volaris"""
     papeleta_id = request.form.get('papeleta_id', type=int)
     if not papeleta_id:
         flash('ID no válido', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     papeleta = Papeleta.query.get(papeleta_id)
     if not papeleta:
         flash('Papeleta no encontrada', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     papeleta.conciliada = False
     papeleta.fecha_conciliacion = None
@@ -5087,10 +5071,10 @@ def desconciliar_papeleta_lc():
     db.session.commit()
     
     flash(f'Conciliación removida para papeleta {papeleta.folio}', 'warning')
-    return redirect(request.referrer or url_for('main.listado_papeletas_lowcost'))
+    return redirect(request.referrer or url_for('main.listado_papeletas_volaris'))
 
 
-@main.route('/papeletas-lowcost/conciliar-volaris', methods=['POST'])
+@main.route('/papeletas-volaris/conciliar-archivo', methods=['POST'])
 @login_required
 def conciliar_volaris():
     """Subir reporte de ventas de Volaris (.xlsx) y conciliar automáticamente"""
@@ -5099,31 +5083,27 @@ def conciliar_volaris():
     archivo = request.files.get('archivo_volaris')
     if not archivo:
         flash('No se seleccionó ningún archivo', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     filename = archivo.filename.lower()
     if not (filename.endswith('.xlsx') or filename.endswith('.xls')):
         flash('Formato no soportado. Sube el archivo Excel (.xlsx) de Volaris', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     try:
         wb = openpyxl.load_workbook(archivo, data_only=True)
     except Exception as e:
         flash(f'Error al leer el archivo: {str(e)}', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
-    # Parsear todas las hojas del reporte
     documentos = []
     periodo = ''
     
     for ws in wb.worksheets:
-        # Leer título del período (fila 1)
         titulo = ws.cell(row=1, column=1).value or ''
         if not periodo and titulo:
             periodo = titulo.replace('REPORTE DE VENTAS DEL ', '').strip()
         
-        # Datos empiezan después de los headers
-        # Fila 1 = título, filas 2-4 pueden ser headers/vacías, datos desde fila 5+
         for row_num in range(2, ws.max_row + 1):
             fecha = ws.cell(row=row_num, column=1).value
             pnr = ws.cell(row=row_num, column=2).value
@@ -5131,17 +5111,14 @@ def conciliar_volaris():
             pasajero = ws.cell(row=row_num, column=4).value
             pago = ws.cell(row=row_num, column=6).value
             
-            # Saltar filas vacías, headers o de totales
             if not pnr or not isinstance(pnr, str) or len(pnr.strip()) < 3:
                 continue
             
             pnr = pnr.strip().upper()
             
-            # Saltar si es header o fórmula
             if pnr.startswith('=') or pnr == 'PNR':
                 continue
             
-            # Validar que pago sea numérico
             try:
                 pago_num = float(pago) if pago else 0.0
             except (ValueError, TypeError):
@@ -5157,16 +5134,14 @@ def conciliar_volaris():
     
     if not documentos:
         flash('No se encontraron registros en el archivo', 'error')
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
-    # Cruzar con papeletas por clave_sabre
     encontrados = 0
     no_encontrados = []
     ya_conciliados = 0
     conciliados_ahora = 0
     
     for doc in documentos:
-        # Buscar papeleta por clave_sabre (PNR)
         papeleta = Papeleta.query.filter(
             db.func.upper(Papeleta.clave_sabre) == doc['pnr']
         ).first()
@@ -5186,7 +5161,6 @@ def conciliar_volaris():
     
     db.session.commit()
     
-    # Guardar resultados en sesión
     from flask import session
     session['volaris_resultado'] = {
         'total_reporte': len(documentos),
@@ -5207,7 +5181,7 @@ def conciliar_volaris():
     return redirect(url_for('main.resultado_conciliacion_volaris'))
 
 
-@main.route('/papeletas-lowcost/resultado-volaris')
+@main.route('/papeletas-volaris/resultado')
 @login_required
 def resultado_conciliacion_volaris():
     """Mostrar resultado de la conciliación Volaris"""
@@ -5215,6 +5189,314 @@ def resultado_conciliacion_volaris():
     resultado = session.pop('volaris_resultado', None)
     
     if not resultado:
-        return redirect(url_for('main.listado_papeletas_lowcost'))
+        return redirect(url_for('main.listado_papeletas_volaris'))
     
     return render_template('resultado_conciliacion_volaris.html', resultado=resultado)
+
+
+# ============================================
+# MÓDULO VIVA AEROBUS - Listado y Conciliación Manual
+# ============================================
+
+@main.route('/papeletas-viva')
+@login_required
+def listado_boletos_viva():
+    """Listado de papeletas de Viva Aerobus con filtros"""
+    
+    fecha_hoy = fecha_mexico()
+    
+    conciliada = request.args.get('conciliada', '')
+    fecha_desde = request.args.get('fecha_desde', '')
+    fecha_hasta = request.args.get('fecha_hasta', '')
+    buscar = request.args.get('buscar', '').strip()
+    pagina = request.args.get('pagina', 1, type=int)
+    por_pagina = 50
+    
+    # Solo Viva Aerobus
+    query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%viva%'))
+    
+    if conciliada == 'si':
+        query = query.filter(Papeleta.conciliada == True)
+    elif conciliada == 'no':
+        query = query.filter(db.or_(Papeleta.conciliada == False, Papeleta.conciliada.is_(None)))
+    
+    if fecha_desde:
+        try:
+            fd = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+            query = query.filter(Papeleta.fecha_venta >= fd)
+        except:
+            pass
+    
+    if fecha_hasta:
+        try:
+            fh = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            query = query.filter(Papeleta.fecha_venta <= fh)
+        except:
+            pass
+    
+    if buscar:
+        query = query.filter(db.or_(
+            Papeleta.clave_sabre.ilike(f'%{buscar}%'),
+            Papeleta.facturar_a.ilike(f'%{buscar}%'),
+            Papeleta.solicito.ilike(f'%{buscar}%'),
+            Papeleta.folio.ilike(f'%{buscar}%')
+        ))
+    
+    query = query.order_by(Papeleta.fecha_venta.desc(), Papeleta.id.desc())
+    
+    total = query.count()
+    papeletas = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
+    total_paginas = (total + por_pagina - 1) // por_pagina
+    
+    base_query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%viva%'))
+    total_papeletas = base_query.count()
+    total_conciliadas = base_query.filter(Papeleta.conciliada == True).count()
+    total_sin_conciliar = total_papeletas - total_conciliadas
+    
+    return render_template('listado_boletos_viva.html',
+        papeletas=papeletas,
+        total=total,
+        total_papeletas=total_papeletas,
+        total_conciliadas=total_conciliadas,
+        total_sin_conciliar=total_sin_conciliar,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        filtro_conciliada=conciliada,
+        filtro_fecha_desde=fecha_desde,
+        filtro_fecha_hasta=fecha_hasta,
+        filtro_buscar=buscar
+    )
+
+
+@main.route('/papeletas-viva/conciliar', methods=['POST'])
+@login_required
+def conciliar_papeleta_viva():
+    """Conciliar una papeleta de Viva Aerobus"""
+    papeleta_id = request.form.get('papeleta_id', type=int)
+    if not papeleta_id:
+        flash('ID no válido', 'error')
+        return redirect(url_for('main.listado_boletos_viva'))
+    
+    papeleta = Papeleta.query.get(papeleta_id)
+    if not papeleta:
+        flash('Papeleta no encontrada', 'error')
+        return redirect(url_for('main.listado_boletos_viva'))
+    
+    papeleta.conciliada = True
+    papeleta.fecha_conciliacion = fecha_mexico()
+    papeleta.conciliada_por_id = current_user.id
+    db.session.commit()
+    
+    flash(f'Papeleta {papeleta.folio} conciliada correctamente', 'success')
+    return redirect(request.referrer or url_for('main.listado_boletos_viva'))
+
+
+@main.route('/papeletas-viva/desconciliar', methods=['POST'])
+@login_required
+def desconciliar_papeleta_viva():
+    """Quitar conciliación de una papeleta de Viva Aerobus"""
+    papeleta_id = request.form.get('papeleta_id', type=int)
+    if not papeleta_id:
+        flash('ID no válido', 'error')
+        return redirect(url_for('main.listado_boletos_viva'))
+    
+    papeleta = Papeleta.query.get(papeleta_id)
+    if not papeleta:
+        flash('Papeleta no encontrada', 'error')
+        return redirect(url_for('main.listado_boletos_viva'))
+    
+    papeleta.conciliada = False
+    papeleta.fecha_conciliacion = None
+    papeleta.conciliada_por_id = None
+    papeleta.periodo_conciliacion = None
+    db.session.commit()
+    
+    flash(f'Conciliación removida para papeleta {papeleta.folio}', 'warning')
+    return redirect(request.referrer or url_for('main.listado_boletos_viva'))
+
+# ============================================
+# MÓDULO RESTRICCIÓN DE CRÉDITO
+# ============================================
+
+@main.route('/api/empresa/<int:empresa_id>/estado-credito')
+@login_required
+def estado_credito_empresa(empresa_id):
+    """API: Retorna el estado de crédito de una empresa (para JS en formularios)"""
+    empresa = Empresa.query.get(empresa_id)
+    if not empresa:
+        return jsonify({'error': 'Empresa no encontrada'}), 404
+    
+    data = {
+        'id': empresa.id,
+        'nombre': empresa.nombre_empresa,
+        'credito_restringido': empresa.credito_restringido or False,
+        'motivo_restriccion': empresa.motivo_restriccion or '',
+        'fecha_restriccion': empresa.fecha_restriccion.strftime('%d/%m/%Y') if empresa.fecha_restriccion else '',
+        'fecha_probable_pago': empresa.fecha_probable_pago.strftime('%d/%m/%Y') if empresa.fecha_probable_pago else '',
+        'notas_cobranza': empresa.notas_cobranza or '',
+        'credito_activo': empresa.credito_activo or False,
+        'limite_credito': float(empresa.limite_credito or 0),
+        'credito_disponible': float(empresa.credito_disponible or 0),
+        'dias_credito': empresa.dias_credito or 0
+    }
+    return jsonify(data)
+
+
+@main.route('/empresas/<int:id>/restringir', methods=['POST'])
+@login_required
+def restringir_empresa(id):
+    """Marcar empresa como restringida por atraso de pago"""
+    if not current_user.es_admin():
+        flash('Acceso no autorizado', 'danger')
+        return redirect(url_for('main.empresas'))
+    
+    empresa = Empresa.query.get_or_404(id)
+    
+    empresa.credito_restringido = True
+    empresa.motivo_restriccion = request.form.get('motivo_restriccion', 'Atraso en pagos mayor a 2 meses')
+    empresa.fecha_restriccion = fecha_mexico()
+    
+    fecha_pp = request.form.get('fecha_probable_pago')
+    if fecha_pp:
+        try:
+            empresa.fecha_probable_pago = datetime.strptime(fecha_pp, '%Y-%m-%d').date()
+        except:
+            pass
+    
+    empresa.notas_cobranza = request.form.get('notas_cobranza', '')
+    empresa.restringido_por_id = current_user.id
+    
+    db.session.commit()
+    flash(f'Crédito restringido para {empresa.nombre_empresa}', 'warning')
+    return redirect(request.referrer or url_for('main.empresas'))
+
+
+@main.route('/empresas/<int:id>/desrestringir', methods=['POST'])
+@login_required
+def desrestringir_empresa(id):
+    """Quitar restricción de crédito"""
+    if not current_user.es_admin():
+        flash('Acceso no autorizado', 'danger')
+        return redirect(url_for('main.empresas'))
+    
+    empresa = Empresa.query.get_or_404(id)
+    
+    empresa.credito_restringido = False
+    empresa.motivo_restriccion = None
+    empresa.fecha_restriccion = None
+    empresa.fecha_probable_pago = None
+    empresa.notas_cobranza = None
+    empresa.restringido_por_id = None
+    
+    db.session.commit()
+    flash(f'Crédito reactivado para {empresa.nombre_empresa}', 'success')
+    return redirect(request.referrer or url_for('main.empresas'))
+
+
+@main.route('/empresas/<int:id>/actualizar-contrato', methods=['POST'])
+@login_required
+def actualizar_contrato_empresa(id):
+    """Actualizar datos del contrato"""
+    if not current_user.es_admin():
+        flash('Acceso no autorizado', 'danger')
+        return redirect(url_for('main.empresas'))
+    
+    empresa = Empresa.query.get_or_404(id)
+    
+    empresa.numero_contrato = request.form.get('numero_contrato', '').strip() or None
+    
+    monto = request.form.get('monto_contrato', '').strip()
+    empresa.monto_contrato = float(monto) if monto else None
+    
+    fi = request.form.get('fecha_inicio_contrato')
+    if fi:
+        try:
+            empresa.fecha_inicio_contrato = datetime.strptime(fi, '%Y-%m-%d').date()
+        except:
+            pass
+    
+    ff = request.form.get('fecha_fin_contrato')
+    if ff:
+        try:
+            empresa.fecha_fin_contrato = datetime.strptime(ff, '%Y-%m-%d').date()
+        except:
+            pass
+    
+    db.session.commit()
+    flash(f'Contrato actualizado para {empresa.nombre_empresa}', 'success')
+    return redirect(request.referrer or url_for('main.empresas'))
+
+
+@main.route('/credito-empresas')
+@login_required
+def panel_credito_empresas():
+    """Panel de seguimiento de crédito y contratos de empresas"""
+    if not current_user.es_admin():
+        flash('Acceso no autorizado', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    fecha_hoy = fecha_mexico()
+    
+    # Todas las empresas activas
+    empresas = Empresa.query.filter(
+        Empresa.activa == True
+    ).order_by(
+        Empresa.credito_restringido.desc(),  # Restringidas primero
+        Empresa.nombre_empresa
+    ).all()
+    
+    # Calcular datos para cada empresa
+    empresas_data = []
+    for emp in empresas:
+        # Consumo total (papeletas a crédito en los últimos 6 meses)
+        seis_meses = fecha_hoy - timedelta(days=180)
+        consumo = db.session.query(func.sum(Papeleta.total)).filter(
+            Papeleta.empresa_id == emp.id,
+            Papeleta.fecha_venta >= seis_meses
+        ).scalar()
+        consumo = float(consumo or 0)
+        
+        # Facturas pendientes (sin factura o pendientes)
+        facturas_pend = Papeleta.query.filter(
+            Papeleta.empresa_id == emp.id,
+            Papeleta.estatus_facturacion.in_(['pendiente', None]),
+            Papeleta.numero_factura.is_(None)
+        ).count()
+        
+        # Monto pendiente de facturar
+        monto_pend = db.session.query(func.sum(Papeleta.total)).filter(
+            Papeleta.empresa_id == emp.id,
+            Papeleta.estatus_facturacion.in_(['pendiente', None]),
+            Papeleta.numero_factura.is_(None)
+        ).scalar()
+        monto_pend = float(monto_pend or 0)
+        
+        # Progreso del contrato
+        progreso_contrato = 0
+        if emp.monto_contrato and float(emp.monto_contrato) > 0:
+            progreso_contrato = min(round((consumo / float(emp.monto_contrato)) * 100, 1), 100)
+        
+        # Días de contrato restantes
+        dias_contrato_rest = None
+        if emp.fecha_fin_contrato:
+            dias_contrato_rest = (emp.fecha_fin_contrato - fecha_hoy).days
+        
+        empresas_data.append({
+            'empresa': emp,
+            'consumo_6m': consumo,
+            'facturas_pendientes': facturas_pend,
+            'monto_pendiente': monto_pend,
+            'progreso_contrato': progreso_contrato,
+            'dias_contrato_restantes': dias_contrato_rest
+        })
+    
+    # Stats
+    total_empresas = len(empresas)
+    restringidas = len([e for e in empresas if e.credito_restringido])
+    
+    return render_template('panel_credito_empresas.html',
+        empresas_data=empresas_data,
+        total_empresas=total_empresas,
+        restringidas=restringidas,
+        fecha_hoy=fecha_hoy
+    )
