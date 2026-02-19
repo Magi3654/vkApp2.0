@@ -2344,6 +2344,7 @@ def expedientes():
         Desglose.empresa_id,
         Desglose.aerolinea_id,
         Desglose.numero_boleto,
+        Desglose.numero_factura,
         Desglose.sucursal_id,
         Desglose.usuario_id
     )
@@ -2394,7 +2395,7 @@ def expedientes():
                 'aerolinea': None,
                 'desglose': d,
                 'papeleta': None,
-                'factura': d.numero_boleto,  # Si tiene número de boleto
+                'factura': d.numero_factura,  # Número de factura real (no boleto)
                 'es_lowcost': False,
                 'es_facturacion': True
             }
