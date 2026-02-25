@@ -16,6 +16,7 @@ from datetime import datetime, date
 
 from decimal import Decimal
 
+
 db = SQLAlchemy()
 
 # =============================================================================
