@@ -8,9 +8,14 @@
 <div class="boletos-page">
     <!-- HEADER -->
     <div class="page-header">
-        <h1><i class="fas fa-plane-departure"></i> Boletos BSP</h1>
+        <div class="page-header-title">
+            <div class="page-header-icon"><i class="fas fa-plane-departure"></i></div>
+            <div class="page-header-text">
+                <h1>Boletos BSP</h1>
+            </div>
+        </div>
         <div class="header-actions">
-            <button class="btn-kn primary" onclick="document.getElementById('modalBSP').classList.add('active')">
+            <button class="btn btn--primary" onclick="document.getElementById('modalBSP').classList.add('active')">
                 <i class="fas fa-file-upload"></i> Conciliar con BSP
             </button>
         </div>
@@ -66,8 +71,8 @@
                     <input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}">
                 </div>
                 <div class="campo" style="display: flex; flex-direction: row; gap: 0.5rem; align-self: flex-end;">
-                    <button type="submit" class="btn-kn primary"><i class="fas fa-search"></i> Filtrar</button>
-                    <a href="{{ url_for('main.listado_boletos') }}" class="btn-kn secondary"><i class="fas fa-times"></i></a>
+                    <button type="submit" class="btn btn--primary btn--sm"><i class="fas fa-search"></i> Filtrar</button>
+                    <a href="{{ url_for('main.listado_boletos') }}" class="btn btn--secondary btn--sm"><i class="fas fa-times"></i></a>
                 </div>
             </div>
         </form>
@@ -112,7 +117,7 @@
                     </td>
                     <td>
                         {% if b.conciliada %}
-                        <span class="badge-status conciliado" title="Conciliado el {{ b.fecha_conciliacion.strftime('%d/%m/%Y') if b.fecha_conciliacion else '' }}">
+                        <span class="badge-status conciliado" title="Conciliado el {{ b.fecha_conciliacion.strftime('%d/%m/%Y') if b.fecha_conciliacion else '' }}{% if b.periodo_bsp %} · Periodo {{ b.periodo_bsp }}{% endif %}">
                             <i class="fas fa-check-circle"></i> Conciliado
                         </span>
                         {% else %}
@@ -123,7 +128,7 @@
                         {% if b.conciliada %}
                         <form method="POST" action="{{ url_for('main.desconciliar_boleto') }}" style="display:inline;">
                             <input type="hidden" name="folio" value="{{ b.folio }}">
-                            <button type="submit" class="btn-kn sm secondary" title="Quitar conciliación" 
+                            <button type="submit" class="btn btn--secondary btn--sm" title="Quitar conciliación" 
                                     onclick="return confirm('¿Quitar conciliación de este boleto?')">
                                 <i class="fas fa-undo"></i>
                             </button>
@@ -131,7 +136,7 @@
                         {% else %}
                         <form method="POST" action="{{ url_for('main.conciliar_boleto') }}" style="display:inline;">
                             <input type="hidden" name="folio" value="{{ b.folio }}">
-                            <button type="submit" class="btn-kn sm success" title="Conciliar manualmente">
+                            <button type="submit" class="btn btn--success btn--sm" title="Conciliar manualmente">
                                 <i class="fas fa-check"></i>
                             </button>
                         </form>
@@ -169,7 +174,7 @@
         </div>
         {% endif %}
 
-        <div style="padding: 0.75rem 1.25rem; font-size: 0.8rem; color: #64748b; border-top: 1px solid #f1f5f9;">
+        <div class="tabla-footer">
             Mostrando {{ boletos|length }} de {{ total }} boletos
         </div>
 
@@ -198,10 +203,10 @@
             </div>
             
             <div class="modal-actions">
-                <button type="button" class="btn-kn secondary" onclick="document.getElementById('modalBSP').classList.remove('active')">
+                <button type="button" class="btn btn--secondary" onclick="document.getElementById('modalBSP').classList.remove('active')">
                     Cancelar
                 </button>
-                <button type="submit" class="btn-kn primary" id="btnConciliar" disabled>
+                <button type="submit" class="btn btn--primary" id="btnConciliar" disabled>
                     <i class="fas fa-sync-alt"></i> Conciliar
                 </button>
             </div>
@@ -224,14 +229,12 @@ function mostrarNombreArchivo(input) {
     }
 }
 
-// Cerrar modal con Escape
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.getElementById('modalBSP').classList.remove('active');
     }
 });
 
-// Cerrar modal al hacer clic fuera
 document.getElementById('modalBSP').addEventListener('click', function(e) {
     if (e.target === this) {
         this.classList.remove('active');

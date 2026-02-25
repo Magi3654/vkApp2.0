@@ -1326,7 +1326,7 @@ def facturacion():
             'pasajero': d.pasajero_nombre or 'N/A',
             'aerolinea': d.aerolinea.nombre if d.aerolinea else 'N/A',
             'total': float(d.total or 0),
-            'clave': d.clave_reserva,
+            'clave': d.clave_sabre or d.clave_reserva,
             'tiene_desglose': True,  # BSP siempre tiene desglose
             'tiene_boleto': bool(d.numero_boleto),
             'objeto': d
@@ -1980,6 +1980,7 @@ def nueva_papeleta_post():
             diez_porciento=float(request.form.get('diez_porciento', 0)), cargo=float(request.form.get('cargo', 0)),
             total=float(request.form.get('total', 0)), facturar_a=facturar_a_nombre,
             solicito=request.form.get('solicito', ''), clave_sabre=request.form.get('clave_sabre', ''),
+            clave_reserva=request.form.get('clave_reserva', '').strip().upper() or None,
             forma_pago=request.form.get('forma_pago', ''), empresa_id=empresa_id, aerolinea_id=aerolinea_id,
             usuario_id=current_user.id, autorizacion_id=autorizacion_id, sucursal_id=current_user.sucursal_id,
             tipo_cargo=request.form.get('tipo_cargo', ''), proveedor=request.form.get('proveedor', ''),
@@ -2044,6 +2045,7 @@ def editar_papeleta(id):
             papeleta.total = float(request.form.get('total', 0))
             papeleta.solicito = request.form.get('solicito', '')
             papeleta.clave_sabre = request.form.get('clave_sabre', '')
+            papeleta.clave_reserva = request.form.get('clave_reserva', '').strip().upper() or None
             papeleta.forma_pago = request.form.get('forma_pago', '')
             
             empresa_id = request.form.get('facturar_a')
@@ -2336,6 +2338,7 @@ def expedientes():
     # Query base para desgloses
     query_desgloses = db.session.query(
         Desglose.clave_reserva,
+        Desglose.clave_sabre,
         Desglose.folio,
         Desglose.pasajero_nombre,
         Desglose.ruta,
@@ -2379,9 +2382,9 @@ def expedientes():
     # Crear diccionario de expedientes
     expedientes_dict = {}
     
-    # Procesar desgloses
+    # Procesar desgloses — agrupar por clave_sabre (vínculo con papeleta)
     for d in claves_desgloses:
-        clave = d.clave_reserva.upper() if d.clave_reserva else 'SIN-CLAVE'
+        clave = (d.clave_sabre or d.clave_reserva or '').upper() or 'SIN-CLAVE'
         if clave not in expedientes_dict:
             expedientes_dict[clave] = {
                 'clave': clave,
@@ -4838,6 +4841,8 @@ def conciliar_bsp():
     no_encontrados = []
     ya_conciliados = 0
     conciliados_ahora = 0
+    conciliados_list = []
+    ya_conciliados_list = []
     periodo = resultado.get('periodo', '')
     
     for doc in docs_a_conciliar:
@@ -4863,14 +4868,18 @@ def conciliar_bsp():
         
         if desglose:
             encontrados += 1
+            doc['folio_desglose'] = desglose.folio
+            doc['pasajero'] = desglose.pasajero_nombre or ''
             if desglose.conciliada:
                 ya_conciliados += 1
+                ya_conciliados_list.append(doc)
             else:
                 desglose.conciliada = True
                 desglose.fecha_conciliacion = fecha_mexico()
                 desglose.conciliada_por_id = current_user.id
                 desglose.periodo_bsp = periodo
                 conciliados_ahora += 1
+                conciliados_list.append(doc)
         else:
             no_encontrados.append(doc)
     
@@ -4885,6 +4894,8 @@ def conciliar_bsp():
         'encontrados': encontrados,
         'ya_conciliados': ya_conciliados,
         'conciliados_ahora': conciliados_ahora,
+        'conciliados_list': conciliados_list,
+        'ya_conciliados_list': ya_conciliados_list,
         'no_encontrados': no_encontrados,
         'periodo': periodo,
         'por_tipo': {
@@ -4903,6 +4914,18 @@ def conciliar_bsp():
     )
     
     return redirect(url_for('main.resultado_conciliacion_bsp'))
+
+
+@main.route('/boletos/resultado-conciliacion')
+@login_required
+def resultado_conciliacion_bsp():
+    """Muestra resultado de la conciliación BSP"""
+    from flask import session
+    resultado = session.get('bsp_resultado', {})
+    if not resultado:
+        flash('No hay resultados de conciliación disponibles', 'info')
+        return redirect(url_for('main.listado_boletos'))
+    return render_template('resultado_conciliacion_bsp.html', resultado=resultado)
 
 
 def _parsear_bsp_pdf(filepath):
@@ -5140,6 +5163,7 @@ def listado_papeletas_volaris():
     if buscar:
         query = query.filter(db.or_(
             Papeleta.clave_sabre.ilike(f'%{buscar}%'),
+            Papeleta.clave_reserva.ilike(f'%{buscar}%'),
             Papeleta.facturar_a.ilike(f'%{buscar}%'),
             Papeleta.solicito.ilike(f'%{buscar}%'),
             Papeleta.folio.ilike(f'%{buscar}%')

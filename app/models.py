@@ -878,6 +878,8 @@ class Papeleta(db.Model):
 
     clave_sabre = db.Column(db.String, nullable=False)
 
+    clave_reserva = db.Column(db.String(20))  # Clave del boleto para reportes
+
     forma_pago = db.Column(db.String, nullable=False)
 
     usuario_id = db.Column(db.BigInteger, db.ForeignKey('usuarios.id'), nullable=False)

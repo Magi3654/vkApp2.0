@@ -11291,3 +11291,206 @@ th strong {
         flex-direction: column;
     }
 }
+
+/* === RESULTADO BSP - Toolbar y filtros === */
+.resultado-bsp-page .faltantes-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 0.0625rem solid var(--alabaster-grey);
+    flex-wrap: wrap;
+}
+
+.resultado-bsp-page .faltantes-search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: var(--bright-snow);
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-md);
+    padding: var(--space-xs) var(--space-md);
+    flex: 1;
+    min-width: 12rem;
+    max-width: 20rem;
+}
+
+.resultado-bsp-page .faltantes-search i {
+    color: var(--gray-400);
+    font-size: var(--text-sm);
+}
+
+.resultado-bsp-page .faltantes-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: var(--text-sm);
+    color: var(--graphite);
+    width: 100%;
+}
+
+.resultado-bsp-page .faltantes-filters {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.resultado-bsp-page .faltantes-filters select {
+    padding: var(--space-xs) var(--space-sm);
+    border: 0.0625rem solid var(--alabaster-grey);
+    border-radius: var(--radius-md);
+    font-size: var(--text-xs);
+    background: var(--bright-snow);
+    color: var(--graphite);
+    cursor: pointer;
+}
+
+.resultado-bsp-page .faltantes-filters select:focus {
+    outline: none;
+    border-color: var(--oxblood);
+}
+
+.resultado-bsp-page .faltantes-count {
+    font-size: var(--text-xs);
+    color: var(--gray-500);
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.resultado-bsp-page .faltantes-header p {
+    font-size: var(--text-sm);
+    color: var(--gray-500);
+    margin: var(--space-xs) 0 0 0;
+}
+
+/* Badges adicionales */
+.resultado-bsp-page .badge-fop {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.resultado-bsp-page .badge-fop.cc {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.resultado-bsp-page .badge-fop.ca {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.resultado-bsp-page .badge-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
+.resultado-bsp-page .badge-scope.intl {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.resultado-bsp-page .badge-scope.dom {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.resultado-bsp-page .tabla-wrapper {
+    overflow-x: auto;
+}
+
+.resultado-bsp-page .text-right {
+    text-align: right;
+}
+
+.resultado-bsp-page .text-muted {
+    color: var(--gray-400);
+}
+
+.resultado-bsp-page .tabla-faltantes tfoot td {
+    padding: 0.75rem;
+    border-top: 0.125rem solid var(--alabaster-grey);
+    background: var(--bright-snow);
+}
+
+/* === RESULTADO BSP - Secciones Conciliados === */
+.resultado-bsp-page .conciliados-section,
+.resultado-bsp-page .ya-conciliados-section {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 0.0625rem solid var(--alabaster-grey);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+}
+
+.resultado-bsp-page .conciliados-header {
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-success-light);
+    border-bottom: 0.0625rem solid #6ee7b7;
+}
+
+.resultado-bsp-page .conciliados-header h2 {
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: var(--color-success);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.resultado-bsp-page .ya-conciliados-header {
+    padding: var(--space-md) var(--space-lg);
+    background: #ede9fe;
+    border-bottom: 0.0625rem solid #c4b5fd;
+}
+
+.resultado-bsp-page .ya-conciliados-header h2 {
+    font-size: var(--text-base);
+    font-weight: 700;
+    color: #7c3aed;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.resultado-bsp-page .tabla-conciliados thead th {
+    background: var(--color-success) !important;
+}
+
+.resultado-bsp-page .tabla-ya-conciliados thead th {
+    background: #7c3aed !important;
+}
+
+.resultado-bsp-page .badge-conciliado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.resultado-bsp-page .badge-ya-conciliado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    background: #ede9fe;
+    color: #7c3aed;
+}

@@ -69,7 +69,7 @@
     <div class="filtros-panel">
         <form method="GET" action="{{ url_for('main.listado_papeletas_volaris') }}">
             <div class="filtros-grid">
-                <div class="campo"><label>Buscar</label><input type="text" name="buscar" value="{{ filtro_buscar }}" placeholder="PNR, pasajero, folio..."></div>
+                <div class="campo"><label>Buscar</label><input type="text" name="buscar" value="{{ filtro_buscar }}" placeholder="Clave, pasajero, folio..."></div>
                 <div class="campo"><label>Conciliación</label><select name="conciliada"><option value="">Todos</option><option value="si" {{ 'selected' if filtro_conciliada == 'si' }}>Conciliadas</option><option value="no" {{ 'selected' if filtro_conciliada == 'no' }}>Sin conciliar</option></select></div>
                 <div class="campo"><label>Desde</label><input type="date" name="fecha_desde" value="{{ filtro_fecha_desde }}"></div>
                 <div class="campo"><label>Hasta</label><input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}"></div>
@@ -84,12 +84,13 @@
     <div class="tabla-container">
         {% if papeletas %}
         <table class="tabla-paps">
-            <thead><tr><th>Folio</th><th>PNR</th><th>Pasajero / Facturar a</th><th>Fecha Venta</th><th>Total</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Clave Sabre</th><th>Pasajero / Facturar a</th><th>Fecha Venta</th><th>Total</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
             <tbody>
                 {% for p in papeletas %}
                 <tr>
                     <td class="mono">{{ p.folio }}</td>
-                    <td class="mono" style="font-weight:600;">{{ p.clave_sabre or '-' }}</td>
+                    <td class="mono" style="font-weight:600;">{{ p.clave_reserva or '-' }}</td>
+                    <td class="mono" style="color:#64748b;">{{ p.clave_sabre or '-' }}</td>
                     <td>{{ p.facturar_a or p.solicito or '-' }}</td>
                     <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
                     <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>

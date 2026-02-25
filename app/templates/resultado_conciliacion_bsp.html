@@ -12,7 +12,7 @@
             <div class="page-header-text">
                 <h1>Resultado Conciliación BSP</h1>
                 {% if resultado.periodo %}
-                <p>Periodo BSP: <strong>{{ resultado.periodo }}</strong></p>
+                <p>Periodo: <strong>{{ resultado.periodo }}</strong></p>
                 {% endif %}
             </div>
         </div>
@@ -80,6 +80,67 @@
     </div>
     {% endif %}
 
+    {% set aerolineas_map = {
+        '001': 'American Airlines',
+        '006': 'Delta Air Lines',
+        '014': 'Air Canada',
+        '016': 'United Airlines',
+        '027': 'Alaska Airlines',
+        '044': 'Aerolíneas Argentinas',
+        '045': 'LATAM Airlines',
+        '047': 'TAP Air Portugal',
+        '057': 'Air France',
+        '071': 'Ethiopian Airlines',
+        '074': 'KLM',
+        '075': 'Iberia',
+        '079': 'Philippine Airlines',
+        '080': 'LOT Polish Airlines',
+        '082': 'Brussels Airlines',
+        '083': 'South African Airways',
+        '086': 'Air New Zealand',
+        '105': 'Finnair',
+        '111': 'Bahamasair',
+        '114': 'EL AL Israel Airlines',
+        '118': 'TAAG Angola',
+        '125': 'British Airways',
+        '127': 'GOL',
+        '131': 'Japan Airlines',
+        '134': 'Avianca',
+        '135': 'Air Tahiti',
+        '139': 'Aeroméxico',
+        '147': 'Royal Air Maroc',
+        '160': 'Cathay Pacific',
+        '169': 'Hahn Air',
+        '180': 'Korean Air',
+        '220': 'Lufthansa',
+        '230': 'Copa Airlines',
+        '244': 'Air Tahiti Nui',
+        '275': 'APG Airlines',
+        '279': 'JetBlue',
+        '297': 'China Airlines',
+        '365': 'FlexFlight',
+        '402': 'Star Air',
+        '427': 'Air Caraïbes',
+        '469': 'Paranair',
+        '512': 'Royal Jordanian',
+        '517': 'Arajet',
+        '577': 'Azul Brazilian',
+        '607': 'Etihad Airways',
+        '624': 'Pegasus Airlines',
+        '695': 'EVA Air',
+        '706': 'Kenya Airways',
+        '752': 'Condor',
+        '783': 'Iberojet',
+        '811': 'Viva Aerobus',
+        '835': 'Croatia Airlines',
+        '838': 'WestJet',
+        '910': 'Oman Air',
+        '927': 'TUI fly Belgium',
+        '957': 'LATAM Brasil',
+        '996': 'Air Europa',
+        '999': 'Air China'
+    } %}
+
     {% if resultado.conciliados_ahora > 0 and not resultado.no_encontrados %}
     <div class="success-section">
         <i class="fas fa-check-circle"></i>
@@ -88,109 +149,159 @@
     </div>
     {% endif %}
 
-    <!-- FALTANTES -->
-    {% if resultado.no_encontrados %}
-    <div class="faltantes-section">
-        <div class="faltantes-header">
-            <h2><i class="fas fa-exclamation-triangle"></i> Documentos NO encontrados en el sistema ({{ resultado.no_encontrados|length }})</h2>
+    <!-- CONCILIADOS AHORA -->
+    {% if resultado.conciliados_list %}
+    <div class="conciliados-section">
+        <div class="conciliados-header">
+            <h2><i class="fas fa-check-circle"></i> Conciliados ahora ({{ resultado.conciliados_list|length }})</h2>
         </div>
-        <div style="overflow-x: auto;">
-            <table class="tabla-faltantes">
+        <div class="tabla-wrapper">
+            <table class="tabla-faltantes tabla-conciliados">
                 <thead>
                     <tr>
                         <th>Aerolínea</th>
                         <th>Tipo</th>
-                        <th>Nº Documento</th>
                         <th>Nº Completo</th>
+                        <th>Folio</th>
+                        <th>Pasajero</th>
                         <th>Fecha</th>
-                        <th>FOP</th>
-                        <th>Scope</th>
-                        <th>Monto</th>
-                        <th>Neto a Pagar</th>
-                        <th>Revisado</th>
+                        <th class="text-right">Monto</th>
+                        <th>Estatus</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% set aerolineas_map = {
-                        '001': 'American Airlines',
-                        '006': 'Delta Air Lines',
-                        '014': 'Air Canada',
-                        '016': 'United Airlines',
-                        '027': 'Alaska Airlines',
-                        '044': 'Aerolíneas Argentinas',
-                        '045': 'LATAM Airlines',
-                        '047': 'TAP Air Portugal',
-                        '057': 'Air France',
-                        '071': 'Ethiopian Airlines',
-                        '074': 'KLM',
-                        '075': 'Iberia',
-                        '079': 'Philippine Airlines',
-                        '080': 'LOT Polish Airlines',
-                        '082': 'Brussels Airlines',
-                        '083': 'South African Airways',
-                        '086': 'Air New Zealand',
-                        '105': 'Finnair',
-                        '111': 'Bahamasair',
-                        '114': 'EL AL Israel Airlines',
-                        '118': 'TAAG Angola',
-                        '125': 'British Airways',
-                        '127': 'GOL',
-                        '131': 'Japan Airlines',
-                        '134': 'Avianca',
-                        '135': 'Air Tahiti',
-                        '139': 'Aeroméxico',
-                        '147': 'Royal Air Maroc',
-                        '160': 'Cathay Pacific',
-                        '169': 'Hahn Air',
-                        '180': 'Korean Air',
-                        '220': 'Lufthansa',
-                        '230': 'Copa Airlines',
-                        '244': 'Air Tahiti Nui',
-                        '275': 'APG Airlines',
-                        '279': 'JetBlue',
-                        '297': 'China Airlines',
-                        '365': 'FlexFlight',
-                        '402': 'Star Air',
-                        '427': 'Air Caraïbes',
-                        '469': 'Paranair',
-                        '512': 'Royal Jordanian',
-                        '517': 'Arajet',
-                        '577': 'Azul Brazilian',
-                        '607': 'Etihad Airways',
-                        '624': 'Pegasus Airlines',
-                        '695': 'EVA Air',
-                        '706': 'Kenya Airways',
-                        '752': 'Condor',
-                        '783': 'Iberojet',
-                        '811': 'Viva Aerobus',
-                        '838': 'WestJet',
-                        '835': 'Croatia Airlines',
-                        '910': 'Oman Air',
-                        '927': 'TUI fly Belgium',
-                        '957': 'LATAM Brasil',
-                        '996': 'Air Europa',
-                        '999': 'Air China'
-                    } %}
-                    {% set tipo_labels = {
-                        'TKTT': 'Boleto',
-                        'EMDS': 'Servicio',
-                        'EMDA': 'Penalidad',
-                        'CANX': 'Cancelación'
-                    } %}
-                    {% for doc in resultado.no_encontrados %}
+                    {% for doc in resultado.conciliados_list %}
                     <tr>
                         <td>
                             <span class="aerolinea-code">{{ doc.airline_code }}</span>
                             {{ aerolineas_map.get(doc.airline_code, doc.airline_code) }}
                         </td>
+                        <td><span class="badge-tipo {{ doc.trnc|lower }}">{{ doc.trnc }}</span></td>
+                        <td class="mono">{{ doc.numero_completo }}</td>
+                        <td><strong>BSP-{{ doc.folio_desglose }}</strong></td>
+                        <td>{{ doc.pasajero or '-' }}</td>
+                        <td>{{ doc.fecha_emision or '-' }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(doc.transaction_amount) }}</td>
+                        <td><span class="badge-conciliado"><i class="fas fa-check"></i> Conciliado</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- YA ESTABAN CONCILIADOS -->
+    {% if resultado.ya_conciliados_list %}
+    <div class="ya-conciliados-section">
+        <div class="ya-conciliados-header">
+            <h2><i class="fas fa-info-circle"></i> Ya estaban conciliados ({{ resultado.ya_conciliados_list|length }})</h2>
+        </div>
+        <div class="tabla-wrapper">
+            <table class="tabla-faltantes tabla-ya-conciliados">
+                <thead>
+                    <tr>
+                        <th>Aerolínea</th>
+                        <th>Tipo</th>
+                        <th>Nº Completo</th>
+                        <th>Folio</th>
+                        <th>Pasajero</th>
+                        <th>Fecha</th>
+                        <th class="text-right">Monto</th>
+                        <th>Estatus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in resultado.ya_conciliados_list %}
+                    <tr>
                         <td>
-                            <span class="badge-tipo {{ doc.trnc|lower }}">{{ tipo_labels.get(doc.trnc, doc.trnc) }}</span>
+                            <span class="aerolinea-code">{{ doc.airline_code }}</span>
+                            {{ aerolineas_map.get(doc.airline_code, doc.airline_code) }}
                         </td>
-                        <td class="mono">{{ doc.document_number }}</td>
+                        <td><span class="badge-tipo {{ doc.trnc|lower }}">{{ doc.trnc }}</span></td>
+                        <td class="mono">{{ doc.numero_completo }}</td>
+                        <td><strong>BSP-{{ doc.folio_desglose }}</strong></td>
+                        <td>{{ doc.pasajero or '-' }}</td>
+                        <td>{{ doc.fecha_emision or '-' }}</td>
+                        <td class="monto">${{ '{:,.2f}'.format(doc.transaction_amount) }}</td>
+                        <td><span class="badge-ya-conciliado"><i class="fas fa-check-double"></i> Ya conciliado</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- FALTANTES -->
+    {% if resultado.no_encontrados %}
+    <div class="faltantes-section">
+        <div class="faltantes-header">
+            <h2><i class="fas fa-exclamation-triangle"></i> Documentos NO encontrados en el sistema ({{ resultado.no_encontrados|length }})</h2>
+            <p>Estos documentos aparecen en el BSP pero no tienen desglose registrado en Kinessia Hub.</p>
+        </div>
+        <div class="faltantes-toolbar">
+            <div class="faltantes-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="buscarFaltante" placeholder="Buscar por número, aerolínea..." onkeyup="filtrarFaltantes()">
+            </div>
+            <div class="faltantes-filters">
+                <select id="filtroTipo" onchange="filtrarFaltantes()">
+                    <option value="">Todos los tipos</option>
+                    <option value="TKTT">Boletos (TKTT)</option>
+                    <option value="EMDS">Servicios (EMDS)</option>
+                    <option value="EMDA">Penalidades (EMDA)</option>
+                </select>
+                <select id="filtroScope" onchange="filtrarFaltantes()">
+                    <option value="">Todo scope</option>
+                    <option value="Internacional">Internacional</option>
+                    <option value="Doméstico">Doméstico</option>
+                </select>
+            </div>
+            <span class="faltantes-count" id="conteoVisible">{{ resultado.no_encontrados|length }} documentos</span>
+        </div>
+        <div class="tabla-wrapper">
+            <table class="tabla-faltantes" id="tablaFaltantes">
+                <thead>
+                    <tr>
+                        <th>Aerolínea</th>
+                        <th>Tipo</th>
+                        <th>Nº Completo</th>
+                        <th>Fecha</th>
+                        <th>FOP</th>
+                        <th>Scope</th>
+                        <th class="text-right">Monto</th>
+                        <th class="text-right">Neto a Pagar</th>
+                        <th>Revisado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in resultado.no_encontrados %}
+                    <tr data-tipo="{{ doc.trnc }}" data-scope="{{ doc.scope or '' }}" 
+                        data-search="{{ doc.numero_completo or (doc.airline_code ~ doc.document_number) }} {{ aerolineas_map.get(doc.airline_code, '') }} {{ doc.document_number }}">
+                        <td>
+                            <span class="aerolinea-code">{{ doc.airline_code }}</span>
+                            {{ aerolineas_map.get(doc.airline_code, doc.airline_code) }}
+                        </td>
+                        <td>
+                            <span class="badge-tipo {{ doc.trnc|lower }}">{{ doc.trnc }}</span>
+                        </td>
                         <td class="mono">{{ doc.numero_completo or (doc.airline_code ~ doc.document_number) }}</td>
                         <td>{{ doc.fecha_emision or '-' }}</td>
-                        <td>{{ doc.fop }}</td>
-                        <td>{{ doc.scope or '-' }}</td>
+                        <td>
+                            {% if doc.fop == 'CC' %}
+                            <span class="badge-fop cc"><i class="fas fa-credit-card"></i> CC</span>
+                            {% else %}
+                            <span class="badge-fop ca">CA</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if doc.scope == 'Internacional' %}
+                            <span class="badge-scope intl"><i class="fas fa-globe-americas"></i> Intl</span>
+                            {% elif doc.scope == 'Doméstico' %}
+                            <span class="badge-scope dom">Dom</span>
+                            {% else %}-{% endif %}
+                        </td>
                         <td class="monto">${{ '{:,.2f}'.format(doc.transaction_amount) }}</td>
                         <td class="monto">${{ '{:,.2f}'.format(doc.balance_payable) }}</td>
                         <td>
@@ -199,7 +310,7 @@
                                 <i class="fas fa-redo"></i> {{ doc.rtdn }}
                             </span>
                             {% else %}
-                            -
+                            <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -207,9 +318,9 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="7" style="text-align: right; padding: 0.75rem; font-weight: 700;">TOTAL FALTANTES:</td>
-                        <td class="monto" style="padding: 0.75rem; font-weight: 700;">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='transaction_amount')) }}</td>
-                        <td class="monto" style="padding: 0.75rem; font-weight: 700;">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='balance_payable')) }}</td>
+                        <td colspan="6" class="text-right"><strong>TOTAL FALTANTES:</strong></td>
+                        <td class="monto"><strong>${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='transaction_amount')) }}</strong></td>
+                        <td class="monto"><strong>${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='balance_payable')) }}</strong></td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -218,4 +329,33 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+function filtrarFaltantes() {
+    const buscar = document.getElementById('buscarFaltante').value.toLowerCase();
+    const tipo = document.getElementById('filtroTipo').value;
+    const scope = document.getElementById('filtroScope').value;
+    const rows = document.querySelectorAll('#tablaFaltantes tbody tr');
+    let visibles = 0;
+
+    rows.forEach(row => {
+        const searchText = row.dataset.search.toLowerCase();
+        const rowTipo = row.dataset.tipo;
+        const rowScope = row.dataset.scope;
+
+        const matchBuscar = !buscar || searchText.includes(buscar);
+        const matchTipo = !tipo || rowTipo === tipo;
+        const matchScope = !scope || rowScope === scope;
+
+        if (matchBuscar && matchTipo && matchScope) {
+            row.style.display = '';
+            visibles++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    document.getElementById('conteoVisible').textContent = visibles + ' documentos';
+}
+</script>
 {% endblock %}
