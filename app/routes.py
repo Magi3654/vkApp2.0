@@ -1981,6 +1981,7 @@ def nueva_papeleta_post():
             total=float(request.form.get('total', 0)), facturar_a=facturar_a_nombre,
             solicito=request.form.get('solicito', ''), clave_sabre=request.form.get('clave_sabre', ''),
             clave_reserva=request.form.get('clave_reserva', '').strip().upper() or None,
+            pasajero_nombre=request.form.get('pasajero_nombre', '').strip().upper() or None,
             forma_pago=request.form.get('forma_pago', ''), empresa_id=empresa_id, aerolinea_id=aerolinea_id,
             usuario_id=current_user.id, autorizacion_id=autorizacion_id, sucursal_id=current_user.sucursal_id,
             tipo_cargo=request.form.get('tipo_cargo', ''), proveedor=request.form.get('proveedor', ''),
@@ -2044,6 +2045,7 @@ def editar_papeleta(id):
             papeleta.cargo = float(request.form.get('cargo', 0))
             papeleta.total = float(request.form.get('total', 0))
             papeleta.solicito = request.form.get('solicito', '')
+            papeleta.pasajero_nombre = request.form.get('pasajero_nombre', '').strip().upper() or None
             papeleta.clave_sabre = request.form.get('clave_sabre', '')
             papeleta.clave_reserva = request.form.get('clave_reserva', '').strip().upper() or None
             papeleta.forma_pago = request.form.get('forma_pago', '')
@@ -2963,6 +2965,45 @@ def eliminar_archivo_papeleta(id):
 # CONSULTA DE REPORTES DE VENTAS
 # =============================================================================
 
+def _generar_folio_reporte():
+    """Genera folio automático RV-YYYY-NNNN"""
+    from datetime import date
+    anio = date.today().year
+    ultimo = ReporteVenta.query.filter(
+        ReporteVenta.folio.like(f'RV-{anio}-%')
+    ).order_by(ReporteVenta.folio.desc()).first()
+    
+    if ultimo and ultimo.folio:
+        try:
+            num = int(ultimo.folio.split('-')[-1]) + 1
+        except (ValueError, IndexError):
+            num = 1
+    else:
+        num = 1
+    return f'RV-{anio}-{num:04d}'
+
+
+def _recalcular_totales_reporte(reporte):
+    """Recalcula todos los totales del reporte sumando sus detalles"""
+    detalles = reporte.detalles.all()
+    
+    reporte.total_bsp = sum(float(d.monto_bsp or 0) for d in detalles)
+    reporte.total_volaris = sum(float(d.monto_volaris or 0) for d in detalles)
+    reporte.total_vivaerobus = sum(float(d.monto_vivaerobus or 0) for d in detalles)
+    reporte.total_compra_tc = sum(float(d.monto_compra_tc or 0) for d in detalles)
+    reporte.total_cargo_expedicion = sum(float(d.cargo_expedicion or 0) for d in detalles)
+    reporte.total_cargo_315 = sum(float(d.cargo_315 or 0) for d in detalles)
+    reporte.total_seguros = sum(float(d.monto_seguros or 0) for d in detalles)
+    reporte.total_hoteles_paquetes = sum(float(d.monto_hoteles_paquetes or 0) for d in detalles)
+    reporte.total_transporte_terrestre = sum(float(d.monto_transporte_terrestre or 0) for d in detalles)
+    reporte.total_pago_directo_tc = sum(float(d.pago_directo_tc or 0) for d in detalles)
+    reporte.total_voucher_tc = sum(float(d.voucher_tc or 0) for d in detalles)
+    reporte.total_efectivo = sum(float(d.efectivo or 0) for d in detalles)
+    reporte.total_general = sum(float(d.total_linea or 0) for d in detalles)
+    reporte.total_boletos = sum(int(d.num_boletos or 0) for d in detalles)
+    reporte.total_recibos = len(detalles)
+
+
 @main.route('/reportes-ventas')
 @login_required
 def reportes_ventas():
@@ -3022,6 +3063,7 @@ def nuevo_reporte_venta():
                     return redirect(url_for('main.editar_reporte_venta', id=existente.id))
             
             reporte = ReporteVenta(
+                folio=_generar_folio_reporte(),
                 fecha=fecha,
                 usuario_id=current_user.id,
                 sucursal_id=current_user.sucursal_id,
@@ -3313,6 +3355,8 @@ def agregar_linea_reporte(id):
             if papeleta:
                 papeleta.reporte_venta_id = id
         
+        # Recalcular totales del reporte
+        _recalcular_totales_reporte(reporte)
         db.session.commit()
         
         # Recargar reporte para obtener totales actualizados
@@ -3433,7 +3477,7 @@ def agregar_papeleta_reporte(id):
             papeleta_id=papeleta_id,
             clave_aerolinea=clave_aerolinea,
             num_boletos=1,
-            reserva=papeleta.clave_sabre or '',
+            reserva=papeleta.clave_reserva or papeleta.clave_sabre or '',
             num_recibo='',
             num_papeleta=papeleta.folio,
             monto_volaris=monto_volaris,
@@ -3450,6 +3494,9 @@ def agregar_papeleta_reporte(id):
         
         db.session.add(detalle)
         papeleta.reporte_venta_id = id
+        
+        # Recalcular totales del reporte
+        _recalcular_totales_reporte(reporte)
         db.session.commit()
         
         db.session.refresh(reporte)
@@ -3489,9 +3536,10 @@ def modificar_detalle_reporte(detalle_id):
                     papeleta.reporte_venta_id = None
             
             db.session.delete(detalle)
-            db.session.commit()
             
-            db.session.refresh(reporte)
+            # Recalcular totales del reporte
+            _recalcular_totales_reporte(reporte)
+            db.session.commit()
             
             return jsonify({
                 'success': True,
@@ -3528,8 +3576,9 @@ def modificar_detalle_reporte(detalle_id):
             detalle.efectivo = float(data.get('efectivo', detalle.efectivo))
             detalle.total_linea = float(data.get('total_linea', detalle.total_linea))
             
+            # Recalcular totales del reporte
+            _recalcular_totales_reporte(reporte)
             db.session.commit()
-            db.session.refresh(reporte)
             
             return jsonify({
                 'success': True,
@@ -5138,8 +5187,18 @@ def listado_papeletas_volaris():
     pagina = request.args.get('pagina', 1, type=int)
     por_pagina = 50
     
-    # Solo Volaris
-    query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%volaris%'))
+    # Solo Volaris — únicamente papeletas ya revisadas:
+    #   - Crédito: factura aprobada (estatus_facturacion = 'aprobada')
+    #   - Mostrador: incluida en reporte de ventas (reporte_venta_id IS NOT NULL)
+    query = Papeleta.query.options(
+        db.joinedload(Papeleta.usuario)
+    ).join(Aerolinea).filter(
+        Aerolinea.nombre.ilike('%volaris%'),
+        db.or_(
+            Papeleta.estatus_facturacion == 'aprobada',
+            Papeleta.reporte_venta_id.isnot(None)
+        )
+    )
     
     if conciliada == 'si':
         query = query.filter(Papeleta.conciliada == True)
@@ -5164,6 +5223,7 @@ def listado_papeletas_volaris():
         query = query.filter(db.or_(
             Papeleta.clave_sabre.ilike(f'%{buscar}%'),
             Papeleta.clave_reserva.ilike(f'%{buscar}%'),
+            Papeleta.pasajero_nombre.ilike(f'%{buscar}%'),
             Papeleta.facturar_a.ilike(f'%{buscar}%'),
             Papeleta.solicito.ilike(f'%{buscar}%'),
             Papeleta.folio.ilike(f'%{buscar}%')
@@ -5175,7 +5235,13 @@ def listado_papeletas_volaris():
     papeletas = query.offset((pagina - 1) * por_pagina).limit(por_pagina).all()
     total_paginas = (total + por_pagina - 1) // por_pagina
     
-    base_query = Papeleta.query.join(Aerolinea).filter(Aerolinea.nombre.ilike('%volaris%'))
+    base_query = Papeleta.query.join(Aerolinea).filter(
+        Aerolinea.nombre.ilike('%volaris%'),
+        db.or_(
+            Papeleta.estatus_facturacion == 'aprobada',
+            Papeleta.reporte_venta_id.isnot(None)
+        )
+    )
     total_papeletas = base_query.count()
     total_conciliadas = base_query.filter(Papeleta.conciliada == True).count()
     total_sin_conciliar = total_papeletas - total_conciliadas
@@ -5308,22 +5374,76 @@ def conciliar_volaris():
     no_encontrados = []
     ya_conciliados = 0
     conciliados_ahora = 0
+    con_diferencia_monto = []
+    conciliados_list = []
+    ya_conciliados_list = []
     
     for doc in documentos:
-        papeleta = Papeleta.query.filter(
-            db.func.upper(Papeleta.clave_sabre) == doc['pnr']
-        ).first()
+        # Buscar TODAS las papeletas con esta clave_reserva
+        papeletas_found = Papeleta.query.options(
+            db.joinedload(Papeleta.usuario)
+        ).filter(
+            db.func.upper(Papeleta.clave_reserva) == doc['pnr']
+        ).order_by(Papeleta.fecha_venta, Papeleta.id).all()
         
-        if papeleta:
+        # Fallback: buscar por clave_sabre si no encuentra por clave_reserva
+        if not papeletas_found:
+            papeletas_found = Papeleta.query.options(
+                db.joinedload(Papeleta.usuario)
+            ).filter(
+                db.func.upper(Papeleta.clave_sabre) == doc['pnr']
+            ).order_by(Papeleta.fecha_venta, Papeleta.id).all()
+        
+        if papeletas_found:
             encontrados += 1
-            if papeleta.conciliada:
+            
+            # Sumar totales de todas las papeletas con esta clave
+            monto_sistema = sum(float(p.total or 0) for p in papeletas_found)
+            monto_volaris = doc['pago']
+            diferencia = round(monto_sistema - monto_volaris, 2)
+            
+            # Datos del primer registro para mostrar
+            primera = papeletas_found[0]
+            folios = ', '.join(p.folio for p in papeletas_found)
+            
+            # Pasajero: preferir pasajero_nombre, luego solicito
+            pasajero_sis = primera.pasajero_nombre or primera.solicito or primera.facturar_a or ''
+            
+            doc_info = {
+                'pnr': doc['pnr'],
+                'fecha': doc['fecha'],
+                'agente_volaris': doc['agente'],
+                'pasajero_volaris': doc['pasajero'],
+                'monto_volaris': monto_volaris,
+                'monto_sistema': monto_sistema,
+                'diferencia': diferencia,
+                'agente_sistema': primera.usuario.nombre if primera.usuario else '',
+                'pasajero_sistema': pasajero_sis,
+                'folio': folios,
+                'clave_reserva': primera.clave_reserva or '',
+                'num_papeletas': len(papeletas_found)
+            }
+            
+            # Verificar si TODAS ya están conciliadas
+            todas_conciliadas = all(p.conciliada for p in papeletas_found)
+            alguna_conciliada = any(p.conciliada for p in papeletas_found)
+            
+            if todas_conciliadas:
                 ya_conciliados += 1
+                ya_conciliados_list.append(doc_info)
             else:
-                papeleta.conciliada = True
-                papeleta.fecha_conciliacion = fecha_mexico()
-                papeleta.conciliada_por_id = current_user.id
-                papeleta.periodo_conciliacion = periodo
+                # Conciliar las que falten
+                for p in papeletas_found:
+                    if not p.conciliada:
+                        p.conciliada = True
+                        p.fecha_conciliacion = fecha_mexico()
+                        p.conciliada_por_id = current_user.id
+                        p.periodo_conciliacion = periodo
                 conciliados_ahora += 1
+                conciliados_list.append(doc_info)
+            
+            if abs(diferencia) > 0.01:
+                con_diferencia_monto.append(doc_info)
         else:
             no_encontrados.append(doc)
     
@@ -5335,7 +5455,10 @@ def conciliar_volaris():
         'encontrados': encontrados,
         'ya_conciliados': ya_conciliados,
         'conciliados_ahora': conciliados_ahora,
+        'conciliados_list': conciliados_list,
+        'ya_conciliados_list': ya_conciliados_list,
         'no_encontrados': no_encontrados,
+        'con_diferencia_monto': con_diferencia_monto,
         'periodo': periodo
     }
     

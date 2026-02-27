@@ -2,134 +2,194 @@
 
 {% block title %}Tarjetas Corporativas - Kinessia Hub{% endblock %}
 
+{% block page_styles %}
+<style>
+.tj-page { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+.tj-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.25rem;
+}
+.tj-header h1 { font-size: 1.35rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: .5rem; }
+.tj-header h1 i { color: var(--kn-oxblood, #990100); }
+.tj-header p { margin: .15rem 0 0; font-size: .85rem; color: #71717a; }
+
+.tj-card {
+    background: #fff; border: 1px solid #e4e4e7; border-radius: 12px;
+    margin-bottom: 1.25rem; overflow: hidden;
+}
+.tj-card-title {
+    padding: .85rem 1.25rem; font-size: .9rem; font-weight: 700;
+    display: flex; align-items: center; gap: .5rem;
+    border-bottom: 1px solid #e4e4e7; background: #fafafa;
+}
+.tj-card-title i { color: var(--kn-oxblood, #990100); }
+.tj-card-body { padding: 1.25rem; }
+
+.tj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; margin-bottom: 1rem; }
+.tj-field { display: flex; flex-direction: column; gap: .25rem; }
+.tj-field label { font-size: .85rem; font-weight: 600; color: #18181b; }
+.tj-field input, .tj-field select {
+    padding: .55rem .75rem; border: 1.5px solid #e4e4e7; border-radius: 6px;
+    font-size: .9rem; color: #18181b; background: #fafafa;
+}
+.tj-field input:focus, .tj-field select:focus {
+    outline: none; border-color: var(--kn-oxblood, #990100); box-shadow: 0 0 0 3px rgba(153,1,0,.08); background: #fff;
+}
+.tj-actions { display: flex; justify-content: flex-end; padding-top: .5rem; }
+.tj-btn {
+    padding: .55rem 1.25rem; border-radius: 8px; font-size: .88rem; font-weight: 600;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem;
+    text-decoration: none; transition: all .2s;
+}
+.tj-btn-primary { background: linear-gradient(135deg, #990100, #b90504); color: #fff; }
+.tj-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(153,1,0,.3); }
+.tj-btn-secondary { background: #e4e4e7; color: #18181b; }
+
+/* Table */
+.tj-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tj-table thead th {
+    background: var(--kn-oxblood, #990100); color: #fff;
+    padding: .7rem .85rem; text-align: left; font-weight: 600;
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+}
+.tj-table tbody td {
+    padding: .65rem .85rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+}
+.tj-table tbody tr:hover { background: #fef2f2; }
+.tj-table .mono { font-family: 'SF Mono','Consolas',monospace; font-weight: 700; color: var(--kn-oxblood, #990100); }
+
+.tj-badge {
+    display: inline-flex; align-items: center; padding: .2rem .55rem;
+    border-radius: 5px; font-size: .72rem; font-weight: 700;
+}
+.tj-badge-success { background: #d1fae5; color: #059669; }
+.tj-badge-danger { background: #fee2e2; color: #dc2626; }
+.tj-badge-info { background: #dbeafe; color: #2563eb; }
+.tj-badge-muted { background: #f4f4f5; color: #71717a; }
+
+.tj-table .act-btns { display: flex; gap: .4rem; }
+.tj-act {
+    width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; font-size: .8rem;
+    transition: all .15s; text-decoration: none;
+}
+.tj-act-edit { background: #dbeafe; color: #2563eb; }
+.tj-act-edit:hover { background: #bfdbfe; }
+.tj-act-del { background: #fee2e2; color: #dc2626; }
+.tj-act-del:hover { background: #fecaca; }
+
+.tj-empty { text-align: center; padding: 3rem; color: #94a3b8; }
+.tj-empty i { font-size: 2.5rem; opacity: .4; margin-bottom: .75rem; display: block; }
+
+@media (max-width: 768px) {
+    .tj-grid { grid-template-columns: 1fr; }
+    .tj-table { font-size: .82rem; }
+    .tj-card { overflow-x: auto; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="crud-container">
-    <div class="page-header">
-        <div class="page-title">
-            <div class="icon"><i class="fas fa-credit-card"></i></div>
-            <div>
-                <h1>Tarjetas Corporativas</h1>
-                <p>Gestión de tarjetas de crédito para operaciones</p>
-            </div>
+<div class="tj-page">
+    <div class="tj-header">
+        <div>
+            <h1><i class="fas fa-credit-card"></i> Tarjetas Corporativas</h1>
+            <p>Gestión de tarjetas de crédito para operaciones</p>
         </div>
     </div>
-    
-    <!-- Formulario para nueva tarjeta -->
-    <div class="card" style="margin-bottom: 2rem;">
-        <div class="card-header">
-            <h3><i class="fas fa-plus-circle"></i> Registrar Nueva Tarjeta</h3>
-        </div>
-        <div class="card-body">
+
+    <!-- Nueva Tarjeta -->
+    <div class="tj-card">
+        <div class="tj-card-title"><i class="fas fa-plus-circle"></i> Registrar Nueva Tarjeta</div>
+        <div class="tj-card-body">
             <form action="{{ url_for('main.nueva_tarjeta') }}" method="POST">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="numero_tarjeta">Número/Terminación *</label>
-                        <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
-                               required maxlength="10" placeholder="Ej: 1234">
+                <div class="tj-grid">
+                    <div class="tj-field">
+                        <label>Número/Terminación *</label>
+                        <input type="text" name="numero_tarjeta" required maxlength="10" placeholder="Ej: 1234">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="nombre_tarjeta">Nombre de la Tarjeta *</label>
-                        <input type="text" id="nombre_tarjeta" name="nombre_tarjeta" 
-                               required placeholder="Ej: VISA Corporativa Ensenada">
+                    <div class="tj-field">
+                        <label>Nombre de la Tarjeta *</label>
+                        <input type="text" name="nombre_tarjeta" required placeholder="Ej: VISA Corporativa Ensenada">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="banco">Banco</label>
-                        <input type="text" id="banco" name="banco" placeholder="Ej: Banamex">
+                    <div class="tj-field">
+                        <label>Banco</label>
+                        <input type="text" name="banco" placeholder="Ej: Banamex">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="titular">Titular</label>
-                        <input type="text" id="titular" name="titular" 
-                               placeholder="Ej: VIAJES KINESSIA SA DE CV">
+                    <div class="tj-field">
+                        <label>Titular</label>
+                        <input type="text" name="titular" placeholder="Ej: VIAJES KINESSIA SA DE CV">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="sucursal_id">Sucursal Asignada</label>
-                        <select id="sucursal_id" name="sucursal_id">
+                    <div class="tj-field">
+                        <label>Sucursal Asignada</label>
+                        <select name="sucursal_id">
                             <option value="">Sin asignar (disponible para todos)</option>
                             {% for sucursal in sucursales %}
-                                <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
+                            <option value="{{ sucursal.id }}">{{ sucursal.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Tarjeta
-                    </button>
+                <div class="tj-actions">
+                    <button type="submit" class="tj-btn tj-btn-primary"><i class="fas fa-save"></i> Guardar Tarjeta</button>
                 </div>
             </form>
         </div>
     </div>
-    
-    <!-- Lista de tarjetas -->
-    <div class="card">
-        <div class="card-header">
-            <h3><i class="fas fa-list"></i> Tarjetas Registradas</h3>
+
+    <!-- Lista -->
+    <div class="tj-card">
+        <div class="tj-card-title"><i class="fas fa-list"></i> Tarjetas Registradas ({{ tarjetas|length }})</div>
+        {% if tarjetas %}
+        <table class="tj-table">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Nombre</th>
+                    <th>Banco</th>
+                    <th>Titular</th>
+                    <th>Sucursal</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarjeta in tarjetas %}
+                <tr>
+                    <td class="mono">{{ tarjeta.numero_tarjeta }}</td>
+                    <td>{{ tarjeta.nombre_tarjeta }}</td>
+                    <td>{{ tarjeta.banco or '—' }}</td>
+                    <td>{{ tarjeta.titular or '—' }}</td>
+                    <td>
+                        {% if tarjeta.sucursal %}
+                        <span class="tj-badge tj-badge-info">{{ tarjeta.sucursal.nombre }}</span>
+                        {% else %}
+                        <span class="tj-badge tj-badge-muted">Sin asignar</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tarjeta.activa %}
+                        <span class="tj-badge tj-badge-success">Activa</span>
+                        {% else %}
+                        <span class="tj-badge tj-badge-danger">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="act-btns">
+                            <a href="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" class="tj-act tj-act-edit" title="Editar"><i class="fas fa-edit"></i></a>
+                            <a href="{{ url_for('main.eliminar_tarjeta', id=tarjeta.id) }}" class="tj-act tj-act-del" title="Eliminar" onclick="return confirm('¿Eliminar tarjeta {{ tarjeta.nombre_tarjeta }}?')"><i class="fas fa-trash"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="tj-empty">
+            <i class="fas fa-credit-card"></i>
+            <p>Sin tarjetas registradas. ¡Agrega la primera!</p>
         </div>
-        <div class="card-body" style="padding: 0;">
-            {% if tarjetas %}
-            <div class="table-container" style="border: none; box-shadow: none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Número</th>
-                            <th>Nombre</th>
-                            <th>Banco</th>
-                            <th>Sucursal</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for tarjeta in tarjetas %}
-                        <tr>
-                            <td><strong class="folio">{{ tarjeta.numero_tarjeta }}</strong></td>
-                            <td>{{ tarjeta.nombre_tarjeta }}</td>
-                            <td>{{ tarjeta.banco or '-' }}</td>
-                            <td>
-                                {% if tarjeta.sucursal %}
-                                    <span class="badge badge-info">{{ tarjeta.sucursal.nombre }}</span>
-                                {% else %}
-                                    <span class="badge badge-secondary">Sin asignar</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if tarjeta.activa %}
-                                    <span class="badge badge-success">Activa</span>
-                                {% else %}
-                                    <span class="badge badge-danger">Inactiva</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="actions">
-                                    <a href="{{ url_for('main.editar_tarjeta', id=tarjeta.id) }}" 
-                                       class="btn-accion btn-edit" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{{ url_for('main.eliminar_tarjeta', id=tarjeta.id) }}" 
-                                       class="btn-accion btn-delete"
-                                       onclick="return confirm('¿Eliminar esta tarjeta?')" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <i class="fas fa-credit-card"></i>
-                <h3>Sin tarjetas registradas</h3>
-                <p>¡Agrega la primera tarjeta usando el formulario de arriba!</p>
-            </div>
-            {% endif %}
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
