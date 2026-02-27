@@ -877,6 +877,8 @@ class Papeleta(db.Model):
 
     solicito = db.Column(db.String, nullable=False)
 
+    pasajero_nombre = db.Column(db.String(255))  # Nombre del pasajero real del boleto
+
     clave_sabre = db.Column(db.String, nullable=False)
 
     clave_reserva = db.Column(db.String(20))  # Clave del boleto para reportes
@@ -1994,16 +1996,3 @@ def obtener_entregas_por_rol(usuario):
 
         ).order_by(EntregaCorte.fecha.desc())# models.py - Kinessia Hub v2.0
 
-# Modelos actualizados con nuevas tablas: Sucursales, Tarjetas, Autorizaciones, Créditos
-
-from flask_sqlalchemy import SQLAlchemy
-
-from flask_login import UserMixin
-
-from werkzeug.security import generate_password_hash, check_password_hash
-
-from sqlalchemy.sql import func
-
-from datetime import datetime, date
-
-from decimal import Decimal

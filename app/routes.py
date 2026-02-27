@@ -1981,6 +1981,7 @@ def nueva_papeleta_post():
             total=float(request.form.get('total', 0)), facturar_a=facturar_a_nombre,
             solicito=request.form.get('solicito', ''), clave_sabre=request.form.get('clave_sabre', ''),
             clave_reserva=request.form.get('clave_reserva', '').strip().upper() or None,
+            pasajero_nombre=request.form.get('pasajero_nombre', '').strip().upper() or None,
             forma_pago=request.form.get('forma_pago', ''), empresa_id=empresa_id, aerolinea_id=aerolinea_id,
             usuario_id=current_user.id, autorizacion_id=autorizacion_id, sucursal_id=current_user.sucursal_id,
             tipo_cargo=request.form.get('tipo_cargo', ''), proveedor=request.form.get('proveedor', ''),
@@ -2044,6 +2045,7 @@ def editar_papeleta(id):
             papeleta.cargo = float(request.form.get('cargo', 0))
             papeleta.total = float(request.form.get('total', 0))
             papeleta.solicito = request.form.get('solicito', '')
+            papeleta.pasajero_nombre = request.form.get('pasajero_nombre', '').strip().upper() or None
             papeleta.clave_sabre = request.form.get('clave_sabre', '')
             papeleta.clave_reserva = request.form.get('clave_reserva', '').strip().upper() or None
             papeleta.forma_pago = request.form.get('forma_pago', '')
@@ -5188,7 +5190,13 @@ def listado_papeletas_volaris():
     # Solo Volaris — únicamente papeletas ya revisadas:
     #   - Crédito: factura aprobada (estatus_facturacion = 'aprobada')
     #   - Mostrador: incluida en reporte de ventas (reporte_venta_id IS NOT NULL)
+<<<<<<< HEAD
     query = Papeleta.query.join(Aerolinea).filter(
+=======
+    query = Papeleta.query.options(
+        db.joinedload(Papeleta.usuario)
+    ).join(Aerolinea).filter(
+>>>>>>> dev
         Aerolinea.nombre.ilike('%volaris%'),
         db.or_(
             Papeleta.estatus_facturacion == 'aprobada',
@@ -5219,6 +5227,7 @@ def listado_papeletas_volaris():
         query = query.filter(db.or_(
             Papeleta.clave_sabre.ilike(f'%{buscar}%'),
             Papeleta.clave_reserva.ilike(f'%{buscar}%'),
+            Papeleta.pasajero_nombre.ilike(f'%{buscar}%'),
             Papeleta.facturar_a.ilike(f'%{buscar}%'),
             Papeleta.solicito.ilike(f'%{buscar}%'),
             Papeleta.folio.ilike(f'%{buscar}%')
@@ -5369,22 +5378,78 @@ def conciliar_volaris():
     no_encontrados = []
     ya_conciliados = 0
     conciliados_ahora = 0
+    con_diferencia_monto = []
+    conciliados_list = []
+    ya_conciliados_list = []
     
     for doc in documentos:
-        papeleta = Papeleta.query.filter(
-            db.func.upper(Papeleta.clave_sabre) == doc['pnr']
-        ).first()
+        # Buscar TODAS las papeletas con esta clave_reserva
+        papeletas_found = Papeleta.query.options(
+            db.joinedload(Papeleta.usuario)
+        ).filter(
+            db.func.upper(Papeleta.clave_reserva) == doc['pnr']
+        ).order_by(Papeleta.fecha_venta, Papeleta.id).all()
         
-        if papeleta:
+        # Fallback: buscar por clave_sabre si no encuentra por clave_reserva
+        if not papeletas_found:
+            papeletas_found = Papeleta.query.options(
+                db.joinedload(Papeleta.usuario)
+            ).filter(
+                db.func.upper(Papeleta.clave_sabre) == doc['pnr']
+            ).order_by(Papeleta.fecha_venta, Papeleta.id).all()
+        
+        if papeletas_found:
             encontrados += 1
-            if papeleta.conciliada:
+            
+            # Sumar totales de todas las papeletas con esta clave
+            # Usar total_ticket (no total) porque Volaris reporta el monto del boleto
+            # sin comisión ni cargo de servicio de la agencia
+            monto_sistema = sum(float(p.total_ticket or 0) for p in papeletas_found)
+            monto_volaris = doc['pago']
+            diferencia = round(monto_sistema - monto_volaris, 2)
+            
+            # Datos del primer registro para mostrar
+            primera = papeletas_found[0]
+            folios = ', '.join(p.folio for p in papeletas_found)
+            
+            # Pasajero: preferir pasajero_nombre, luego solicito
+            pasajero_sis = primera.pasajero_nombre or primera.solicito or primera.facturar_a or ''
+            
+            doc_info = {
+                'pnr': doc['pnr'],
+                'fecha': doc['fecha'],
+                'agente_volaris': doc['agente'],
+                'pasajero_volaris': doc['pasajero'],
+                'monto_volaris': monto_volaris,
+                'monto_sistema': monto_sistema,
+                'diferencia': diferencia,
+                'agente_sistema': primera.usuario.nombre if primera.usuario else '',
+                'pasajero_sistema': pasajero_sis,
+                'folio': folios,
+                'clave_reserva': primera.clave_reserva or '',
+                'num_papeletas': len(papeletas_found)
+            }
+            
+            # Verificar si TODAS ya están conciliadas
+            todas_conciliadas = all(p.conciliada for p in papeletas_found)
+            alguna_conciliada = any(p.conciliada for p in papeletas_found)
+            
+            if todas_conciliadas:
                 ya_conciliados += 1
+                ya_conciliados_list.append(doc_info)
             else:
-                papeleta.conciliada = True
-                papeleta.fecha_conciliacion = fecha_mexico()
-                papeleta.conciliada_por_id = current_user.id
-                papeleta.periodo_conciliacion = periodo
+                # Conciliar las que falten
+                for p in papeletas_found:
+                    if not p.conciliada:
+                        p.conciliada = True
+                        p.fecha_conciliacion = fecha_mexico()
+                        p.conciliada_por_id = current_user.id
+                        p.periodo_conciliacion = periodo
                 conciliados_ahora += 1
+                conciliados_list.append(doc_info)
+            
+            if abs(diferencia) > 0.01:
+                con_diferencia_monto.append(doc_info)
         else:
             no_encontrados.append(doc)
     
@@ -5396,7 +5461,10 @@ def conciliar_volaris():
         'encontrados': encontrados,
         'ya_conciliados': ya_conciliados,
         'conciliados_ahora': conciliados_ahora,
+        'conciliados_list': conciliados_list,
+        'ya_conciliados_list': ya_conciliados_list,
         'no_encontrados': no_encontrados,
+        'con_diferencia_monto': con_diferencia_monto,
         'periodo': periodo
     }
     

@@ -16,11 +16,13 @@
     --kn-danger: #dc2626;
     --kn-danger-light: #fee2e2;
     --kn-info: #0284c7;
-    --kn-purple: #7c3aed;
+    --kn-info-light: #e0f2fe;
+    --kn-purple: #6B2D8B;
+    --kn-purple-light: #f3e8ff;
 }
 
 .resultado-page {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 1.5rem;
     background: var(--kn-snow);
@@ -39,13 +41,16 @@
     font-weight: 700;
     color: var(--kn-graphite);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.page-header h1 i { color: #6B2D8B; }
+.page-header h1 i { color: var(--kn-purple); }
 
 .resumen-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
 }
@@ -67,11 +72,12 @@
     height: 4px;
 }
 
-.resumen-card.total::before { background: #6B2D8B; }
+.resumen-card.total::before { background: var(--kn-purple); }
 .resumen-card.ok::before { background: var(--kn-success); }
-.resumen-card.ya::before { background: var(--kn-purple); }
-.resumen-card.nuevo::before { background: var(--kn-info); }
+.resumen-card.ya::before { background: var(--kn-info); }
+.resumen-card.nuevo::before { background: var(--kn-success); }
 .resumen-card.falta::before { background: var(--kn-danger); }
+.resumen-card.diff::before { background: var(--kn-warning); }
 
 .resumen-card .num {
     font-size: 2rem;
@@ -80,69 +86,143 @@
 }
 
 .resumen-card .label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #64748b;
     margin-top: 0.25rem;
+    text-transform: uppercase;
 }
 
-.faltantes-section {
+/* Secciones */
+.section-block {
     background: var(--kn-white);
     border-radius: 12px;
     border: 1px solid var(--kn-alabaster);
     overflow: hidden;
+    margin-bottom: 1.5rem;
 }
 
-.faltantes-header {
+.section-header {
     padding: 1rem 1.25rem;
-    background: var(--kn-danger-light);
-    border-bottom: 1px solid #fca5a5;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid var(--kn-alabaster);
 }
 
-.faltantes-header h2 {
+.section-header h2 {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--kn-danger);
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-.tabla-faltantes {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
+.section-header.success { background: var(--kn-success-light); }
+.section-header.success h2 { color: var(--kn-success); }
+.section-header.warning { background: var(--kn-warning-light); }
+.section-header.warning h2 { color: var(--kn-warning); }
+.section-header.danger { background: var(--kn-danger-light); }
+.section-header.danger h2 { color: var(--kn-danger); }
+.section-header.info { background: var(--kn-info-light); }
+.section-header.info h2 { color: var(--kn-info); }
+
+/* Toolbar */
+.section-toolbar {
+    padding: 0.75rem 1.25rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
 }
 
-.tabla-faltantes thead th {
+.section-toolbar input {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--kn-alabaster);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    min-width: 200px;
+}
+
+.section-toolbar input:focus {
+    outline: none;
+    border-color: var(--kn-purple);
+}
+
+/* Tabla */
+.tabla-result {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.tabla-result thead th {
     background: var(--kn-graphite);
     color: white;
     padding: 0.65rem 0.75rem;
     text-align: left;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
-.tabla-faltantes tbody td {
-    padding: 0.6rem 0.75rem;
+.tabla-result tbody td {
+    padding: 0.55rem 0.75rem;
     border-bottom: 1px solid #f1f5f9;
 }
 
-.tabla-faltantes .mono {
-    font-family: 'SF Mono', monospace;
-    font-size: 0.8rem;
+.tabla-result tbody tr:hover { background: #fafafa; }
+
+.tabla-result .mono {
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 0.78rem;
     font-weight: 600;
 }
 
-.tabla-faltantes .monto {
+.tabla-result .monto {
     text-align: right;
     font-weight: 600;
     font-family: 'SF Mono', monospace;
 }
+
+.tabla-result .diff-pos { color: var(--kn-danger); }
+.tabla-result .diff-neg { color: var(--kn-danger); }
+.tabla-result .diff-ok { color: var(--kn-success); }
+
+.badge-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.badge-sm.red { background: #fee2e2; color: #dc2626; }
+.badge-sm.green { background: #d1fae5; color: #059669; }
+.badge-sm.yellow { background: #fef3c7; color: #d97706; }
+
+/* Totales footer */
+.tabla-result tfoot td {
+    background: #f8fafc;
+    font-weight: 700;
+    padding: 0.75rem;
+}
+
+/* Success banner */
+.success-banner {
+    background: var(--kn-success-light);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.success-banner i { font-size: 3rem; color: var(--kn-success); margin-bottom: 0.75rem; }
+.success-banner h2 { color: var(--kn-success); margin: 0 0 0.5rem 0; }
 
 .btn-kn {
     padding: 0.5rem 1rem;
@@ -157,26 +237,12 @@
     text-decoration: none;
 }
 
-.btn-kn.primary { background: var(--kn-purple); color: white; }
 .btn-kn.secondary { background: var(--kn-alabaster); color: var(--kn-graphite); }
 
-.success-section {
-    background: var(--kn-success-light);
-    border-radius: 12px;
-    padding: 2rem;
-    text-align: center;
-    margin-bottom: 1.5rem;
-}
-
-.success-section i {
-    font-size: 3rem;
-    color: var(--kn-success);
-    margin-bottom: 0.75rem;
-}
-
-.success-section h2 {
-    color: var(--kn-success);
-    margin: 0 0 0.5rem 0;
+@media(max-width:768px) {
+    .resumen-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabla-result { font-size: 0.75rem; }
+    .section-block { overflow-x: auto; }
 }
 </style>
 {% endblock %}
@@ -194,15 +260,11 @@
     <p style="color: #64748b; margin-bottom: 1.5rem;">Periodo: <strong>{{ resultado.periodo }}</strong></p>
     {% endif %}
 
-    <!-- RESUMEN -->
+    <!-- RESUMEN KPIs -->
     <div class="resumen-grid">
         <div class="resumen-card total">
             <div class="num">{{ resultado.total_reporte }}</div>
-            <div class="label">Registros Volaris</div>
-        </div>
-        <div class="resumen-card ok">
-            <div class="num">{{ resultado.encontrados }}</div>
-            <div class="label">Encontrados</div>
+            <div class="label">En Reporte Volaris</div>
         </div>
         <div class="resumen-card nuevo">
             <div class="num">{{ resultado.conciliados_ahora }}</div>
@@ -216,30 +278,184 @@
             <div class="num">{{ resultado.no_encontrados|length }}</div>
             <div class="label">No Encontrados</div>
         </div>
+        <div class="resumen-card diff">
+            <div class="num">{{ resultado.con_diferencia_monto|length }}</div>
+            <div class="label">Con Diferencia $</div>
+        </div>
     </div>
 
-    {% if resultado.conciliados_ahora > 0 and not resultado.no_encontrados %}
-    <div class="success-section">
+    {% if resultado.conciliados_ahora > 0 and not resultado.no_encontrados and not resultado.con_diferencia_monto %}
+    <div class="success-banner">
         <i class="fas fa-check-circle"></i>
-        <h2>¡Conciliación exitosa!</h2>
-        <p>Todos los registros de Volaris fueron encontrados y conciliados en el sistema.</p>
+        <h2>¡Conciliación perfecta!</h2>
+        <p>Todos los registros coinciden en PNR y monto.</p>
     </div>
     {% endif %}
 
-    <!-- FALTANTES -->
-    {% if resultado.no_encontrados %}
-    <div class="faltantes-section">
-        <div class="faltantes-header">
-            <h2><i class="fas fa-exclamation-triangle"></i> PNRs NO encontrados en el sistema ({{ resultado.no_encontrados|length }})</h2>
+    <!-- DIFERENCIAS DE MONTO -->
+    {% if resultado.con_diferencia_monto %}
+    <div class="section-block">
+        <div class="section-header warning">
+            <h2><i class="fas fa-exclamation-triangle"></i> Diferencias de Monto ({{ resultado.con_diferencia_monto|length }})</h2>
         </div>
-        <table class="tabla-faltantes">
+        <table class="tabla-result">
+            <thead>
+                <tr>
+                    <th>Papeleta</th>
+                    <th>PNR</th>
+                    <th>Clave Boleto</th>
+                    <th>Agente</th>
+                    <th>Pasajero</th>
+                    <th>Total Ticket</th>
+                    <th>Monto Volaris</th>
+                    <th>Diferencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in resultado.con_diferencia_monto %}
+                <tr>
+                    <td class="mono">{{ d.folio }}{% if d.num_papeletas > 1 %} <span class="badge-sm yellow">{{ d.num_papeletas }} paps</span>{% endif %}</td>
+                    <td class="mono">{{ d.pnr }}</td>
+                    <td class="mono">{{ d.clave_reserva or '-' }}</td>
+                    <td>{{ d.agente_sistema }}</td>
+                    <td>{{ d.pasajero_sistema }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_sistema) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_volaris) }}</td>
+                    <td class="monto {{ 'diff-pos' if d.diferencia > 0 else 'diff-neg' }}">
+                        {{ '+' if d.diferencia > 0 else '' }}${{ '{:,.2f}'.format(d.diferencia) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" style="text-align:right;">TOTAL DIFERENCIAS:</td>
+                    <td class="monto">${{ '{:,.2f}'.format(resultado.con_diferencia_monto|sum(attribute='monto_sistema')) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(resultado.con_diferencia_monto|sum(attribute='monto_volaris')) }}</td>
+                    <td class="monto {{ 'diff-pos' if (resultado.con_diferencia_monto|sum(attribute='diferencia')) > 0 else 'diff-neg' }}">
+                        ${{ '{:,.2f}'.format(resultado.con_diferencia_monto|sum(attribute='diferencia')) }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- CONCILIADOS AHORA -->
+    {% if resultado.conciliados_list %}
+    <div class="section-block">
+        <div class="section-header success">
+            <h2><i class="fas fa-check-circle"></i> Conciliados Ahora ({{ resultado.conciliados_list|length }})</h2>
+        </div>
+        <div class="section-toolbar">
+            <input type="text" placeholder="Buscar PNR, agente, pasajero..." oninput="filtrarTabla(this, 'tblConciliados')">
+        </div>
+        <table class="tabla-result" id="tblConciliados">
+            <thead>
+                <tr>
+                    <th>Papeleta</th>
+                    <th>PNR</th>
+                    <th>Clave Boleto</th>
+                    <th>Agente (Sistema)</th>
+                    <th>Agente (Volaris)</th>
+                    <th>Pasajero (Sistema)</th>
+                    <th>Pasajero (Volaris)</th>
+                    <th>Total Ticket</th>
+                    <th>Monto Volaris</th>
+                    <th>Dif</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in resultado.conciliados_list %}
+                <tr>
+                    <td class="mono">{{ d.folio }}{% if d.num_papeletas > 1 %} <span class="badge-sm yellow">{{ d.num_papeletas }} paps</span>{% endif %}</td>
+                    <td class="mono">{{ d.pnr }}</td>
+                    <td class="mono">{{ d.clave_reserva or '-' }}</td>
+                    <td>{{ d.agente_sistema }}</td>
+                    <td>{{ d.agente_volaris }}</td>
+                    <td>{{ d.pasajero_sistema }}</td>
+                    <td>{{ d.pasajero_volaris }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_sistema) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_volaris) }}</td>
+                    <td class="monto {{ 'diff-ok' if d.diferencia == 0 else 'diff-neg' }}">
+                        {% if d.diferencia == 0 %}
+                        <span class="badge-sm green"><i class="fas fa-check"></i> OK</span>
+                        {% else %}
+                        ${{ '{:,.2f}'.format(d.diferencia) }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right;">TOTALES:</td>
+                    <td class="monto">${{ '{:,.2f}'.format(resultado.conciliados_list|sum(attribute='monto_sistema')) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(resultado.conciliados_list|sum(attribute='monto_volaris')) }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- YA CONCILIADOS -->
+    {% if resultado.ya_conciliados_list %}
+    <div class="section-block">
+        <div class="section-header info">
+            <h2><i class="fas fa-info-circle"></i> Ya Conciliados Previamente ({{ resultado.ya_conciliados_list|length }})</h2>
+        </div>
+        <table class="tabla-result">
+            <thead>
+                <tr>
+                    <th>Papeleta</th>
+                    <th>PNR</th>
+                    <th>Clave Boleto</th>
+                    <th>Agente</th>
+                    <th>Pasajero</th>
+                    <th>Total Ticket</th>
+                    <th>Monto Volaris</th>
+                    <th>Dif</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in resultado.ya_conciliados_list %}
+                <tr>
+                    <td class="mono">{{ d.folio }}{% if d.num_papeletas > 1 %} <span class="badge-sm yellow">{{ d.num_papeletas }} paps</span>{% endif %}</td>
+                    <td class="mono">{{ d.pnr }}</td>
+                    <td class="mono">{{ d.clave_reserva or '-' }}</td>
+                    <td>{{ d.agente_sistema }}</td>
+                    <td>{{ d.pasajero_sistema }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_sistema) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(d.monto_volaris) }}</td>
+                    <td class="monto {{ 'diff-ok' if d.diferencia == 0 else 'diff-neg' }}">
+                        {% if d.diferencia == 0 %}
+                        <span class="badge-sm green"><i class="fas fa-check"></i></span>
+                        {% else %}
+                        ${{ '{:,.2f}'.format(d.diferencia) }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- NO ENCONTRADOS -->
+    {% if resultado.no_encontrados %}
+    <div class="section-block">
+        <div class="section-header danger">
+            <h2><i class="fas fa-times-circle"></i> No Encontrados en Sistema ({{ resultado.no_encontrados|length }})</h2>
+        </div>
+        <table class="tabla-result">
             <thead>
                 <tr>
                     <th>Fecha</th>
                     <th>PNR</th>
-                    <th>Agente</th>
-                    <th>Pasajero</th>
-                    <th>Pago</th>
+                    <th>Agente (Volaris)</th>
+                    <th>Pasajero (Volaris)</th>
+                    <th>Monto</th>
                 </tr>
             </thead>
             <tbody>
@@ -254,13 +470,24 @@
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr style="background: #f8fafc; font-weight: 700;">
-                    <td colspan="4" style="text-align: right; padding: 0.75rem;">TOTAL FALTANTES:</td>
-                    <td class="monto" style="padding: 0.75rem;">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='pago')) }}</td>
+                <tr>
+                    <td colspan="4" style="text-align: right;">TOTAL FALTANTES:</td>
+                    <td class="monto">${{ '{:,.2f}'.format(resultado.no_encontrados|sum(attribute='pago')) }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
     {% endif %}
 </div>
+
+<script>
+function filtrarTabla(input, tablaId) {
+    const filtro = input.value.toLowerCase();
+    const filas = document.getElementById(tablaId).querySelectorAll('tbody tr');
+    filas.forEach(function(fila) {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(filtro) ? '' : 'none';
+    });
+}
+</script>
 {% endblock %}

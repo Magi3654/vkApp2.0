@@ -1,235 +1,330 @@
 {% extends "base.html" %}
 
 {% block page_styles %}
-    <style>
-        /* Sección de Archivo PDF */
-        .archivo-section {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border: 2px dashed #3b82f6;
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s;
-        }
-        .archivo-section:hover {
-            border-color: #2563eb;
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        }
-        .archivo-section.has-file {
-            border-style: solid;
-            border-color: #10b981;
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        }
-        .archivo-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .archivo-header i {
-            font-size: 1.75rem;
-            color: #3b82f6;
-        }
-        .archivo-section.has-file .archivo-header i {
-            color: #10b981;
-        }
-        .archivo-header h4 {
-            margin: 0;
-            font-size: 1rem;
-            color: #1e40af;
-        }
-        .archivo-section.has-file .archivo-header h4 {
-            color: #065f46;
-        }
-        .archivo-header p {
-            margin: 0;
-            font-size: 0.85rem;
-            color: #3b82f6;
-        }
-        .archivo-section.has-file .archivo-header p {
-            color: #059669;
-        }
-        .archivo-input-wrapper {
-            position: relative;
-        }
-        .archivo-input-wrapper input[type="file"] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-        }
-        .archivo-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
-            background: white;
-            border: 1px solid #93c5fd;
-            border-radius: 8px;
-            color: #3b82f6;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .archivo-label:hover {
-            background: #eff6ff;
-            border-color: #3b82f6;
-        }
-        .archivo-section.has-file .archivo-label {
-            background: #ecfdf5;
-            border-color: #10b981;
-            color: #059669;
-        }
-        .archivo-label i {
-            font-size: 1.25rem;
-        }
-        .archivo-help {
-            display: block;
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-            color: #6b7280;
-        }
+<style>
+:root {
+    --pap-card: #ffffff;
+    --pap-border: #e4e4e7;
+    --pap-text: #18181b;
+    --pap-muted: #71717a;
+    --pap-oxblood: #990100;
+    --pap-ember: #b90504;
+    --pap-success: #059669;
+    --pap-blue: #2563eb;
+    --pap-radius: 12px;
+}
 
-        .extemporanea-section {
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            border: 2px solid #ec4899;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        .extemporanea-section.active { background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%); }
-        .extemporanea-header { display: flex; align-items: center; gap: 0.75rem; }
-        .extemporanea-header input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-        .extemporanea-header label { font-weight: 600; color: #9d174d; cursor: pointer; margin: 0; }
-        .extemporanea-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #db2777; }
-        .extemporanea-fields.active { display: block; }
-        .extemporanea-fields .form-group { margin-bottom: 1rem; }
-        .extemporanea-fields label { color: #9d174d; font-weight: 500; }
-        .extemporanea-fields textarea { min-height: 80px; resize: vertical; }
-        .extemporanea-warning { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #9d174d; margin-top: 0.5rem; background: rgba(255,255,255,0.5); padding: 0.5rem; border-radius: 6px; }
-        
-        .reembolso-section {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 2px solid #f59e0b;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        .reembolso-section.active { background: linear-gradient(135deg, #fde68a 0%, #fbbf24 100%); }
-        .reembolso-header { display: flex; align-items: center; gap: 0.75rem; }
-        .reembolso-header input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-        .reembolso-header label { font-weight: 600; color: #92400e; cursor: pointer; margin: 0; }
-        .reembolso-fields { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed #d97706; }
-        .reembolso-fields.active { display: block; }
-        .reembolso-fields .form-group { margin-bottom: 1rem; }
-        .reembolso-fields label { color: #92400e; font-weight: 500; }
-        .reembolso-fields textarea { min-height: 60px; resize: vertical; }
-        .reembolso-fields .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .reembolso-warning { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #92400e; margin-top: 0.5rem; }
-    </style>
+.pap-page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+/* Header */
+.pap-header {
+    background: linear-gradient(135deg, var(--pap-oxblood), var(--pap-ember));
+    border-radius: var(--pap-radius);
+    padding: 1.35rem 1.75rem;
+    margin-bottom: 1.25rem;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pap-header h1 { font-size: 1.35rem; font-weight: 700; margin: 0; color: #fff; display: flex; align-items: center; gap: .5rem; }
+.pap-header p { margin: .2rem 0 0; font-size: .9rem; opacity: .85; }
+.pap-header .back-link { color: rgba(255,255,255,.75); font-size: .85rem; text-decoration: none; display: flex; align-items: center; gap: .3rem; }
+.pap-header .back-link:hover { color: #fff; }
+
+/* 2-PANEL */
+.pap-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.25rem;
+    align-items: start;
+}
+.pap-main { min-width: 0; }
+.pap-sidebar { position: sticky; top: 80px; }
+
+/* SECTIONS */
+.pap-section {
+    background: var(--pap-card);
+    border: 1px solid var(--pap-border);
+    border-radius: var(--pap-radius);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+.pap-section-title {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--pap-muted); padding: .9rem 1.25rem .1rem;
+    display: flex; align-items: center; gap: .4rem;
+}
+.pap-section-title i { color: var(--pap-oxblood); font-size: .8rem; }
+.pap-section-body { padding: .65rem 1.25rem 1.15rem; }
+
+/* GRID */
+.g { display: grid; gap: .9rem; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.f { display: flex; flex-direction: column; gap: .3rem; }
+.f.span2 { grid-column: span 2; }
+
+.f label { font-size: .85rem; font-weight: 600; color: var(--pap-text); line-height: 1.3; }
+.f label .req { color: #dc2626; }
+.f label small { font-weight: 400; color: var(--pap-muted); }
+
+.f input, .f select, .f textarea {
+    padding: .6rem .8rem; border: 1.5px solid var(--pap-border); border-radius: 6px;
+    font-size: .92rem; color: var(--pap-text); background: #fafafa;
+    transition: border-color .15s, box-shadow .15s;
+}
+.f input:focus, .f select:focus, .f textarea:focus {
+    outline: none; border-color: var(--pap-oxblood); box-shadow: 0 0 0 3px rgba(153,1,0,.08); background: #fff;
+}
+.f input:read-only { background: #f0f0f0; color: var(--pap-muted); }
+.f small { font-size: .75rem; color: var(--pap-muted); }
+
+/* SIDEBAR MONTOS */
+.sidebar-card {
+    background: var(--pap-card);
+    border: 1px solid var(--pap-border);
+    border-radius: var(--pap-radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.sidebar-card-title {
+    font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: #fff; padding: .7rem 1rem;
+    background: var(--pap-oxblood);
+    display: flex; align-items: center; gap: .4rem;
+}
+.sidebar-card-body { padding: .9rem 1rem; }
+
+.monto-row {
+    display: flex; flex-direction: column; gap: .2rem;
+    margin-bottom: .85rem;
+}
+.monto-row:last-child { margin-bottom: 0; }
+.monto-row label { font-size: .82rem; font-weight: 600; color: var(--pap-text); display: flex; align-items: center; gap: .35rem; }
+.monto-row label small { font-weight: 400; color: var(--pap-muted); }
+.monto-row input {
+    padding: .6rem .8rem; border: 1.5px solid var(--pap-border); border-radius: 6px;
+    font-family: 'SF Mono','Consolas',monospace; font-size: .95rem; text-align: right; font-weight: 600;
+    color: var(--pap-text); background: #fafafa;
+    transition: border-color .15s;
+}
+.monto-row input:focus { outline: none; border-color: var(--pap-oxblood); box-shadow: 0 0 0 3px rgba(153,1,0,.08); background: #fff; }
+.monto-row input:read-only { background: #f0f0f0; }
+
+.comision-label { display: flex; align-items: center; gap: .45rem; }
+.comision-label input[type="checkbox"] { width: 17px; height: 17px; cursor: pointer; }
+.btn-calc {
+    background: var(--pap-oxblood); color: #fff; border: none; border-radius: 4px;
+    width: 26px; height: 26px; font-size: .72rem; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-calc:hover { background: var(--pap-ember); }
+
+.total-box {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 2px solid var(--pap-oxblood); border-radius: 8px;
+    padding: .8rem 1rem;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: .25rem;
+}
+.total-box label { font-size: .9rem; font-weight: 800; color: var(--pap-oxblood); text-transform: uppercase; letter-spacing: .03em; }
+.total-box input {
+    border: none; background: transparent;
+    font-family: 'SF Mono','Consolas',monospace; font-size: 1.4rem; font-weight: 800;
+    color: var(--pap-oxblood); text-align: right; width: 150px; padding: 0;
+}
+.total-box input:focus { outline: none; box-shadow: none; }
+
+/* PDF */
+.upload-box {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px dashed #3b82f6; border-radius: var(--pap-radius);
+    padding: 1.1rem; text-align: center; cursor: pointer;
+    transition: all .2s; position: relative;
+    margin-bottom: 1rem;
+}
+.upload-box:hover { border-color: #1d4ed8; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+.upload-box.has-file { border-style: solid; border-color: var(--pap-success); background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+.upload-box i.icon-main { font-size: 1.35rem; color: #3b82f6; }
+.upload-box.has-file i.icon-main { color: var(--pap-success); }
+.upload-box .upload-label { font-size: .88rem; font-weight: 600; color: #1e40af; display: block; margin-top: .3rem; }
+.upload-box.has-file .upload-label { color: #065f46; }
+.upload-box input[type="file"] { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+.upload-box small { font-size: .75rem; color: #64748b; display: block; margin-top: .25rem; }
+
+/* ACTIONS */
+.pap-actions { display: flex; flex-direction: column; gap: .6rem; }
+.btn-pap {
+    padding: .7rem 1.15rem; border-radius: 8px; font-size: .95rem; font-weight: 600;
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .45rem;
+    text-decoration: none; transition: all .2s; width: 100%;
+}
+.btn-pap.cancel { background: #e4e4e7; color: var(--pap-text); }
+.btn-pap.cancel:hover { background: #d4d4d8; }
+.btn-pap.submit { background: linear-gradient(135deg, var(--pap-oxblood), var(--pap-ember)); color: #fff; }
+.btn-pap.submit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(153,1,0,.3); }
+.btn-pap.submit:disabled, .btn-pap.submit.disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* TOGGLE SECTIONS */
+.pap-toggle { border-radius: 10px; padding: .75rem 1rem; margin-bottom: .65rem; }
+.pap-toggle .th { display: flex; align-items: center; gap: .55rem; }
+.pap-toggle .th input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+.pap-toggle .th label { font-size: .9rem; font-weight: 600; cursor: pointer; margin: 0; }
+.pap-toggle .tf { display: none; margin-top: .75rem; padding-top: .75rem; border-top: 1px dashed; }
+.pap-toggle .tf.active { display: block; }
+.pap-toggle .iw { display: flex; align-items: center; gap: .4rem; font-size: .82rem; padding: .4rem .6rem; border-radius: 6px; margin-bottom: .75rem; }
+
+.t-ext { background: linear-gradient(135deg, #fce7f3, #fbcfe8); border: 1.5px solid #ec4899; }
+.t-ext .th label { color: #9d174d; }
+.t-ext .tf { border-color: #db2777; }
+.t-ext .iw { background: rgba(255,255,255,.5); color: #9d174d; }
+
+.t-rmb { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1.5px solid #f59e0b; }
+.t-rmb .th label { color: #92400e; }
+.t-rmb .tf { border-color: #d97706; }
+.t-rmb .iw { background: rgba(255,255,255,.5); color: #92400e; }
+
+/* TARJETA */
+.toggle-link { font-size: .82rem; color: var(--pap-blue); cursor: pointer; text-decoration: underline; display: inline-block; margin-top: .25rem; }
+.manual-input:not(.active) { display: none; }
+.manual-input { margin-top: .4rem; }
+.manual-input input { width: 120px; }
+.dropdownContainer.hidden select, .dropdownContainer.hidden .toggle-link { display: none; }
+.tarjeta-info { font-size: .82rem; margin-top: .3rem; padding: .45rem .6rem; border-radius: 6px; display: none; line-height: 1.5; }
+.tarjeta-info.puede-usar { background: #d1fae5; color: #065f46; display: block; }
+.tarjeta-info.sin-auth { background: #fee2e2; color: #991b1b; display: block; }
+.tarjeta-info .btn-solicitar-auth {
+    margin-top: .35rem; padding: .3rem .6rem; font-size: .78rem; font-weight: 600;
+    background: var(--pap-oxblood); color: #fff; border: none; border-radius: 5px; cursor: pointer;
+}
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.active { display: flex; }
+.modal-content { background: #fff; border-radius: 16px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,.3); overflow: hidden; }
+.modal-header { padding: 1.15rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e4e4e7; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { margin: 0; font-size: 1.1rem; }
+.modal-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #71717a; }
+.modal-body { padding: 1.25rem; }
+.modal-body .form-group { margin-bottom: .85rem; }
+.modal-body label { font-size: .9rem; font-weight: 600; display: block; margin-bottom: .3rem; }
+.modal-body textarea { width: 100%; padding: .6rem .8rem; border: 1.5px solid var(--pap-border); border-radius: 6px; font-size: .9rem; resize: vertical; }
+.modal-footer { padding: .85rem 1.25rem; background: #f8fafc; border-top: 1px solid #e4e4e7; display: flex; justify-content: flex-end; gap: .5rem; }
+
+@media (max-width: 900px) {
+    .pap-layout { grid-template-columns: 1fr; }
+    .pap-sidebar { position: static; }
+    .g2, .g3 { grid-template-columns: 1fr; }
+    .f.span2 { grid-column: span 1; }
+}
+@media (min-width: 901px) and (max-width: 1060px) {
+    .pap-layout { grid-template-columns: 1fr 300px; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="crud-container-single">
-    <div class="form-section">
-        <div class="form-header">
-            <h2>Registrar Nueva Papeleta</h2>
-            <p>Completa la información del cargo a tarjeta de crédito.</p>
+<div class="pap-page">
+    <div class="pap-header">
+        <div>
+            <h1><i class="fas fa-credit-card"></i> Nueva Papeleta</h1>
+            <p>Registra el cargo a tarjeta de crédito</p>
         </div>
-        
-        <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" class="crud-form" enctype="multipart/form-data">
-            
-            <div class="extemporanea-section" id="extemporaneaSection">
-                <div class="extemporanea-header">
+        <a href="{{ url_for('main.consulta_papeletas') }}" class="back-link"><i class="fas fa-arrow-left"></i> Volver</a>
+    </div>
+
+    <form id="formPapeleta" action="{{ url_for('main.nueva_papeleta_post') }}" method="POST" enctype="multipart/form-data">
+    <div class="pap-layout">
+
+        <!-- PANEL IZQUIERDO -->
+        <div class="pap-main">
+
+            <div class="pap-toggle t-ext" id="extemporaneaSection">
+                <div class="th">
                     <input type="checkbox" id="extemporanea" name="extemporanea" value="1">
-                    <label for="extemporanea"><i class="fas fa-clock"></i> Es papeleta extemporánea (cargo ya realizado, registro tardío)</label>
+                    <label for="extemporanea"><i class="fas fa-clock"></i> Papeleta extemporánea (registro tardío)</label>
                 </div>
-                <div class="extemporanea-fields" id="extemporaneaFields">
-                    <div class="extemporanea-warning">
-                        <i class="fas fa-exclamation-triangle"></i> Las papeletas extemporáneas no requieren autorización de tarjeta ya que el cargo ya fue procesado.
-                    </div>
-                    <div class="form-group">
-                        <label for="fecha_cargo_real">Fecha real del cargo *</label>
-                        <input type="date" id="fecha_cargo_real" name="fecha_cargo_real">
-                        <small>Fecha en que realmente se hizo el cargo a la tarjeta</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="motivo_extemporanea">Motivo del registro tardío *</label>
-                        <textarea id="motivo_extemporanea" name="motivo_extemporanea" placeholder="Explica por qué no se registró a tiempo"></textarea>
+                <div class="tf" id="extemporaneaFields">
+                    <div class="iw"><i class="fas fa-exclamation-triangle"></i> No requiere autorización — el cargo ya fue procesado.</div>
+                    <div class="g g2">
+                        <div class="f">
+                            <label>Fecha real del cargo <span class="req">*</span></label>
+                            <input type="date" id="fecha_cargo_real" name="fecha_cargo_real">
+                        </div>
+                        <div class="f">
+                            <label>Motivo <span class="req">*</span></label>
+                            <textarea id="motivo_extemporanea" name="motivo_extemporanea" rows="2" placeholder="¿Por qué no se registró a tiempo?"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="reembolso-section" id="reembolsoSection">
-                <div class="reembolso-header">
+
+            <div class="pap-toggle t-rmb" id="reembolsoSection">
+                <div class="th">
                     <input type="checkbox" id="tiene_reembolso" name="tiene_reembolso" value="1">
-                    <label for="tiene_reembolso"><i class="fas fa-undo"></i> Este cargo tiene/tendrá reembolso (duplicado, cancelación, error)</label>
+                    <label for="tiene_reembolso"><i class="fas fa-undo"></i> Tiene/tendrá reembolso</label>
                 </div>
-                <div class="reembolso-fields" id="reembolsoFields">
-                    <div class="reembolso-warning">
-                        <i class="fas fa-lightbulb"></i> Usa esta opción para cargos duplicados, boletos cancelados o errores que serán reembolsados.
-                    </div>
-                    <div class="form-group">
-                        <label for="motivo_reembolso">Motivo del reembolso *</label>
-                        <select id="motivo_reembolso" name="motivo_reembolso">
-                            <option value="">Selecciona el motivo...</option>
-                            <option value="duplicado">Compra duplicada (doble cargo)</option>
-                            <option value="cancelacion">Cancelación de boleto/reserva</option>
-                            <option value="cambio">Cambio de itinerario con diferencia</option>
-                            <option value="error_monto">Error en el monto cobrado</option>
-                            <option value="no_show">No show (pasajero no se presentó)</option>
-                            <option value="otro">Otro motivo</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="motivoOtroGroup" style="display: none;">
-                        <label for="motivo_reembolso_otro">Especifica el motivo *</label>
-                        <textarea id="motivo_reembolso_otro" name="motivo_reembolso_otro" placeholder="Describe el motivo del reembolso..."></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="monto_reembolso">Monto a reembolsar *</label>
-                            <input type="number" step="0.01" min="0" id="monto_reembolso" name="monto_reembolso" placeholder="0.00" class="monto-input">
-                            <small>Deja en 0 si es reembolso total del ticket</small>
+                <div class="tf" id="reembolsoFields">
+                    <div class="iw"><i class="fas fa-lightbulb"></i> Duplicados, cancelaciones o errores.</div>
+                    <div class="g g2">
+                        <div class="f">
+                            <label>Motivo <span class="req">*</span></label>
+                            <select id="motivo_reembolso" name="motivo_reembolso">
+                                <option value="">Selecciona...</option>
+                                <option value="duplicado">Compra duplicada</option>
+                                <option value="cancelacion">Cancelación</option>
+                                <option value="cambio">Cambio de itinerario</option>
+                                <option value="error_monto">Error en monto</option>
+                                <option value="no_show">No show</option>
+                                <option value="otro">Otro</option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label for="estatus_reembolso">Estatus del reembolso</label>
+                        <div class="f">
+                            <label>Monto reembolso</label>
+                            <input type="number" step="0.01" min="0" id="monto_reembolso" name="monto_reembolso" placeholder="0.00" style="font-family:monospace;text-align:right;">
+                        </div>
+                        <div class="f" id="motivoOtroGroup" style="display:none;">
+                            <label>Especifica <span class="req">*</span></label>
+                            <textarea id="motivo_reembolso_otro" name="motivo_reembolso_otro" rows="2" placeholder="Describe..."></textarea>
+                        </div>
+                        <div class="f">
+                            <label>Estatus</label>
                             <select id="estatus_reembolso" name="estatus_reembolso">
-                                <option value="pendiente">Pendiente de solicitar</option>
-                                <option value="en_proceso">En proceso con aerolínea</option>
-                                <option value="completado">Reembolso recibido</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en_proceso">En proceso</option>
+                                <option value="completado">Completado</option>
                                 <option value="rechazado">Rechazado</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fecha_solicitud_reembolso">Fecha de solicitud</label>
+                        <div class="f">
+                            <label>Fecha solicitud</label>
                             <input type="date" id="fecha_solicitud_reembolso" name="fecha_solicitud_reembolso">
                         </div>
-                        <div class="form-group">
-                            <label for="referencia_reembolso">Referencia / Caso</label>
-                            <input type="text" id="referencia_reembolso" name="referencia_reembolso" placeholder="Ej: CASO-12345, REF-ABC">
+                        <div class="f">
+                            <label>Referencia</label>
+                            <input type="text" id="referencia_reembolso" name="referencia_reembolso" placeholder="CASO-12345">
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="papeleta_relacionada">Papeleta relacionada (si es duplicado)</label>
-                        <input type="text" id="papeleta_relacionada" name="papeleta_relacionada_folio" placeholder="Folio de la otra papeleta (ej: 8821-015)">
-                        <small>Si es compra duplicada, indica el folio de la otra papeleta</small>
+                        <div class="f">
+                            <label>Papeleta relacionada</label>
+                            <input type="text" id="papeleta_relacionada" name="papeleta_relacionada_folio" placeholder="Folio (ej: 8821-015)">
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="form-grid">
-                <div class="form-column">
-                    <div class="form-group">
-                        <label for="tarjeta_id">Tarjeta Corporativa *</label>
-                        <div class="dropdown-input" id="dropdownContainer">
-                            <select id="tarjeta_id" name="tarjeta_id">
-                                <option value="">Selecciona una tarjeta...</option>
-                                {% for item in tarjetas_info %}
+
+            <!-- Tarjeta y Claves -->
+            <div class="pap-section">
+                <div class="pap-section-title"><i class="fas fa-credit-card"></i> Tarjeta y Claves</div>
+                <div class="pap-section-body">
+                    <div class="g g2">
+                        <div class="f">
+                            <label>Tarjeta Corporativa <span class="req">*</span></label>
+                            <div id="dropdownContainer">
+                                <select id="tarjeta_id" name="tarjeta_id">
+                                    <option value="">Selecciona una tarjeta...</option>
+                                    {% for item in tarjetas_info %}
                                     <option value="{{ item.tarjeta.id }}" 
                                             data-numero="{{ item.tarjeta.numero_tarjeta }}"
                                             data-requiere="{{ item.requiere_autorizacion|lower }}"
@@ -237,162 +332,160 @@
                                             data-puede-usar="{{ item.puede_usar|lower }}"
                                             data-usuarios="{{ item.usuarios_asignados|join(', ') if item.usuarios_asignados else '' }}"
                                             data-tiempo-restante="{{ item.tiempo_restante or '' }}"
-                                            data-fecha-expiracion="{{ item.fecha_expiracion or '' }}"
-                                            class="{% if item.puede_usar %}tarjeta-disponible{% else %}tarjeta-bloqueada{% endif %}">
-                                        {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }})
-                                        {% if item.puede_usar %}✓{% else %}🔒{% endif %}
+                                            data-fecha-expiracion="{{ item.fecha_expiracion or '' }}">
+                                        {{ item.tarjeta.nombre_tarjeta }} ({{ item.tarjeta.numero_tarjeta }}) {% if item.puede_usar %}✓{% else %}🔒{% endif %}
                                     </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="toggle-link" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
+                            </div>
+                            <div class="manual-input" id="manualContainer">
+                                <input type="text" id="tarjeta_manual" name="tarjeta_manual" maxlength="4" pattern="\d{4}" placeholder="Últimos 4 dígitos">
+                                <span class="toggle-link" id="toggleDropdown">Volver al selector</span>
+                            </div>
+                            <div id="tarjetaInfo" class="tarjeta-info"></div>
+                        </div>
+                        <div class="f">
+                            <label>Folio</label>
+                            <input type="text" id="folio" name="folio" readonly required>
+                            <small>Generado automáticamente</small>
+                        </div>
+                        <div class="f">
+                            <label>Clave Sabre <span class="req">*</span></label>
+                            <input type="text" id="clave_sabre" name="clave_sabre" required placeholder="KDOUZR" style="text-transform:uppercase;">
+                        </div>
+                        <div class="f">
+                            <label>Clave Reserva / Boleto <span class="req">*</span></label>
+                            <input type="text" id="clave_reserva" name="clave_reserva" required placeholder="ABC123" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos de la Compra -->
+            <div class="pap-section">
+                <div class="pap-section-title"><i class="fas fa-shopping-cart"></i> Datos de la Compra</div>
+                <div class="pap-section-body">
+                    <div class="g g2">
+                        <div class="f">
+                            <label>Fecha de Venta <span class="req">*</span></label>
+                            <input type="date" id="fecha_venta" name="fecha_venta" required>
+                        </div>
+                        <div class="f">
+                            <label>Facturar a <span class="req">*</span></label>
+                            <select id="facturar_a" name="facturar_a" required>
+                                <option value="">Selecciona empresa...</option>
+                                {% for empresa in empresas %}
+                                <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <span class="toggle-link" id="toggleManual">¿No encuentras la tarjeta? Ingresar manualmente</span>
-                        <div class="manual-input" id="manualContainer">
-                            <input type="text" id="tarjeta_manual" name="tarjeta_manual" maxlength="4" pattern="\d{4}" placeholder="Últimos 4 dígitos">
-                            <span class="toggle-link" id="toggleDropdown">Volver al selector</span>
+                        <div class="f">
+                            <label>Tipo de Cargo <span class="req">*</span></label>
+                            <select id="tipo_cargo" name="tipo_cargo" required>
+                                <option value="">Selecciona...</option>
+                                <option value="aerolinea">Aerolínea</option>
+                                <option value="hotel">Hotel</option>
+                                <option value="auto">Renta de Auto</option>
+                                <option value="otro">Otro</option>
+                            </select>
                         </div>
-                        <div id="tarjetaInfo" class="tarjeta-info"></div>
+                        <div class="f" id="aerolineaGroup">
+                            <label>Aerolínea</label>
+                            <select id="aerolinea_id" name="aerolinea_id">
+                                <option value="">Selecciona...</option>
+                                {% for aerolinea in aerolineas %}
+                                <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="f" id="proveedorGroup" style="display:none;">
+                            <label>Proveedor <span class="req">*</span></label>
+                            <input type="text" id="proveedor" name="proveedor" placeholder="Marriott, Hertz...">
+                        </div>
+                        <div class="f">
+                            <label>Forma de Pago</label>
+                            <select id="forma_pago" name="forma_pago">
+                                <option value="">Selecciona...</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="Contado">Contado</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Depósito">Depósito</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="folio">Folio</label>
-                        <input type="text" id="folio" name="folio" readonly required>
-                        <small>Se genera automáticamente</small>
+                </div>
+            </div>
+
+            <!-- Personas -->
+            <div class="pap-section">
+                <div class="pap-section-title"><i class="fas fa-user"></i> Personas</div>
+                <div class="pap-section-body">
+                    <div class="g g2">
+                        <div class="f">
+                            <label>Solicitó <span class="req">*</span></label>
+                            <input type="text" id="solicito" name="solicito" required placeholder="NOMBRE DEL SOLICITANTE" style="text-transform:uppercase;">
+                        </div>
+                        <div class="f">
+                            <label>Pasajero <small>(quien viaja)</small></label>
+                            <input type="text" id="pasajero_nombre" name="pasajero_nombre" placeholder="NOMBRE DEL PASAJERO" style="text-transform:uppercase;">
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="fecha_venta">Fecha de Venta *</label>
-                        <input type="date" id="fecha_venta" name="fecha_venta" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DERECHO -->
+        <div class="pap-sidebar">
+            <div class="sidebar-card">
+                <div class="sidebar-card-title"><i class="fas fa-dollar-sign"></i> Desglose de Montos</div>
+                <div class="sidebar-card-body">
+                    <div class="monto-row">
+                        <label>Total del Ticket <span style="color:#dc2626;">*</span></label>
+                        <input type="number" step="0.01" min="0" id="total_ticket" name="total_ticket" required placeholder="0.00">
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="facturar_a">Facturar a *</label>
-                        <select id="facturar_a" name="facturar_a" required>
-                            <option value="">Selecciona una empresa...</option>
-                            {% for empresa in empresas %}
-                                <option value="{{ empresa.id }}">{{ empresa.nombre_empresa }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="monto-row">
+                        <label class="comision-label">
+                            Comisión
+                            <input type="checkbox" id="check_comision" checked>
+                            <button type="button" class="btn-calc" id="btnCalcular10" title="Calcular 10%"><i class="fas fa-calculator"></i></button>
+                        </label>
+                        <input type="number" step="0.01" min="0" id="diez_porciento" name="diez_porciento" placeholder="0.00" value="0">
+                    </div>
+                    <div class="monto-row">
+                        <label>Cargo Visible <small>(facturado)</small></label>
+                        <input type="number" step="0.01" min="0" id="cargo" name="cargo" placeholder="0.00" value="0">
                         <small id="cargoEmpresaInfo"></small>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="tipo_cargo">Tipo de Cargo *</label>
-                        <select id="tipo_cargo" name="tipo_cargo" required>
-                            <option value="">Selecciona...</option>
-                            <option value="aerolinea">Aerolínea</option>
-                            <option value="hotel">Hotel</option>
-                            <option value="auto">Renta de Auto</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                    <div class="monto-row" id="cargoOcultoGroup" style="display:none;">
+                        <label><i class="fas fa-eye-slash"></i> Cargo Oculto</label>
+                        <input type="number" step="0.01" min="0" id="cargo_oculto" name="cargo_oculto" placeholder="0.00" value="0" readonly>
                     </div>
-                    
-                    <div class="form-group" id="aerolineaGroup">
-                        <label for="aerolinea_id">Aerolínea</label>
-                        <select id="aerolinea_id" name="aerolinea_id">
-                            <option value="">Selecciona una aerolínea...</option>
-                            {% for aerolinea in aerolineas %}
-                                <option value="{{ aerolinea.id }}">{{ aerolinea.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="proveedorGroup" style="display: none;">
-                        <label for="proveedor">Nombre del Proveedor *</label>
-                        <input type="text" id="proveedor" name="proveedor" placeholder="Ej: Marriott, Hertz, etc.">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="solicito">Solicitó *</label>
-                        <input type="text" id="solicito" name="solicito" required placeholder="Nombre del solicitante" style="text-transform: uppercase;">
+                    <div class="total-box">
+                        <label>Total</label>
+                        <input type="number" step="0.01" min="0" id="total" name="total" required readonly>
                     </div>
                 </div>
-                
-                <div class="form-column">
-                    <div class="form-group">
-                        <label for="clave_sabre">Clave Sabre *</label>
-                        <input type="text" id="clave_sabre" name="clave_sabre" required placeholder="Ej: KDOUZR" style="text-transform: uppercase;">
-                    </div>
+            </div>
 
-                    <div class="form-group">
-                        <label for="clave_reserva">Clave Reserva / Boleto *</label>
-                        <input type="text" id="clave_reserva" name="clave_reserva" required placeholder="Ej: ABC123" style="text-transform: uppercase;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="forma_pago">Forma de Pago</label>
-                        <select id="forma_pago" name="forma_pago">
-                            <option value="">Selecciona...</option>
-                            <option value="Crédito">Crédito</option>
-                            <option value="Contado">Contado</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Depósito">Depósito</option>
-                        </select>
-                    </div>
-                    
-                    <div class="montos-section">
-                        <h4><i class="fas fa-dollar-sign"></i> Desglose de Montos</h4>
-                        
-                        <div class="form-group">
-                            <label for="total_ticket">Total del Ticket *</label>
-                            <input type="number" step="0.01" min="0" id="total_ticket" name="total_ticket" required placeholder="0.00" class="monto-input">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="diez_porciento">
-                                Comisión Ajustable
-                                <input type="checkbox" id="check_comision" checked style="margin-left: 0.5rem;">
-                                <button type="button" class="btn-calcular" id="btnCalcular10" title="Calcular 10%"><i class="fas fa-calculator"></i></button>
-                            </label>
-                            <input type="number" step="0.01" min="0" id="diez_porciento" name="diez_porciento" placeholder="0.00" class="monto-input" value="0">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cargo">Cargo Visible <small>(facturado)</small></label>
-                            <input type="number" step="0.01" min="0" id="cargo" name="cargo" placeholder="0.00" class="monto-input" value="0">
-                            <small id="cargoEmpresaInfo"></small>
-                        </div>
-                        
-                        <div class="form-group" id="cargoOcultoGroup" style="display: none;">
-                            <label for="cargo_oculto"><i class="fas fa-eye-slash"></i> Cargo Oculto <small>(incluido en tarifa)</small></label>
-                            <input type="number" step="0.01" min="0" id="cargo_oculto" name="cargo_oculto" placeholder="0.00" class="monto-input monto-oculto" value="0" readonly>
-                            <small>Este cargo se agrega al total pero no se factura por separado</small>
-                        </div>
-                        
-                        <div class="form-group total-group">
-                            <label for="total">TOTAL A COBRAR</label>
-                            <input type="number" step="0.01" min="0" id="total" name="total" required readonly class="monto-total">
-                        </div>
-                    </div>
-                </div>
+            <div class="upload-box" id="uploadZone">
+                <i class="fas fa-file-pdf icon-main"></i>
+                <span class="upload-label" id="archivo_nombre">PDF del Boleto</span>
+                <input type="file" id="archivo_boleto" name="archivo_boleto" accept=".pdf" required>
+                <small>Clic para seleccionar · Max 10MB</small>
             </div>
-            
-            <!-- Sección de Archivo PDF del Boleto -->
-            <div class="archivo-section">
-                <div class="archivo-header">
-                    <i class="fas fa-file-pdf"></i>
-                    <div>
-                        <h4>PDF del Boleto *</h4>
-                        <p>Adjunta el boleto electrónico en formato PDF</p>
-                    </div>
-                </div>
-                <div class="archivo-input-wrapper">
-                    <input type="file" id="archivo_boleto" name="archivo_boleto" accept=".pdf" required>
-                    <label for="archivo_boleto" class="archivo-label">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span id="archivo_nombre">Seleccionar archivo PDF...</span>
-                    </label>
-                </div>
-                <small class="archivo-help"><i class="fas fa-info-circle"></i> Máximo 10MB. Solo archivos PDF.</small>
+
+            <div class="pap-actions">
+                <button type="submit" id="btnSubmit" class="btn-pap submit" disabled><i class="fas fa-save"></i> Guardar Papeleta</button>
+                <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-pap cancel">Cancelar</a>
             </div>
-            
-            <div class="form-actions">
-                <a href="{{ url_for('main.consulta_papeletas') }}" class="btn-cancel">Cancelar</a>
-                <button type="submit" id="btnSubmit" class="btn-submit" disabled><i class="fas fa-save"></i> Guardar Papeleta</button>
-            </div>
-        </form>
+        </div>
+
     </div>
+    </form>
 </div>
 
+<!-- Modal -->
 <div class="modal-overlay" id="modalAutorizacion">
     <div class="modal-content">
         <div class="modal-header">
@@ -409,8 +502,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
-                <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Enviar Solicitud</button>
+                <button type="button" class="btn-pap cancel" onclick="cerrarModal()" style="width:auto;">Cancelar</button>
+                <button type="submit" class="btn-pap submit" style="width:auto;"><i class="fas fa-paper-plane"></i> Enviar</button>
             </div>
         </form>
     </div>
@@ -418,407 +511,168 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const tarjetaSelect = document.getElementById('tarjeta_id');
-    const tarjetaManual = document.getElementById('tarjeta_manual');
-    const folioInput = document.getElementById('folio');
-    const tarjetaInfo = document.getElementById('tarjetaInfo');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const toggleManual = document.getElementById('toggleManual');
-    const toggleDropdown = document.getElementById('toggleDropdown');
-    const dropdownContainer = document.getElementById('dropdownContainer');
-    const manualContainer = document.getElementById('manualContainer');
-    const formPapeleta = document.getElementById('formPapeleta');
-    const totalTicket = document.getElementById('total_ticket');
-    const diezPorciento = document.getElementById('diez_porciento');
-    const cargo = document.getElementById('cargo');
-    const totalFinal = document.getElementById('total');
-    const btnCalcular10 = document.getElementById('btnCalcular10');
-    const empresaSelect = document.getElementById('facturar_a');
-    const cargoEmpresaInfo = document.getElementById('cargoEmpresaInfo');
-    
-    let modoManual = false;
-    let puedeEnviar = false;
-    
+    var tarjetaSelect = document.getElementById('tarjeta_id');
+    var tarjetaManual = document.getElementById('tarjeta_manual');
+    var folioInput = document.getElementById('folio');
+    var tarjetaInfo = document.getElementById('tarjetaInfo');
+    var btnSubmit = document.getElementById('btnSubmit');
+    var toggleManual = document.getElementById('toggleManual');
+    var toggleDropdown = document.getElementById('toggleDropdown');
+    var dropdownContainer = document.getElementById('dropdownContainer');
+    var manualContainer = document.getElementById('manualContainer');
+    var formPapeleta = document.getElementById('formPapeleta');
+    var totalTicket = document.getElementById('total_ticket');
+    var diezPorciento = document.getElementById('diez_porciento');
+    var cargo = document.getElementById('cargo');
+    var totalFinal = document.getElementById('total');
+    var btnCalcular10 = document.getElementById('btnCalcular10');
+    var empresaSelect = document.getElementById('facturar_a');
+    var cargoEmpresaInfo = document.getElementById('cargoEmpresaInfo');
+    var modoManual = false, puedeEnviar = false, esExtemporanea = false, tieneReembolso = false;
+
     toggleManual.addEventListener('click', function() {
-        modoManual = true;
-        dropdownContainer.classList.add('hidden');
-        manualContainer.classList.add('active');
-        tarjetaSelect.value = '';
-        tarjetaInfo.style.display = 'none';
-        tarjetaInfo.innerHTML = '';
-        puedeEnviar = true;
-        actualizarBoton();
+        modoManual = true; dropdownContainer.classList.add('hidden'); manualContainer.classList.add('active');
+        tarjetaSelect.value = ''; tarjetaInfo.style.display = 'none'; tarjetaInfo.innerHTML = '';
+        puedeEnviar = true; actualizarBoton();
     });
-    
     toggleDropdown.addEventListener('click', function() {
-        modoManual = false;
-        dropdownContainer.classList.remove('hidden');
-        manualContainer.classList.remove('active');
-        tarjetaManual.value = '';
-        folioInput.value = '';
-        puedeEnviar = false;
-        actualizarBoton();
+        modoManual = false; dropdownContainer.classList.remove('hidden'); manualContainer.classList.remove('active');
+        tarjetaManual.value = ''; folioInput.value = ''; puedeEnviar = false; actualizarBoton();
     });
-    
+
     tarjetaSelect.addEventListener('change', function() {
-        const option = this.options[this.selectedIndex];
-        if (!this.value) {
-            tarjetaInfo.style.display = 'none';
-            tarjetaInfo.innerHTML = '';
-            folioInput.value = '';
-            puedeEnviar = false;
-            actualizarBoton();
-            return;
-        }
-        
-        const numero = option.dataset.numero;
-        const puedeUsar = option.dataset.puedeUsar === 'true';
-        const usuariosAsignados = option.dataset.usuarios;
-        const tiempoRestante = option.dataset.tiempoRestante;
-        const fechaExpiracion = option.dataset.fechaExpiracion;
-        
+        var option = this.options[this.selectedIndex];
+        if (!this.value) { tarjetaInfo.style.display='none'; tarjetaInfo.innerHTML=''; folioInput.value=''; puedeEnviar=false; actualizarBoton(); return; }
+        var numero=option.dataset.numero, puedeUsar=option.dataset.puedeUsar==='true', usuarios=option.dataset.usuarios, tiempo=option.dataset.tiempoRestante;
         tarjetaInfo.style.display = 'block';
-        
-        if (puedeUsar) {
-            tarjetaInfo.className = 'tarjeta-info puede-usar';
-            let html = '<i class="fas fa-check-circle"></i> Puedes usar esta tarjeta.';
-            if (tiempoRestante) {
-                html += `<br><small><i class="fas fa-stopwatch"></i> <strong>Autorización temporal:</strong> expira en ${tiempoRestante}</small>`;
-                html += `<br><small><i class="fas fa-calendar"></i> Válida hasta: ${fechaExpiracion}</small>`;
-            } else if (usuariosAsignados) {
-                html += `<br><small><i class="fas fa-users"></i> Asignada a: ${usuariosAsignados}</small>`;
-            }
-            tarjetaInfo.innerHTML = html;
-            puedeEnviar = true;
+        if (esExtemporanea) {
+            tarjetaInfo.className='tarjeta-info puede-usar';
+            tarjetaInfo.innerHTML='<i class="fas fa-check-circle"></i> Extemporánea — No requiere autorización.';
+            puedeEnviar=true;
+        } else if (puedeUsar) {
+            tarjetaInfo.className='tarjeta-info puede-usar';
+            var h='<i class="fas fa-check-circle"></i> Puedes usar esta tarjeta.';
+            if(tiempo) h+='<br><small><i class="fas fa-stopwatch"></i> Expira en '+tiempo+'</small>';
+            else if(usuarios) h+='<br><small><i class="fas fa-users"></i> '+usuarios+'</small>';
+            tarjetaInfo.innerHTML=h; puedeEnviar=true;
         } else {
-            tarjetaInfo.className = 'tarjeta-info sin-auth';
-            let html = '<i class="fas fa-lock"></i> No tienes acceso a esta tarjeta.';
-            if (usuariosAsignados) {
-                html += `<br><small><i class="fas fa-users"></i> Asignada a: ${usuariosAsignados}</small>`;
-            }
-            html += `<br><small><i class="fas fa-lightbulb"></i> Puedes solicitar autorización temporal (válida por 24 horas)</small>`;
-            html += `<br><button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion(${this.value})"><i class="fas fa-key"></i> Solicitar Autorización (24 hrs)</button>`;
-            tarjetaInfo.innerHTML = html;
-            puedeEnviar = false;
+            tarjetaInfo.className='tarjeta-info sin-auth';
+            var h='<i class="fas fa-lock"></i> Sin acceso.';
+            if(usuarios) h+='<br><small><i class="fas fa-users"></i> Asignada a: '+usuarios+'</small>';
+            h+='<br><button type="button" class="btn-solicitar-auth" onclick="abrirModalAutorizacion('+this.value+')"><i class="fas fa-key"></i> Solicitar Autorización</button>';
+            tarjetaInfo.innerHTML=h; puedeEnviar=false;
         }
-        
         actualizarBoton();
-        
-        if (numero) {
-            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
-                .then(response => response.json())
-                .then(data => { if (data.folio) folioInput.value = data.folio; })
-                .catch(error => console.error('Error:', error));
-        }
+        if(numero) fetch('/api/siguiente-folio-papeleta?tarjeta='+numero).then(function(r){return r.json()}).then(function(d){if(d.folio)folioInput.value=d.folio});
     });
-    
+
     tarjetaManual.addEventListener('input', function() {
-        const tarjeta = this.value;
-        if (tarjeta.length === 4 && /^\d{4}$/.test(tarjeta)) {
-            fetch(`/api/siguiente-folio-papeleta?tarjeta=${tarjeta}`)
-                .then(response => response.json())
-                .then(data => { if (data.folio) folioInput.value = data.folio; })
-                .catch(error => console.error('Error:', error));
-            puedeEnviar = true;
-        } else {
-            folioInput.value = '';
-            puedeEnviar = false;
-        }
+        if(this.value.length===4 && /^\d{4}$/.test(this.value)){
+            fetch('/api/siguiente-folio-papeleta?tarjeta='+this.value).then(function(r){return r.json()}).then(function(d){if(d.folio)folioInput.value=d.folio});
+            puedeEnviar=true;
+        } else { folioInput.value=''; puedeEnviar=false; }
         actualizarBoton();
     });
-    
+
     function calcularTotal() {
-        const ticket = parseFloat(totalTicket.value) || 0;
-        const comision = parseFloat(diezPorciento.value) || 0;
-        const cargoServicio = parseFloat(cargo.value) || 0;
-        const cargoOcultoVal = parseFloat(document.getElementById('cargo_oculto').value) || 0;
-        totalFinal.value = (ticket + comision + cargoServicio + cargoOcultoVal).toFixed(2);
+        var t=parseFloat(totalTicket.value)||0, c=parseFloat(diezPorciento.value)||0, s=parseFloat(cargo.value)||0, o=parseFloat(document.getElementById('cargo_oculto').value)||0;
+        totalFinal.value=(t+c+s+o).toFixed(2);
     }
-    
-    btnCalcular10.addEventListener('click', function() {
-        const ticket = parseFloat(totalTicket.value) || 0;
-        diezPorciento.value = (ticket * 0.10).toFixed(2);
-        calcularTotal();
-    });
-    
+    btnCalcular10.addEventListener('click', function(){ diezPorciento.value=((parseFloat(totalTicket.value)||0)*0.10).toFixed(2); calcularTotal(); });
     totalTicket.addEventListener('input', calcularTotal);
     diezPorciento.addEventListener('input', calcularTotal);
     cargo.addEventListener('input', calcularTotal);
-    
+
     empresaSelect.addEventListener('change', function() {
-        const empresaId = this.value;
-        const cargoOcultoInput = document.getElementById('cargo_oculto');
-        const cargoOcultoGroup = document.getElementById('cargoOcultoGroup');
-        const tipoCargoSelect = document.getElementById('tipo_cargo');
-        const tipoServicio = tipoCargoSelect.value === 'aerolinea' ? 'nacional' : (tipoCargoSelect.value || 'nacional');
-        
-        if (!empresaId) {
-            cargoEmpresaInfo.innerHTML = '';
-            cargo.value = '0';
-            cargoOcultoInput.value = '0';
-            cargoOcultoGroup.style.display = 'none';
+        var id=this.value, ci=document.getElementById('cargo_oculto'), cg=document.getElementById('cargoOcultoGroup'),
+            ts=document.getElementById('tipo_cargo').value==='aerolinea'?'nacional':(document.getElementById('tipo_cargo').value||'nacional');
+        if(!id){cargoEmpresaInfo.innerHTML='';cargo.value='0';ci.value='0';cg.style.display='none';calcularTotal();return;}
+        fetch('/api/cargos-empresa/'+id+'?tipo_servicio='+ts).then(function(r){return r.json()}).then(function(d){
+            var cv=d.cargo_visible||0, co=d.cargo_oculto||0;
+            cargo.value=cv.toFixed(2); ci.value=co.toFixed(2);
+            cg.style.display=co>0?'block':'none';
+            var info=''; if(cv>0) info+='<i class="fas fa-eye"></i> $'+cv.toFixed(2);
+            if(co>0) info+=(info?' + ':'')+' <i class="fas fa-eye-slash"></i> $'+co.toFixed(2);
+            cargoEmpresaInfo.innerHTML=info||''; cargoEmpresaInfo.style.color=(cv>0||co>0)?'#28a745':'#6c757d';
             calcularTotal();
-            return;
-        }
-        
-        fetch(`/api/cargos-empresa/${empresaId}?tipo_servicio=${tipoServicio}`)
-            .then(response => response.json())
-            .then(data => {
-                const cargoVisible = data.cargo_visible || 0;
-                const cargoOculto = data.cargo_oculto || 0;
-                
-                cargo.value = cargoVisible.toFixed(2);
-                cargoOcultoInput.value = cargoOculto.toFixed(2);
-                
-                // Mostrar/ocultar campo de cargo oculto
-                if (cargoOculto > 0) {
-                    cargoOcultoGroup.style.display = 'block';
-                } else {
-                    cargoOcultoGroup.style.display = 'none';
-                }
-                
-                // Info de cargos
-                let info = '';
-                if (cargoVisible > 0) info += `<i class="fas fa-eye"></i> $${cargoVisible.toFixed(2)}`;
-                if (cargoOculto > 0) info += (info ? ' + ' : '') + `<i class="fas fa-eye-slash"></i> $${cargoOculto.toFixed(2)} oculto`;
-                if (!info) info = '<i class="fas fa-info-circle"></i> Sin cargos configurados';
-                
-                cargoEmpresaInfo.innerHTML = info;
-                cargoEmpresaInfo.style.color = (cargoVisible > 0 || cargoOculto > 0) ? '#28a745' : '#6c757d';
-                
-                calcularTotal();
-            })
-            .catch(error => { 
-                console.error('Error:', error); 
-                cargoEmpresaInfo.innerHTML = ''; 
-                cargoOcultoGroup.style.display = 'none';
-            });
+        }).catch(function(){cargoEmpresaInfo.innerHTML='';cg.style.display='none';});
     });
-    
-    // Recargar cargos cuando cambie el tipo de cargo
-    document.getElementById('tipo_cargo').addEventListener('change', function() {
-        if (empresaSelect.value) {
-            empresaSelect.dispatchEvent(new Event('change'));
-        }
-    });
-    
-    function actualizarBoton() {
-        btnSubmit.disabled = !puedeEnviar;
-        btnSubmit.classList.toggle('disabled', !puedeEnviar);
-    }
-    
-    const extemporaneaCheckbox = document.getElementById('extemporanea');
-    const extemporaneaSection = document.getElementById('extemporaneaSection');
-    const extemporaneaFields = document.getElementById('extemporaneaFields');
-    const fechaCargoReal = document.getElementById('fecha_cargo_real');
-    const motivoExtemporanea = document.getElementById('motivo_extemporanea');
-    let esExtemporanea = false;
-    
-    extemporaneaCheckbox.addEventListener('change', function() {
-        esExtemporanea = this.checked;
-        extemporaneaSection.classList.toggle('active', esExtemporanea);
-        extemporaneaFields.classList.toggle('active', esExtemporanea);
-        
-        if (esExtemporanea) {
-            fechaCargoReal.required = true;
-            motivoExtemporanea.required = true;
-            const selectedOption = tarjetaSelect.options[tarjetaSelect.selectedIndex];
-            if (selectedOption && selectedOption.value) {
-                puedeEnviar = true;
-                tarjetaInfo.className = 'tarjeta-info puede-usar';
-                tarjetaInfo.innerHTML = '<i class="fas fa-check-circle"></i> Papeleta extemporánea - No requiere autorización.<br><small><i class="fas fa-clock"></i> El cargo ya fue procesado anteriormente.</small>';
-                tarjetaInfo.style.display = 'block';
-            }
+    document.getElementById('tipo_cargo').addEventListener('change', function(){ if(empresaSelect.value) empresaSelect.dispatchEvent(new Event('change')); });
+
+    function actualizarBoton(){ btnSubmit.disabled=!puedeEnviar; btnSubmit.classList.toggle('disabled',!puedeEnviar); }
+
+    var fechaCargoReal=document.getElementById('fecha_cargo_real'), motivoExtemporanea=document.getElementById('motivo_extemporanea');
+    document.getElementById('extemporanea').addEventListener('change', function() {
+        esExtemporanea=this.checked;
+        document.getElementById('extemporaneaFields').classList.toggle('active',esExtemporanea);
+        if(esExtemporanea){
+            fechaCargoReal.required=true; motivoExtemporanea.required=true;
+            document.getElementById('archivo_boleto').removeAttribute('required');
+            if(tarjetaSelect.value){ puedeEnviar=true; tarjetaInfo.className='tarjeta-info puede-usar'; tarjetaInfo.innerHTML='<i class="fas fa-check-circle"></i> Extemporánea — No requiere autorización.'; tarjetaInfo.style.display='block'; }
         } else {
-            fechaCargoReal.required = false;
-            motivoExtemporanea.required = false;
-            fechaCargoReal.value = '';
-            motivoExtemporanea.value = '';
-            if (tarjetaSelect.value) {
-                tarjetaSelect.dispatchEvent(new Event('change'));
-            } else if (tarjetaManual.value.length === 4) {
-                puedeEnviar = true;
-            } else {
-                puedeEnviar = false;
-            }
+            fechaCargoReal.required=false; motivoExtemporanea.required=false; fechaCargoReal.value=''; motivoExtemporanea.value='';
+            document.getElementById('archivo_boleto').setAttribute('required','required');
+            if(tarjetaSelect.value) tarjetaSelect.dispatchEvent(new Event('change'));
+            else if(tarjetaManual.value.length===4) puedeEnviar=true; else puedeEnviar=false;
         }
         actualizarBoton();
     });
-    
-    tarjetaSelect.addEventListener('change', function() {
-        const option = this.options[this.selectedIndex];
-        if (!this.value) {
-            tarjetaInfo.style.display = 'none';
-            tarjetaInfo.innerHTML = '';
-            folioInput.value = '';
-            puedeEnviar = false;
-            actualizarBoton();
-            return;
-        }
-        
-        const numero = option.dataset.numero;
-        if (esExtemporanea) {
-            tarjetaInfo.className = 'tarjeta-info puede-usar';
-            tarjetaInfo.innerHTML = '<i class="fas fa-check-circle"></i> Papeleta extemporánea - No requiere autorización.<br><small><i class="fas fa-clock"></i> El cargo ya fue procesado anteriormente.</small>';
-            tarjetaInfo.style.display = 'block';
-            puedeEnviar = true;
-        }
-        
-        actualizarBoton();
-        
-        if (numero) {
-            fetch(`/api/siguiente-folio-papeleta?tarjeta=${numero}`)
-                .then(response => response.json())
-                .then(data => { if (data.folio) folioInput.value = data.folio; })
-                .catch(error => console.error('Error:', error));
-        }
+
+    var motivoReembolsoSelect=document.getElementById('motivo_reembolso'), motivoOtroGroup=document.getElementById('motivoOtroGroup'), montoReembolso=document.getElementById('monto_reembolso');
+    document.getElementById('tiene_reembolso').addEventListener('change', function() {
+        tieneReembolso=this.checked;
+        document.getElementById('reembolsoFields').classList.toggle('active',tieneReembolso);
+        if(tieneReembolso){ motivoReembolsoSelect.required=true; }
+        else { motivoReembolsoSelect.required=false; motivoReembolsoSelect.value=''; montoReembolso.value='';
+            document.getElementById('referencia_reembolso').value=''; document.getElementById('fecha_solicitud_reembolso').value='';
+            document.getElementById('papeleta_relacionada').value=''; motivoOtroGroup.style.display='none'; }
     });
-    
-    const reembolsoCheckbox = document.getElementById('tiene_reembolso');
-    const reembolsoSection = document.getElementById('reembolsoSection');
-    const reembolsoFields = document.getElementById('reembolsoFields');
-    const motivoReembolsoSelect = document.getElementById('motivo_reembolso');
-    const motivoOtroGroup = document.getElementById('motivoOtroGroup');
-    const montoReembolso = document.getElementById('monto_reembolso');
-    let tieneReembolso = false;
-    
-    reembolsoCheckbox.addEventListener('change', function() {
-        tieneReembolso = this.checked;
-        reembolsoSection.classList.toggle('active', tieneReembolso);
-        reembolsoFields.classList.toggle('active', tieneReembolso);
-        
-        if (tieneReembolso) {
-            motivoReembolsoSelect.required = true;
-        } else {
-            motivoReembolsoSelect.required = false;
-            motivoReembolsoSelect.value = '';
-            montoReembolso.value = '';
-            document.getElementById('referencia_reembolso').value = '';
-            document.getElementById('fecha_solicitud_reembolso').value = '';
-            document.getElementById('papeleta_relacionada').value = '';
-            motivoOtroGroup.style.display = 'none';
-        }
+    motivoReembolsoSelect.addEventListener('change', function(){
+        if(this.value==='otro'){motivoOtroGroup.style.display='block';document.getElementById('motivo_reembolso_otro').required=true;}
+        else{motivoOtroGroup.style.display='none';document.getElementById('motivo_reembolso_otro').required=false;}
     });
-    
-    motivoReembolsoSelect.addEventListener('change', function() {
-        if (this.value === 'otro') {
-            motivoOtroGroup.style.display = 'block';
-            document.getElementById('motivo_reembolso_otro').required = true;
-        } else {
-            motivoOtroGroup.style.display = 'none';
-            document.getElementById('motivo_reembolso_otro').required = false;
-            document.getElementById('motivo_reembolso_otro').value = '';
-        }
-    });
-    
-    totalTicket.addEventListener('change', function() {
-        if (tieneReembolso && !montoReembolso.value) montoReembolso.value = this.value;
-    });
-    
+    totalTicket.addEventListener('change', function(){ if(tieneReembolso&&!montoReembolso.value) montoReembolso.value=this.value; });
+
     formPapeleta.addEventListener('submit', function(e) {
-        if (!puedeEnviar) {
-            e.preventDefault();
-            alert('Debes seleccionar una tarjeta válida o solicitar autorización.');
-            return false;
+        if(!puedeEnviar){e.preventDefault();alert('Selecciona una tarjeta válida.');return false;}
+        if(esExtemporanea){
+            if(!fechaCargoReal.value){e.preventDefault();alert('Ingresa la fecha real del cargo.');fechaCargoReal.focus();return false;}
+            if(!motivoExtemporanea.value.trim()){e.preventDefault();alert('Ingresa el motivo.');motivoExtemporanea.focus();return false;}
         }
-        if (esExtemporanea) {
-            if (!fechaCargoReal.value) { e.preventDefault(); alert('Debes ingresar la fecha real del cargo.'); fechaCargoReal.focus(); return false; }
-            if (!motivoExtemporanea.value.trim()) { e.preventDefault(); alert('Debes ingresar el motivo del registro tardío.'); motivoExtemporanea.focus(); return false; }
+        if(tieneReembolso){
+            if(!motivoReembolsoSelect.value){e.preventDefault();alert('Selecciona motivo del reembolso.');motivoReembolsoSelect.focus();return false;}
+            if(motivoReembolsoSelect.value==='otro'&&!document.getElementById('motivo_reembolso_otro').value.trim()){e.preventDefault();alert('Especifica el motivo.');return false;}
         }
-        if (tieneReembolso) {
-            if (!motivoReembolsoSelect.value) { e.preventDefault(); alert('Debes seleccionar el motivo del reembolso.'); motivoReembolsoSelect.focus(); return false; }
-            if (motivoReembolsoSelect.value === 'otro' && !document.getElementById('motivo_reembolso_otro').value.trim()) { e.preventDefault(); alert('Debes especificar el motivo del reembolso.'); document.getElementById('motivo_reembolso_otro').focus(); return false; }
-        }
-        if (modoManual) { tarjetaSelect.value = ''; } else { tarjetaManual.value = ''; }
+        if(modoManual){tarjetaSelect.value='';}else{tarjetaManual.value='';}
     });
-    
+
     actualizarBoton();
-    // Usar fecha local del dispositivo (no UTC)
-    const hoy = new Date();
-    const fechaLocal = hoy.getFullYear() + '-' + 
-                       String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(hoy.getDate()).padStart(2, '0');
-    document.getElementById('fecha_venta').value = fechaLocal;
-    totalFinal.value = '0.00';
-    
-    // Manejo del archivo PDF
-    const archivoInput = document.getElementById('archivo_boleto');
-    const archivoNombre = document.getElementById('archivo_nombre');
-    const archivoSection = document.querySelector('.archivo-section');
-    
-    archivoInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            const file = this.files[0];
-            
-            // Validar que sea PDF
-            if (!file.name.toLowerCase().endsWith('.pdf')) {
-                alert('Solo se permiten archivos PDF');
-                this.value = '';
-                archivoNombre.textContent = 'Seleccionar archivo PDF...';
-                archivoSection.classList.remove('has-file');
-                return;
-            }
-            
-            // Validar tamaño (máximo 10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('El archivo es demasiado grande. Máximo 10MB.');
-                this.value = '';
-                archivoNombre.textContent = 'Seleccionar archivo PDF...';
-                archivoSection.classList.remove('has-file');
-                return;
-            }
-            
-            archivoNombre.textContent = file.name;
-            archivoSection.classList.add('has-file');
-        } else {
-            archivoNombre.textContent = 'Seleccionar archivo PDF...';
-            archivoSection.classList.remove('has-file');
-        }
+    var h=new Date();
+    document.getElementById('fecha_venta').value=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');
+    totalFinal.value='0.00';
+
+    document.getElementById('archivo_boleto').addEventListener('change', function(){
+        var uz=document.getElementById('uploadZone'), an=document.getElementById('archivo_nombre');
+        if(this.files&&this.files[0]){
+            var f=this.files[0];
+            if(!f.name.toLowerCase().endsWith('.pdf')){alert('Solo archivos PDF');this.value='';an.textContent='PDF del Boleto';uz.classList.remove('has-file');return;}
+            if(f.size>10*1024*1024){alert('Máximo 10MB');this.value='';an.textContent='PDF del Boleto';uz.classList.remove('has-file');return;}
+            an.innerHTML='<i class="fas fa-check-circle"></i> '+f.name; uz.classList.add('has-file');
+        } else { an.textContent='PDF del Boleto'; uz.classList.remove('has-file'); }
     });
-    
-    const tipoCargo = document.getElementById('tipo_cargo');
-    const aerolineaGroup = document.getElementById('aerolineaGroup');
-    const proveedorGroup = document.getElementById('proveedorGroup');
-    const aerolineaSelect = document.getElementById('aerolinea_id');
-    const proveedorInput = document.getElementById('proveedor');
-    
-    tipoCargo.addEventListener('change', function() {
-        const tipo = this.value;
-        if (tipo === 'aerolinea') {
-            aerolineaGroup.style.display = 'flex';
-            proveedorGroup.style.display = 'none';
-            aerolineaSelect.required = true;
-            proveedorInput.required = false;
-            proveedorInput.value = '';
-        } else if (tipo === 'hotel' || tipo === 'auto' || tipo === 'otro') {
-            aerolineaGroup.style.display = 'none';
-            proveedorGroup.style.display = 'flex';
-            aerolineaSelect.required = false;
-            aerolineaSelect.value = '';
-            proveedorInput.required = true;
-            if (tipo === 'hotel') proveedorInput.placeholder = 'Ej: Marriott, Hilton, Holiday Inn...';
-            else if (tipo === 'auto') proveedorInput.placeholder = 'Ej: Hertz, Avis, National...';
-            else proveedorInput.placeholder = 'Especifica el proveedor o servicio...';
-        } else {
-            aerolineaGroup.style.display = 'flex';
-            proveedorGroup.style.display = 'none';
-            aerolineaSelect.required = false;
-            proveedorInput.required = false;
-        }
+
+    document.getElementById('tipo_cargo').addEventListener('change', function(){
+        var t=this.value;
+        document.getElementById('aerolineaGroup').style.display=(t==='aerolinea'||!t)?'':'none';
+        document.getElementById('proveedorGroup').style.display=(t&&t!=='aerolinea')?'':'none';
+        if(t==='aerolinea'){document.getElementById('aerolinea_id').required=true;document.getElementById('proveedor').required=false;}
+        else if(t){document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=true;}
+        else{document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=false;}
     });
 });
-
-function abrirModalAutorizacion(tarjetaId) {
-    document.getElementById('modal_tarjeta_id').value = tarjetaId;
-    document.getElementById('modalAutorizacion').classList.add('active');
-}
-
-function cerrarModal() {
-    document.getElementById('modalAutorizacion').classList.remove('active');
-    document.getElementById('motivo').value = '';
-}
-
-document.getElementById('modalAutorizacion').addEventListener('click', function(e) { if (e.target === this) cerrarModal(); });
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarModal(); });
+function abrirModalAutorizacion(id){document.getElementById('modal_tarjeta_id').value=id;document.getElementById('modalAutorizacion').classList.add('active');}
+function cerrarModal(){document.getElementById('modalAutorizacion').classList.remove('active');document.getElementById('motivo').value='';}
+document.getElementById('modalAutorizacion').addEventListener('click',function(e){if(e.target===this)cerrarModal()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')cerrarModal()});
 </script>
 {% endblock %}

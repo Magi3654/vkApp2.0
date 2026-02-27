@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Papeletas Volaris - Kinessia Hub{% endblock %}
+{% block title %}Boletos Volaris - Kinessia Hub{% endblock %}
 {% block page_styles %}
 <style>
 :root { --kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-graphite:#333;--kn-white:#fff;--kn-success:#059669;--kn-success-light:#d1fae5;--kn-warning:#d97706;--kn-warning-light:#fef3c7;--kn-purple:#6B2D8B; }
@@ -56,7 +56,7 @@
 {% block content %}
 <div class="lc-page">
     <div class="page-header">
-        <h1><i class="fas fa-plane"></i> Papeletas Volaris</h1>
+        <h1><i class="fas fa-plane"></i> Boletos Volaris</h1>
         <button class="btn-kn volaris" onclick="document.getElementById('modalVolaris').classList.add('active')"><i class="fas fa-file-upload"></i> Conciliar con Archivo</button>
     </div>
 
@@ -84,16 +84,18 @@
     <div class="tabla-container">
         {% if papeletas %}
         <table class="tabla-paps">
-            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Clave Sabre</th><th>Pasajero / Facturar a</th><th>Fecha Venta</th><th>Total</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Clave Sabre</th><th>Agente</th><th>Pasajero</th><th>Fecha Venta</th><th>Total Ticket</th><th>Total Papeleta</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
             <tbody>
                 {% for p in papeletas %}
                 <tr>
                     <td class="mono">{{ p.folio }}</td>
                     <td class="mono" style="font-weight:600;">{{ p.clave_reserva or '-' }}</td>
                     <td class="mono" style="color:#64748b;">{{ p.clave_sabre or '-' }}</td>
-                    <td>{{ p.facturar_a or p.solicito or '-' }}</td>
+                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
+                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
                     <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
-                    <td class="monto">${{ '{:,.2f}'.format(p.total|float) }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
+                    <td class="monto" style="color:#64748b;font-size:.8rem;">${{ '{:,.2f}'.format(p.total|float) }}</td>
                     <td>{{ p.forma_pago or '-' }}</td>
                     <td>{% if p.conciliada %}<span class="badge-status conciliado"><i class="fas fa-check-circle"></i> Conciliada</span>{% else %}<span class="badge-status pendiente"><i class="fas fa-exclamation-circle"></i> Pendiente</span>{% endif %}</td>
                     <td>

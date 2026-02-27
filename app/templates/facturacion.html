@@ -1552,7 +1552,7 @@ function abrirExpediente(tipo, id) {
         
         // PDF
         if (exp.archivoBoleto) {
-            const pdfUrl = '/uploads/boletos/' + exp.archivoBoleto;
+            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
             document.getElementById('pdfViewer').src = pdfUrl;
             document.getElementById('pdfViewer').style.display = 'block';
             document.getElementById('noPdfMsg').style.display = 'none';
@@ -1648,7 +1648,7 @@ function abrirExpediente(tipo, id) {
         
         // BSP - Mostrar PDF si existe archivo_boleto
         if (exp.archivoBoleto) {
-            const pdfUrl = '/uploads/boletos/' + exp.archivoBoleto;
+            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
             document.getElementById('pdfViewer').src = pdfUrl;
             document.getElementById('pdfViewer').style.display = 'block';
             document.getElementById('noPdfMsg').style.display = 'none';
