@@ -5398,7 +5398,9 @@ def conciliar_volaris():
             encontrados += 1
             
             # Sumar totales de todas las papeletas con esta clave
-            monto_sistema = sum(float(p.total or 0) for p in papeletas_found)
+            # Usar total_ticket (no total) porque Volaris reporta el monto del boleto
+            # sin comisión ni cargo de servicio de la agencia
+            monto_sistema = sum(float(p.total_ticket or 0) for p in papeletas_found)
             monto_volaris = doc['pago']
             diferencia = round(monto_sistema - monto_volaris, 2)
             
