@@ -5190,13 +5190,9 @@ def listado_papeletas_volaris():
     # Solo Volaris — únicamente papeletas ya revisadas:
     #   - Crédito: factura aprobada (estatus_facturacion = 'aprobada')
     #   - Mostrador: incluida en reporte de ventas (reporte_venta_id IS NOT NULL)
-<<<<<<< HEAD
-    query = Papeleta.query.join(Aerolinea).filter(
-=======
     query = Papeleta.query.options(
         db.joinedload(Papeleta.usuario)
     ).join(Aerolinea).filter(
->>>>>>> dev
         Aerolinea.nombre.ilike('%volaris%'),
         db.or_(
             Papeleta.estatus_facturacion == 'aprobada',
