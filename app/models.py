@@ -944,6 +944,9 @@ class Papeleta(db.Model):
     aprobada_por_id = db.Column(db.BigInteger, db.ForeignKey("usuarios.id"))
     fecha_aprobacion = db.Column(db.DateTime(timezone=True))
 
+    # Comisión de agencia (SUA en Volaris, Compensación en Viva Aerobus)
+    comision_agencia = db.Column(db.Numeric(10, 2), default=0)
+
 
 
 
@@ -1995,4 +1998,3 @@ def obtener_entregas_por_rol(usuario):
             EntregaCorte.agente_id == usuario.id
 
         ).order_by(EntregaCorte.fecha.desc())# models.py - Kinessia Hub v2.0
-
