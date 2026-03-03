@@ -19,5 +19,11 @@ python-dotenv==1.0.0
 # Servidor WSGI para producción
 gunicorn==21.2.0
 
-# Utilidades adicionales (opcional pero recomendado)
+# Utilidades adicionales
 python-dateutil==2.8.2
+
+# Conciliación Volaris (leer Excel .xlsx)
+openpyxl==3.1.2
+
+# Conciliación BSP (leer PDF FCAGBILLDET)
+pdfplumber==0.11.0
