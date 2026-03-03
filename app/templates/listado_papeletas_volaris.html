@@ -169,7 +169,7 @@
     <div class="modal-box">
         <h2><i class="fas fa-file-excel"></i> Conciliar con Volaris</h2>
         <p>Sube el Reporte de Ventas de Volaris (.xlsx) para cruzar automáticamente los PNRs con las papeletas del sistema.</p>
-        <form method="POST" action="{{ url_for('main.conciliar_volaris') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('main.conciliar_volaris') }}" enctype="multipart/form-data" onsubmit="document.getElementById('modalVolaris').classList.remove('active')">
             <div class="upload-zone" onclick="document.getElementById('inputVolaris').click()">
                 <i class="fas fa-cloud-upload-alt"></i><p>Haz clic para seleccionar el archivo</p>
                 <p class="filename" id="volarisFilename" style="display:none;"></p>
