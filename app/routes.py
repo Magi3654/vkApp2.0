@@ -543,6 +543,8 @@ def api_papeleta_detalle(id):
         'facturar_a': papeleta.facturar_a or '',
         'solicito': papeleta.solicito or '',
         'clave_sabre': papeleta.clave_sabre or '',
+        'clave_reserva': papeleta.clave_reserva or '',
+        'pasajero_nombre': papeleta.pasajero_nombre or '',
         'forma_pago': papeleta.forma_pago or '',
         'aerolinea': aerolinea_nombre,
         'proveedor': papeleta.proveedor or '',

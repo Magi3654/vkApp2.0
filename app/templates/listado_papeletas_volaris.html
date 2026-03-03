@@ -49,7 +49,48 @@
 .paginacion a:hover{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
 .paginacion .active{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
 .empty-paps{text-align:center;padding:3rem;color:#94a3b8}.empty-paps i{font-size:3rem;margin-bottom:1rem;opacity:.4}
-@media(max-width:768px){.page-header{flex-direction:column;align-items:flex-start}.kpi-row{grid-template-columns:repeat(3,1fr)}.tabla-container{overflow-x:auto}.filtros-grid{flex-direction:column}.filtros-grid .campo{width:100%}.filtros-grid select,.filtros-grid input{width:100%}}
+.tabla-paps tbody tr{cursor:pointer}
+.tabla-paps tbody tr:active{background:#f3e8ff}
+
+/* === MODAL DETALLE PAPELETA === */
+.modal-detalle-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(30,10,50,.6);backdrop-filter:blur(4px);z-index:1100;align-items:center;justify-content:center;padding:1rem}
+.modal-detalle-overlay.active{display:flex}
+.modal-detalle{background:#fff;border-radius:16px;max-width:860px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 24px 80px rgba(107,45,139,.25);display:flex;flex-direction:column;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.modal-det-header{display:flex;justify-content:space-between;align-items:center;padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff)}
+.modal-det-header h2{font-size:1.1rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.modal-det-header h2 i{color:var(--kn-purple)}
+.modal-det-close{width:32px;height:32px;border:none;background:var(--kn-snow);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:1rem;transition:all .15s}
+.modal-det-close:hover{background:var(--kn-purple);color:#fff}
+.modal-det-body{overflow-y:auto;padding:1.5rem;flex:1}
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
+.det-field{display:flex;flex-direction:column;gap:.15rem}
+.det-field.full{grid-column:1/-1}
+.det-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;font-weight:600}
+.det-value{font-size:.9rem;color:var(--kn-graphite);font-weight:500}
+.det-value.mono{font-family:'SF Mono','Consolas',monospace;font-size:.85rem}
+.det-value.monto{font-family:'SF Mono','Consolas',monospace;font-weight:700;color:var(--kn-purple)}
+.det-section{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--kn-purple);font-weight:700;margin:1.25rem 0 .5rem;padding-bottom:.35rem;border-bottom:2px solid #f3e8ff;display:flex;align-items:center;gap:.4rem}
+.det-section i{font-size:.7rem}
+.det-pdf-frame{width:100%;height:380px;border:1px solid var(--kn-alabaster);border-radius:10px;overflow:hidden;background:var(--kn-snow)}
+.det-pdf-frame iframe{width:100%;height:100%;border:none}
+.det-pdf-empty{width:100%;height:120px;border:2px dashed var(--kn-alabaster);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;gap:.5rem}
+.det-pdf-empty i{font-size:1.5rem;opacity:.5}
+.det-factura-row{display:flex;gap:.75rem;align-items:flex-end}
+.det-factura-input{flex:1;padding:.5rem .75rem;border:1.5px solid var(--kn-alabaster);border-radius:8px;font-size:.9rem;font-family:'SF Mono','Consolas',monospace;background:var(--kn-snow);transition:border-color .2s}
+.det-factura-input:focus{outline:none;border-color:var(--kn-purple);box-shadow:0 0 0 3px rgba(107,45,139,.1)}
+.det-factura-input.saved{border-color:var(--kn-success);background:#f0fdf4}
+.btn-save-factura{padding:.5rem 1rem;border-radius:8px;border:none;background:var(--kn-purple);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s;white-space:nowrap}
+.btn-save-factura:hover{background:#5a2576;transform:translateY(-1px)}
+.btn-save-factura.saving{opacity:.6;pointer-events:none}
+.btn-save-factura.done{background:var(--kn-success)}
+.det-loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:#94a3b8;gap:.5rem}
+.det-loading i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.det-conciliacion-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .75rem;border-radius:8px;font-size:.8rem;font-weight:700}
+.det-conciliacion-badge.ok{background:var(--kn-success-light);color:var(--kn-success)}
+.det-conciliacion-badge.pend{background:var(--kn-warning-light);color:var(--kn-warning)}
+@media(max-width:768px){.page-header{flex-direction:column;align-items:flex-start}.kpi-row{grid-template-columns:repeat(3,1fr)}.tabla-container{overflow-x:auto}.filtros-grid{flex-direction:column}.filtros-grid .campo{width:100%}.filtros-grid select,.filtros-grid input{width:100%}.modal-detalle{max-height:95vh}.det-grid{grid-template-columns:1fr}.det-pdf-frame{height:280px}}
 </style>
 {% endblock %}
 
@@ -84,10 +125,10 @@
     <div class="tabla-container">
         {% if papeletas %}
         <table class="tabla-paps">
-            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Clave Sabre</th><th>Agente</th><th>Pasajero</th><th>Fecha Venta</th><th>Total Ticket</th><th>Total Papeleta</th><th>Forma Pago</th><th>Conciliación</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Clave Sabre</th><th>Agente</th><th>Pasajero</th><th>Fecha Venta</th><th>Total Ticket</th><th>Total Papeleta</th><th>Forma Pago</th><th>Empresa</th><th>Conciliación</th><th>Acciones</th></tr></thead>
             <tbody>
                 {% for p in papeletas %}
-                <tr>
+                <tr onclick="abrirDetalle({{ p.id }})" title="Ver detalle">
                     <td class="mono">{{ p.folio }}</td>
                     <td class="mono" style="font-weight:600;">{{ p.clave_reserva or '-' }}</td>
                     <td class="mono" style="color:#64748b;">{{ p.clave_sabre or '-' }}</td>
@@ -97,8 +138,9 @@
                     <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
                     <td class="monto" style="color:#64748b;font-size:.8rem;">${{ '{:,.2f}'.format(p.total|float) }}</td>
                     <td>{{ p.forma_pago or '-' }}</td>
+                    <td>{{ p.facturar_a or '-' }}</td>
                     <td>{% if p.conciliada %}<span class="badge-status conciliado"><i class="fas fa-check-circle"></i> Conciliada</span>{% else %}<span class="badge-status pendiente"><i class="fas fa-exclamation-circle"></i> Pendiente</span>{% endif %}</td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         {% if p.conciliada %}
                         <form method="POST" action="{{ url_for('main.desconciliar_papeleta_volaris') }}" style="display:inline;"><input type="hidden" name="papeleta_id" value="{{ p.id }}"><button type="submit" class="btn-kn sm secondary" title="Quitar conciliación" onclick="return confirm('¿Quitar conciliación?')"><i class="fas fa-undo"></i></button></form>
                         {% else %}
@@ -142,7 +184,92 @@
 </div>
 <script>
 function mostrarNombre(i){var f=i.files[0]?i.files[0].name:'';var e=document.getElementById('volarisFilename');var b=document.getElementById('btnConciliar');if(f){e.textContent=f;e.style.display='block';b.disabled=false}else{e.style.display='none';b.disabled=true}}
-document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('modalVolaris').classList.remove('active')});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.getElementById('modalVolaris').classList.remove('active');document.getElementById('modalDetalle').classList.remove('active')}});
 document.getElementById('modalVolaris').addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')});
+</script>
+
+<!-- Modal Detalle Papeleta -->
+<div class="modal-detalle-overlay" id="modalDetalle" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-detalle">
+        <div class="modal-det-header">
+            <h2><i class="fas fa-receipt"></i> <span id="detTituloFolio">Papeleta</span></h2>
+            <button class="modal-det-close" onclick="document.getElementById('modalDetalle').classList.remove('active')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-det-body" id="detBody">
+            <div class="det-loading" id="detLoading"><i class="fas fa-spinner"></i> Cargando...</div>
+            <div id="detContenido" style="display:none;">
+                
+                <!-- Datos principales -->
+                <div class="det-section"><i class="fas fa-info-circle"></i> Datos de la Papeleta</div>
+                <div class="det-grid">
+                    <div class="det-field"><span class="det-label">Folio</span><span class="det-value mono" id="detFolio"></span></div>
+                    <div class="det-field"><span class="det-label">Pasajero</span><span class="det-value" id="detPasajero"></span></div>
+                    <div class="det-field"><span class="det-label">Clave Reserva</span><span class="det-value mono" id="detClaveReserva"></span></div>
+                    <div class="det-field"><span class="det-label">Total Ticket</span><span class="det-value monto" id="detTotalTicket"></span></div>
+                    <div class="det-field"><span class="det-label">Empresa</span><span class="det-value" id="detEmpresa"></span></div>
+                    <div class="det-field"><span class="det-label">Factura</span><span class="det-value mono" id="detFacturaDisplay"></span></div>
+                </div>
+
+                <!-- PDF del Boleto -->
+                <div class="det-section"><i class="fas fa-file-pdf"></i> Boleto / PDF</div>
+                <div id="detPdfContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let papeletaActualId = null;
+
+function abrirDetalle(id) {
+    papeletaActualId = id;
+    const modal = document.getElementById('modalDetalle');
+    const loading = document.getElementById('detLoading');
+    const contenido = document.getElementById('detContenido');
+    
+    modal.classList.add('active');
+    loading.style.display = 'flex';
+    contenido.style.display = 'none';
+    
+    fetch('/api/papeleta/' + id)
+        .then(r => r.json())
+        .then(d => {
+            loading.style.display = 'none';
+            contenido.style.display = 'block';
+            
+            document.getElementById('detTituloFolio').textContent = 'Papeleta ' + d.folio;
+            document.getElementById('detFolio').textContent = d.folio;
+            document.getElementById('detClaveReserva').textContent = d.clave_reserva || '-';
+            document.getElementById('detPasajero').textContent = d.pasajero_nombre || d.solicito || '-';
+            document.getElementById('detTotalTicket').textContent = '$' + parseFloat(d.total_ticket || 0).toLocaleString('es-MX', {minimumFractionDigits:2});
+            document.getElementById('detEmpresa').textContent = d.facturar_a || '-';
+            
+            // PDF
+            const pdfContainer = document.getElementById('detPdfContainer');
+            if (d.tiene_archivo && d.archivo_boleto) {
+                const pdfUrl = '/static/uploads/boletos/' + encodeURIComponent(d.archivo_boleto);
+                fetch(pdfUrl, {method:'HEAD'})
+                    .then(r => {
+                        if (r.ok) {
+                            pdfContainer.innerHTML = '<div class="det-pdf-frame"><iframe src="' + pdfUrl + '#toolbar=1&navpanes=0"></iframe></div>';
+                        } else {
+                            pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Boleto registrado pero archivo no disponible</span><span style="font-size:.7rem;color:#94a3b8;">(' + d.archivo_boleto + ')</span></div>';
+                        }
+                    })
+                    .catch(() => {
+                        pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Error al verificar boleto</span></div>';
+                    });
+            } else {
+                pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Sin boleto adjunto</span></div>';
+            }
+            
+            // Factura
+            document.getElementById('detFacturaDisplay').textContent = d.numero_factura || 'Sin factura';
+        })
+        .catch(err => {
+            loading.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al cargar datos';
+            console.error(err);
+        });
+}
 </script>
 {% endblock %}
