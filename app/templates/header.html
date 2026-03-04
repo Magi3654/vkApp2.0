@@ -57,9 +57,12 @@
                 </a>
                 <ul class="dropdown-menu">
                     <li><a href="{{ url_for('main.facturacion') }}"><i class="fas fa-file-invoice"></i> Registrar Facturas</a></li>
+                    <li><a href="{{ url_for('main.gestion_facturas') }}"><i class="fas fa-file-invoice-dollar"></i> Gestión de Facturas</a></li>
                     {% if current_user.rol in ['gerente', 'director', 'administrador', 'admin'] %}
                     <li><a href="{{ url_for('main.revision_facturas') }}"><i class="fas fa-search-dollar"></i> Revisión Facturas</a></li>
                     {% endif %}
+                    <li class="dropdown-divider"></li>
+                    <li><a href="{{ url_for('main.comisiones_sua_volaris') }}"><i class="fas fa-hand-holding-usd"></i> Comisiones SUA</a></li>
                 </ul>
             </li>
             {% endif %}
