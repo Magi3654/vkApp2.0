@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Comisiones SUA Volaris - Kinessia Hub{% endblock %}
+{% block page_styles %}
+<style>
+:root { --kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-graphite:#333;--kn-white:#fff;--kn-success:#059669;--kn-success-light:#d1fae5;--kn-warning:#d97706;--kn-warning-light:#fef3c7;--kn-purple:#6B2D8B; }
+.sua-page{max-width:1400px;margin:0 auto;padding:1.5rem;background:var(--kn-snow);min-height:calc(100vh - 60px)}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.page-header h1{font-size:1.5rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.page-header h1 i{color:var(--kn-purple)}
+.btn-kn{padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;transition:all .2s}
+.btn-kn.secondary{background:var(--kn-alabaster);color:var(--kn-graphite)}.btn-kn.secondary:hover{background:#d1d1d1}
+
+/* Selector de periodo */
+.periodo-selector{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;border:1px solid var(--kn-alabaster);display:flex;gap:.75rem;align-items:flex-end;flex-wrap:wrap}
+.periodo-selector .campo{display:flex;flex-direction:column;gap:.25rem}
+.periodo-selector label{font-size:.7rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.periodo-selector select{padding:.5rem .75rem;border:1px solid var(--kn-alabaster);border-radius:8px;font-size:.85rem;background:var(--kn-snow);color:var(--kn-graphite)}
+.periodo-selector select:focus{outline:none;border-color:var(--kn-purple);box-shadow:0 0 0 2px rgba(107,45,139,.1)}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi-card{background:var(--kn-white);border-radius:12px;padding:1.25rem;border:1px solid var(--kn-alabaster);position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card.q1::before{background:#8b5cf6}.kpi-card.q2::before{background:#06b6d4}.kpi-card.total::before{background:var(--kn-purple)}
+.kpi-card .kpi-num{font-size:1.75rem;font-weight:800;color:var(--kn-graphite);line-height:1;font-family:'SF Mono','Consolas',monospace}
+.kpi-card .kpi-label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-top:.25rem}
+.kpi-card .kpi-count{font-size:.8rem;color:#94a3b8;margin-top:.15rem}
+
+/* Quincena panel */
+.quincena-panel{background:var(--kn-white);border-radius:12px;border:1px solid var(--kn-alabaster);margin-bottom:1.5rem;overflow:hidden}
+.quincena-header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff)}
+.quincena-header h3{font-size:1rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.quincena-header h3 i{color:var(--kn-purple)}
+.quincena-header .total-badge{background:var(--kn-purple);color:#fff;padding:.35rem .85rem;border-radius:8px;font-size:.9rem;font-weight:700;font-family:'SF Mono','Consolas',monospace}
+.quincena-header .btn-solicitar{padding:.45rem .9rem;border-radius:8px;border:none;background:var(--kn-success);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s}
+.quincena-header .btn-solicitar:hover{background:#047857;transform:translateY(-1px)}
+.quincena-header .btn-solicitar:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.quincena-header .right-actions{display:flex;align-items:center;gap:.75rem}
+
+/* Tabla SUA */
+.tabla-sua{width:100%;border-collapse:collapse;font-size:.85rem}
+.tabla-sua thead th{background:#f8fafc;color:#64748b;padding:.6rem .75rem;text-align:left;font-weight:600;font-size:.72rem;text-transform:uppercase;border-bottom:2px solid #f1f5f9}
+.tabla-sua tbody td{padding:.55rem .75rem;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.tabla-sua tbody tr:hover{background:#faf5ff}
+.tabla-sua .mono{font-family:'SF Mono','Consolas',monospace;font-size:.8rem}
+.tabla-sua .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
+.tabla-sua .monto.sua{color:var(--kn-purple);font-weight:700}
+.tabla-sua tfoot td{padding:.75rem;font-weight:700;background:#faf5ff;border-top:2px solid var(--kn-purple)}
+
+.empty-quincena{text-align:center;padding:2rem;color:#94a3b8}
+.empty-quincena i{font-size:1.5rem;opacity:.4;margin-bottom:.5rem}
+
+/* Confirm modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(30,10,50,.6);backdrop-filter:blur(4px);z-index:1100;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.active{display:flex}
+.modal-confirm{background:#fff;border-radius:16px;max-width:480px;width:90%;box-shadow:0 24px 80px rgba(107,45,139,.25);animation:modalIn .25s ease;overflow:hidden}
+@keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.modal-confirm-header{padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff)}
+.modal-confirm-header h3{margin:0;font-size:1.1rem;font-weight:700;color:var(--kn-graphite);display:flex;align-items:center;gap:.5rem}
+.modal-confirm-header h3 i{color:var(--kn-purple)}
+.modal-confirm-body{padding:1.5rem}
+.modal-confirm-body p{color:#64748b;font-size:.9rem;margin:0 0 1rem}
+.modal-confirm-body .resumen{background:var(--kn-snow);border-radius:10px;padding:1rem;margin-bottom:1rem}
+.modal-confirm-body .resumen-row{display:flex;justify-content:space-between;padding:.35rem 0;font-size:.85rem}
+.modal-confirm-body .resumen-row .label{color:#64748b}
+.modal-confirm-body .resumen-row .value{font-weight:600;color:var(--kn-graphite)}
+.modal-confirm-body .resumen-row.total{border-top:2px solid var(--kn-purple);margin-top:.5rem;padding-top:.75rem}
+.modal-confirm-body .resumen-row.total .value{font-size:1.1rem;color:var(--kn-purple);font-family:'SF Mono',monospace}
+.modal-confirm-footer{display:flex;gap:.75rem;justify-content:flex-end;padding:1rem 1.5rem;border-top:1px solid #f1f5f9}
+.modal-confirm-footer .btn-cancel{padding:.5rem 1rem;border-radius:8px;border:none;background:var(--kn-alabaster);color:var(--kn-graphite);font-size:.85rem;font-weight:600;cursor:pointer}
+.modal-confirm-footer .btn-send{padding:.5rem 1rem;border-radius:8px;border:none;background:var(--kn-success);color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem}
+.modal-confirm-footer .btn-send:hover{background:#047857}
+
+@media(max-width:768px){.quincena-header{flex-direction:column;gap:.75rem;align-items:flex-start}.quincena-header .right-actions{width:100%;justify-content:space-between}.kpi-row{grid-template-columns:1fr 1fr}.periodo-selector{flex-direction:column}.tabla-sua{font-size:.78rem}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sua-page">
+    <div class="page-header">
+        <h1><i class="fas fa-hand-holding-usd"></i> Comisiones SUA — Volaris</h1>
+        <a href="{{ url_for('main.listado_papeletas_volaris') }}" class="btn-kn secondary"><i class="fas fa-arrow-left"></i> Volver a Boletos</a>
+    </div>
+
+    <!-- Selector de periodo -->
+    <form class="periodo-selector" method="GET">
+        <div class="campo">
+            <label>Mes</label>
+            <select name="mes" onchange="this.form.submit()">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {{ 'selected' if m == mes }}>{{ meses_nombres[m] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo">
+            <label>Año</label>
+            <select name="anio" onchange="this.form.submit()">
+                {% for a in range(2025, anio + 2) %}
+                <option value="{{ a }}" {{ 'selected' if a == anio }}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <!-- KPIs -->
+    <div class="kpi-row">
+        <div class="kpi-card q1">
+            <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_q1) }}</div>
+            <div class="kpi-label">1ra Quincena (1-15)</div>
+            <div class="kpi-count">{{ papeletas_q1|length }} boleto{{ 's' if papeletas_q1|length != 1 }}</div>
+        </div>
+        <div class="kpi-card q2">
+            <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_q2) }}</div>
+            <div class="kpi-label">2da Quincena (16-{{ q2_fin.day }})</div>
+            <div class="kpi-count">{{ papeletas_q2|length }} boleto{{ 's' if papeletas_q2|length != 1 }}</div>
+        </div>
+        <div class="kpi-card total">
+            <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_mes) }}</div>
+            <div class="kpi-label">Total {{ mes_nombre }} {{ anio }}</div>
+            <div class="kpi-count">{{ papeletas_q1|length + papeletas_q2|length }} boletos</div>
+        </div>
+    </div>
+
+    <!-- Quincena 1 -->
+    <div class="quincena-panel">
+        <div class="quincena-header">
+            <h3><i class="fas fa-calendar-week"></i> 1ra Quincena — {{ q1_inicio.strftime('%d/%m') }} al {{ q1_fin.strftime('%d/%m/%Y') }}</h3>
+            <div class="right-actions">
+                <span class="total-badge">${{ '{:,.2f}'.format(total_sua_q1) }}</span>
+                <button type="button" class="btn-solicitar" {{ 'disabled' if total_sua_q1 <= 0 }}
+                    onclick="confirmarSolicitud('q1', '1ra Quincena {{ mes_nombre }} {{ anio }}', '{{ '{:,.2f}'.format(total_sua_q1) }}', {{ total_sua_q1 }}, {{ papeletas_q1|length }})">
+                    <i class="fas fa-file-invoice-dollar"></i> Solicitar Factura
+                </button>
+            </div>
+        </div>
+        {% if papeletas_q1 %}
+        <table class="tabla-sua">
+            <thead><tr><th>Folio</th><th>Clave Reserva</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Total Ticket</th><th style="text-align:right">SUA</th></tr></thead>
+            <tbody>
+                {% for p in papeletas_q1 %}
+                <tr>
+                    <td class="mono">{{ p.folio }}</td>
+                    <td class="mono">{{ p.clave_reserva or '-' }}</td>
+                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
+                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
+                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
+                    <td>{{ p.facturar_a or '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
+                    <td class="monto sua">${{ '{:,.2f}'.format(p.comision_agencia|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot><tr><td colspan="7" style="text-align:right;">Total SUA 1ra Quincena:</td><td class="monto sua">${{ '{:,.2f}'.format(total_sua_q1) }}</td></tr></tfoot>
+        </table>
+        {% else %}
+        <div class="empty-quincena"><i class="fas fa-inbox"></i><p>Sin boletos con SUA en esta quincena</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Quincena 2 -->
+    <div class="quincena-panel">
+        <div class="quincena-header">
+            <h3><i class="fas fa-calendar-week"></i> 2da Quincena — {{ q2_inicio.strftime('%d/%m') }} al {{ q2_fin.strftime('%d/%m/%Y') }}</h3>
+            <div class="right-actions">
+                <span class="total-badge">${{ '{:,.2f}'.format(total_sua_q2) }}</span>
+                <button type="button" class="btn-solicitar" {{ 'disabled' if total_sua_q2 <= 0 }}
+                    onclick="confirmarSolicitud('q2', '2da Quincena {{ mes_nombre }} {{ anio }}', '{{ '{:,.2f}'.format(total_sua_q2) }}', {{ total_sua_q2 }}, {{ papeletas_q2|length }})">
+                    <i class="fas fa-file-invoice-dollar"></i> Solicitar Factura
+                </button>
+            </div>
+        </div>
+        {% if papeletas_q2 %}
+        <table class="tabla-sua">
+            <thead><tr><th>Folio</th><th>Clave Reserva</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Total Ticket</th><th style="text-align:right">SUA</th></tr></thead>
+            <tbody>
+                {% for p in papeletas_q2 %}
+                <tr>
+                    <td class="mono">{{ p.folio }}</td>
+                    <td class="mono">{{ p.clave_reserva or '-' }}</td>
+                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
+                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
+                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
+                    <td>{{ p.facturar_a or '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
+                    <td class="monto sua">${{ '{:,.2f}'.format(p.comision_agencia|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot><tr><td colspan="7" style="text-align:right;">Total SUA 2da Quincena:</td><td class="monto sua">${{ '{:,.2f}'.format(total_sua_q2) }}</td></tr></tfoot>
+        </table>
+        {% else %}
+        <div class="empty-quincena"><i class="fas fa-inbox"></i><p>Sin boletos con SUA en esta quincena</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Confirmar Solicitud -->
+<div class="modal-overlay" id="modalSolicitud" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal-confirm">
+        <div class="modal-confirm-header">
+            <h3><i class="fas fa-file-invoice-dollar"></i> Solicitar Factura de Comisiones SUA</h3>
+        </div>
+        <div class="modal-confirm-body">
+            <p>Se enviará una solicitud a facturación para emitir la factura de comisiones SUA Volaris.</p>
+            <div class="resumen">
+                <div class="resumen-row"><span class="label">Periodo:</span><span class="value" id="solPeriodo"></span></div>
+                <div class="resumen-row"><span class="label">Boletos con SUA:</span><span class="value" id="solBoletos"></span></div>
+                <div class="resumen-row total"><span class="label">Monto a Facturar:</span><span class="value" id="solMonto"></span></div>
+            </div>
+        </div>
+        <form method="POST" action="{{ url_for('main.solicitar_factura_sua') }}" onsubmit="document.getElementById('modalSolicitud').classList.remove('active')">
+            <input type="hidden" name="quincena" id="solQuincena">
+            <input type="hidden" name="anio" value="{{ anio }}">
+            <input type="hidden" name="mes" value="{{ mes }}">
+            <input type="hidden" name="monto_total" id="solMontoVal">
+            <div class="modal-confirm-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('modalSolicitud').classList.remove('active')">Cancelar</button>
+                <button type="submit" class="btn-send"><i class="fas fa-paper-plane"></i> Enviar a Facturación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function confirmarSolicitud(quincena, periodo, montoStr, montoVal, boletos) {
+    document.getElementById('solPeriodo').textContent = periodo;
+    document.getElementById('solBoletos').textContent = boletos + ' boleto' + (boletos !== 1 ? 's' : '');
+    document.getElementById('solMonto').textContent = '$' + montoStr;
+    document.getElementById('solQuincena').value = quincena;
+    document.getElementById('solMontoVal').value = montoVal;
+    document.getElementById('modalSolicitud').classList.add('active');
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') document.getElementById('modalSolicitud').classList.remove('active'); });
+</script>
+{% endblock %}

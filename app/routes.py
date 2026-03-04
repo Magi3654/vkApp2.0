@@ -545,6 +545,7 @@ def api_papeleta_detalle(id):
         'clave_sabre': papeleta.clave_sabre or '',
         'clave_reserva': papeleta.clave_reserva or '',
         'pasajero_nombre': papeleta.pasajero_nombre or '',
+        'comision_agencia': float(papeleta.comision_agencia or 0),
         'forma_pago': papeleta.forma_pago or '',
         'aerolinea': aerolinea_nombre,
         'proveedor': papeleta.proveedor or '',
@@ -1337,6 +1338,32 @@ def facturacion():
     # Ordenar por fecha descendente
     expedientes_pendientes.sort(key=lambda x: x['fecha'] or date.min, reverse=True)
     
+    # 3. Solicitudes de factura SUA pendientes
+    solicitudes_sua = Notificacion.query.filter(
+        Notificacion.tipo == 'otro',
+        Notificacion.estatus == 'pendiente',
+        Notificacion.destinatario == 'facturacion',
+        Notificacion.titulo.ilike('%SUA%')
+    ).order_by(Notificacion.created_at.desc()).all()
+    
+    for s in solicitudes_sua:
+        payload = s.payload or {}
+        expedientes_pendientes.insert(0, {
+            'tipo': 'comision_sua',
+            'id': s.id,
+            'folio': f'SUA-{s.id}',
+            'fecha': s.created_at.date() if s.created_at else fecha_mexico(),
+            'fecha_display': fecha_espanol(s.created_at.date() if s.created_at else fecha_mexico()),
+            'empresa': 'VOLARIS - Comisiones SUA',
+            'pasajero': payload.get('periodo', ''),
+            'aerolinea': 'Volaris',
+            'total': float(payload.get('monto_total', 0)),
+            'clave': payload.get('periodo', ''),
+            'tiene_desglose': True,
+            'tiene_boleto': True,
+            'objeto': s
+        })
+    
     # Agrupar por fecha
     def agrupar_por_fecha(expedientes):
         grupos = OrderedDict()
@@ -1379,6 +1406,7 @@ def facturacion():
     return render_template('facturacion.html',
                            papeletas_pendientes=papeletas_pendientes,
                            desgloses_bsp_pendientes=desgloses_bsp_pendientes,
+                           solicitudes_sua=solicitudes_sua,
                            expedientes_pendientes=expedientes_pendientes,
                            expedientes_agrupados=expedientes_agrupados,
                            papeletas_facturadas=papeletas_facturadas,
@@ -1990,7 +2018,8 @@ def nueva_papeleta_post():
             extemporanea=es_extemporanea, fecha_cargo_real=fecha_cargo_real, motivo_extemporanea=motivo_extemporanea,
             tiene_reembolso=tiene_reembolso, motivo_reembolso=motivo_reembolso, monto_reembolso=monto_reembolso,
             estatus_reembolso=estatus_reembolso, fecha_solicitud_reembolso=fecha_solicitud_reembolso,
-            referencia_reembolso=referencia_reembolso, papeleta_relacionada_id=papeleta_relacionada_id
+            referencia_reembolso=referencia_reembolso, papeleta_relacionada_id=papeleta_relacionada_id,
+            comision_agencia=float(request.form.get('comision_agencia', 0))
         )
         db.session.add(nueva)
         db.session.flush()  # Para obtener el ID antes del commit
@@ -5795,3 +5824,127 @@ def panel_credito_empresas():
         restringidas=restringidas,
         fecha_hoy=fecha_hoy
     )
+
+# =============================================================================
+# CONCENTRADO QUINCENAL SUA - Comisiones de Agencia (Volaris)
+# =============================================================================
+
+@main.route('/papeletas-volaris/comisiones-sua')
+@login_required
+def comisiones_sua_volaris():
+    """Concentrado quincenal de SUA (comisiones de agencia Volaris)"""
+    from calendar import monthrange
+    
+    # Parámetros de filtro
+    anio = request.args.get('anio', type=int, default=fecha_mexico().year)
+    mes = request.args.get('mes', type=int, default=fecha_mexico().month)
+    
+    # Calcular quincenas
+    ultimo_dia = monthrange(anio, mes)[1]
+    q1_inicio = date(anio, mes, 1)
+    q1_fin = date(anio, mes, 15)
+    q2_inicio = date(anio, mes, 16)
+    q2_fin = date(anio, mes, ultimo_dia)
+    
+    # Volaris ID = 2
+    volaris_id = Aerolinea.query.filter(Aerolinea.nombre.ilike('%volaris%')).first()
+    volaris_aerolinea_id = volaris_id.id if volaris_id else 2
+    
+    # Query base: papeletas Volaris con comision_agencia > 0
+    base_query = Papeleta.query.options(
+        db.joinedload(Papeleta.usuario)
+    ).filter(
+        Papeleta.aerolinea_id == volaris_aerolinea_id,
+        Papeleta.comision_agencia > 0,
+        Papeleta.estatus_control == 'activa'
+    )
+    
+    # Quincena 1 (1-15)
+    papeletas_q1 = base_query.filter(
+        Papeleta.fecha_venta >= q1_inicio,
+        Papeleta.fecha_venta <= q1_fin
+    ).order_by(Papeleta.fecha_venta).all()
+    
+    total_sua_q1 = sum(float(p.comision_agencia or 0) for p in papeletas_q1)
+    
+    # Quincena 2 (16-fin)
+    papeletas_q2 = base_query.filter(
+        Papeleta.fecha_venta >= q2_inicio,
+        Papeleta.fecha_venta <= q2_fin
+    ).order_by(Papeleta.fecha_venta).all()
+    
+    total_sua_q2 = sum(float(p.comision_agencia or 0) for p in papeletas_q2)
+    
+    # Total del mes
+    total_sua_mes = total_sua_q1 + total_sua_q2
+    
+    # Meses disponibles (para el selector)
+    meses_nombres = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    
+    return render_template('comisiones_sua_volaris.html',
+        anio=anio, mes=mes, mes_nombre=meses_nombres[mes],
+        q1_inicio=q1_inicio, q1_fin=q1_fin,
+        q2_inicio=q2_inicio, q2_fin=q2_fin,
+        papeletas_q1=papeletas_q1, total_sua_q1=total_sua_q1,
+        papeletas_q2=papeletas_q2, total_sua_q2=total_sua_q2,
+        total_sua_mes=total_sua_mes,
+        meses_nombres=meses_nombres
+    )
+
+
+@main.route('/papeletas-volaris/solicitar-factura-sua', methods=['POST'])
+@login_required
+def solicitar_factura_sua():
+    """Crear solicitud de factura de comisiones SUA para facturación"""
+    quincena = request.form.get('quincena')  # 'q1' o 'q2'
+    anio = int(request.form.get('anio'))
+    mes = int(request.form.get('mes'))
+    monto_total = float(request.form.get('monto_total', 0))
+    
+    from calendar import monthrange
+    ultimo_dia = monthrange(anio, mes)[1]
+    
+    if quincena == 'q1':
+        fecha_inicio = date(anio, mes, 1)
+        fecha_fin = date(anio, mes, 15)
+        periodo = f"1ra Quincena {mes:02d}/{anio}"
+    else:
+        fecha_inicio = date(anio, mes, 16)
+        fecha_fin = date(anio, mes, ultimo_dia)
+        periodo = f"2da Quincena {mes:02d}/{anio}"
+    
+    if monto_total <= 0:
+        flash('No hay monto de SUA para solicitar factura.', 'warning')
+        return redirect(url_for('main.comisiones_sua_volaris', anio=anio, mes=mes))
+    
+    # Crear notificación para facturación
+    try:
+        notif = Notificacion(
+            tipo='otro',
+            titulo=f'Solicitud Factura SUA - {periodo}',
+            mensaje=f'Se solicita factura de comisiones SUA Volaris por ${monto_total:,.2f} correspondiente a {periodo}.',
+            destinatario='facturacion',
+            canal='sistema',
+            payload={
+                'tipo': 'comision_sua',
+                'quincena': quincena,
+                'anio': anio,
+                'mes': mes,
+                'fecha_inicio': str(fecha_inicio),
+                'fecha_fin': str(fecha_fin),
+                'monto_total': monto_total,
+                'periodo': periodo,
+                'solicitado_por': current_user.nombre
+            },
+            sucursal_id=current_user.sucursal_id
+        )
+        db.session.add(notif)
+        db.session.commit()
+        
+        flash(f'Solicitud de factura SUA enviada a facturación — {periodo}: ${monto_total:,.2f}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al enviar solicitud: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.comisiones_sua_volaris', anio=anio, mes=mes))

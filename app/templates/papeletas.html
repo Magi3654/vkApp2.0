@@ -403,6 +403,12 @@
                             <label>Proveedor <span class="req">*</span></label>
                             <input type="text" id="proveedor" name="proveedor" placeholder="Marriott, Hertz...">
                         </div>
+                        <div class="f" id="comisionAgenciaGroup" style="display:none;">
+                            <label id="comisionAgenciaLabel">SUA</label>
+                            <select id="comision_agencia" name="comision_agencia">
+                                <option value="0">$0</option>
+                            </select>
+                        </div>
                         <div class="f">
                             <label>Forma de Pago</label>
                             <select id="forma_pago" name="forma_pago">
@@ -668,6 +674,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if(t==='aerolinea'){document.getElementById('aerolinea_id').required=true;document.getElementById('proveedor').required=false;}
         else if(t){document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=true;}
         else{document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=false;}
+        if(t!=='aerolinea'){document.getElementById('comisionAgenciaGroup').style.display='none';document.getElementById('comision_agencia').value='0';}
+    });
+
+    // SUA (Volaris ID=2) / Compensación de Agencia (Viva ID=3)
+    var suaOpciones = {
+        '2': {label:'SUA (Volaris)', montos:[0,100,150,200,250,300]},
+        '3': {label:'Compensación de Agencia (Viva)', montos:[0,50,100]}
+    };
+    document.getElementById('aerolinea_id').addEventListener('change', function(){
+        var cag=document.getElementById('comisionAgenciaGroup'), sel=document.getElementById('comision_agencia'), lbl=document.getElementById('comisionAgenciaLabel');
+        var config=suaOpciones[this.value];
+        if(config){
+            lbl.textContent=config.label;
+            sel.innerHTML='';
+            config.montos.forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent='$'+m+' MXN';sel.appendChild(o);});
+            cag.style.display='';
+        } else {
+            cag.style.display='none';sel.innerHTML='<option value="0">$0</option>';
+        }
     });
 });
 function abrirModalAutorizacion(id){document.getElementById('modal_tarjeta_id').value=id;document.getElementById('modalAutorizacion').classList.add('active');}

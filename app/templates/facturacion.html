@@ -144,6 +144,11 @@
     color: white;
 }
 
+.tipo-badge.sua {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6B2D8B 100%);
+    color: white;
+}
+
 .tipo-badge i {
     font-size: 0.65rem;
 }
@@ -843,6 +848,10 @@
             <div class="number" style="color: #0ea5e9;">{{ desgloses_bsp_pendientes|length }}</div>
             <div class="label">BSP</div>
         </div>
+        <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="number" style="color: #8b5cf6;">{{ solicitudes_sua|length }}</div>
+            <div class="label">SUA</div>
+        </div>
         <div class="stat-card warning">
             <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'facturada')|list|length }}</div>
             <div class="label">Por Revisar</div>
@@ -865,6 +874,7 @@
                 <option value="">Todos</option>
                 <option value="lowcost">Low Cost</option>
                 <option value="bsp">BSP</option>
+                <option value="sua">SUA</option>
             </select>
         </div>
         <div class="filtro-group">
@@ -925,15 +935,17 @@
             <div class="expediente-row" 
                  onclick="abrirExpediente('{{ exp.tipo }}', {{ exp.id }})" 
                  id="expediente-row-{{ exp.tipo }}-{{ exp.id }}"
-                 data-tipo="{{ 'bsp' if exp.tipo == 'desglose_bsp' else 'lowcost' }}"
+                 data-tipo="{{ 'bsp' if exp.tipo == 'desglose_bsp' else ('sua' if exp.tipo == 'comision_sua' else 'lowcost') }}"
                  data-clave="{{ exp.clave|lower if exp.clave else '' }}"
                  data-empresa="{{ exp.empresa|lower }}"
                  data-pasajero="{{ exp.pasajero|lower }}"
                  data-fecha="{{ exp.fecha.strftime('%Y-%m-%d') if exp.fecha else '' }}"
                  data-docs="{{ 'completo' if exp.tiene_desglose and exp.tiene_boleto else 'incompleto' }}">
-                <div class="tipo-badge {{ 'bsp' if exp.tipo == 'desglose_bsp' else 'lowcost' }}">
+                <div class="tipo-badge {{ 'bsp' if exp.tipo == 'desglose_bsp' else ('sua' if exp.tipo == 'comision_sua' else 'lowcost') }}">
                     {% if exp.tipo == 'desglose_bsp' %}
                         <i class="fas fa-plane"></i> BSP
+                    {% elif exp.tipo == 'comision_sua' %}
+                        <i class="fas fa-hand-holding-usd"></i> SUA
                     {% else %}
                         <i class="fas fa-ticket-alt"></i> LC
                     {% endif %}
@@ -945,7 +957,10 @@
                 <div class="pasajero">{{ exp.pasajero }}</div>
                 <div class="monto">${{ "{:,.2f}".format(exp.total) }}</div>
                 <div class="estatus-docs">
-                    {% if exp.tipo == 'desglose_bsp' %}
+                    {% if exp.tipo == 'comision_sua' %}
+                        <span class="doc-badge tiene" title="Concentrado SUA"><i class="fas fa-hand-holding-usd"></i></span>
+                        <span class="doc-badge tiene" title="Listado de boletos"><i class="fas fa-list"></i></span>
+                    {% elif exp.tipo == 'desglose_bsp' %}
                         {# BSP solo tiene desglose #}
                         <span class="doc-badge tiene" title="Desglose"><i class="fas fa-calculator"></i></span>
                         <span class="doc-badge {{ 'tiene' if exp.tiene_boleto else 'no-tiene' }}" title="Boleto">
@@ -1409,6 +1424,12 @@ function formatEstatusReembolso(estatus) {
 }
 
 function abrirExpediente(tipo, id) {
+    // SUA: abrir la vista de comisiones directamente
+    if (tipo === 'comision_sua') {
+        window.open('/papeletas-volaris/comisiones-sua', '_blank');
+        return;
+    }
+    
     let exp;
     
     if (tipo === 'papeleta') {
