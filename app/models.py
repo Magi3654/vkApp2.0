@@ -946,6 +946,9 @@ class Papeleta(db.Model):
 
     # Comisión de agencia (SUA en Volaris, Compensación en Viva Aerobus)
     comision_agencia = db.Column(db.Numeric(10, 2), default=0)
+    
+    # Notas/observaciones de facturación
+    notas_facturacion = db.Column(db.Text)
 
 
 

@@ -5948,3 +5948,146 @@ def solicitar_factura_sua():
         flash(f'Error al enviar solicitud: {str(e)}', 'danger')
     
     return redirect(url_for('main.comisiones_sua_volaris', anio=anio, mes=mes))
+
+
+# =============================================================================
+# GESTIÓN DE FACTURAS - Consulta, edición y cancelación
+# =============================================================================
+
+@main.route('/gestion-facturas')
+@login_required
+def gestion_facturas():
+    """Vista de gestión de facturas emitidas"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        flash('No tienes permiso para acceder a este módulo.', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+    # Filtros
+    q_factura = request.args.get('factura', '').strip()
+    q_empresa = request.args.get('empresa', '').strip()
+    q_estatus = request.args.get('estatus', '').strip()
+    q_desde = request.args.get('desde', '').strip()
+    q_hasta = request.args.get('hasta', '').strip()
+    
+    # Base query: papeletas con factura registrada
+    query = Papeleta.query.options(
+        db.joinedload(Papeleta.usuario),
+        db.joinedload(Papeleta.empresa)
+    ).filter(
+        Papeleta.estatus_facturacion.in_(['facturada', 'aprobada', 'rechazada', 'cancelada'])
+    )
+    
+    # Aplicar filtros
+    if q_factura:
+        query = query.filter(
+            db.or_(
+                Papeleta.numero_factura.ilike(f'%{q_factura}%'),
+                Papeleta.folio.ilike(f'%{q_factura}%')
+            )
+        )
+    if q_empresa:
+        query = query.filter(
+            db.or_(
+                Papeleta.facturar_a == q_empresa,
+                Papeleta.empresa.has(Empresa.nombre_empresa == q_empresa)
+            )
+        )
+    if q_estatus:
+        query = query.filter(Papeleta.estatus_facturacion == q_estatus)
+    if q_desde:
+        try:
+            fecha_desde = datetime.strptime(q_desde, '%Y-%m-%d').date()
+            query = query.filter(db.cast(Papeleta.fecha_facturacion, db.Date) >= fecha_desde)
+        except ValueError:
+            pass
+    if q_hasta:
+        try:
+            fecha_hasta = datetime.strptime(q_hasta, '%Y-%m-%d').date()
+            query = query.filter(db.cast(Papeleta.fecha_facturacion, db.Date) <= fecha_hasta)
+        except ValueError:
+            pass
+    
+    facturas = query.order_by(Papeleta.fecha_facturacion.desc()).all()
+    
+    # Empresas únicas para el dropdown (de TODAS las facturas, no solo filtradas)
+    todas_facturas = Papeleta.query.options(
+        db.joinedload(Papeleta.empresa)
+    ).filter(
+        Papeleta.estatus_facturacion.in_(['facturada', 'aprobada', 'rechazada', 'cancelada'])
+    ).all()
+    empresas_unicas = sorted(set(
+        (p.empresa.nombre_empresa if p.empresa else p.facturar_a) for p in todas_facturas if (p.empresa or p.facturar_a)
+    ))
+    
+    # Estadísticas
+    stats = {
+        'total': len(facturas),
+        'aprobadas': len([f for f in facturas if f.estatus_facturacion == 'aprobada']),
+        'rechazadas': len([f for f in facturas if f.estatus_facturacion == 'rechazada']),
+        'canceladas': len([f for f in facturas if f.estatus_facturacion == 'cancelada']),
+        'monto_total': sum(float(f.monto_factura or f.total or 0) for f in facturas),
+        'monto_aprobadas': sum(float(f.monto_factura or f.total or 0) for f in facturas if f.estatus_facturacion == 'aprobada')
+    }
+    
+    return render_template('gestion_facturas.html',
+        facturas=facturas, stats=stats, empresas_unicas=empresas_unicas,
+        q_factura=q_factura, q_empresa=q_empresa, q_estatus=q_estatus,
+        q_desde=q_desde, q_hasta=q_hasta
+    )
+
+
+@main.route('/gestion-facturas/actualizar/<int:id>', methods=['POST'])
+@login_required
+def actualizar_factura(id):
+    """Actualizar datos de una factura (número, estatus, notas)"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        return jsonify({'success': False, 'error': 'Sin permiso'}), 403
+    
+    papeleta = Papeleta.query.get_or_404(id)
+    data = request.get_json()
+    
+    cambios = []
+    
+    if 'numero_factura' in data and data['numero_factura'] != papeleta.numero_factura:
+        viejo = papeleta.numero_factura
+        papeleta.numero_factura = data['numero_factura'].strip() if data['numero_factura'] else None
+        cambios.append(f'Factura: {viejo} → {papeleta.numero_factura}')
+    
+    if 'estatus' in data and data['estatus'] != papeleta.estatus_facturacion:
+        viejo = papeleta.estatus_facturacion
+        nuevo = data['estatus']
+        
+        if nuevo == 'cancelada':
+            # Guardar referencia de la factura cancelada en notas
+            factura_cancelada = papeleta.numero_factura or ''
+            notas_previas = papeleta.notas_facturacion or ''
+            nota_cancel = f'Factura {factura_cancelada} cancelada por {current_user.nombre}'
+            papeleta.notas_facturacion = (notas_previas + '\n' + nota_cancel).strip() if notas_previas else nota_cancel
+            
+            # Reset campos de facturación para que vuelva a pendiente
+            papeleta.estatus_facturacion = 'pendiente'
+            papeleta.numero_factura = None
+            papeleta.monto_factura = None
+            papeleta.facturada_por_id = None
+            papeleta.fecha_facturacion = None
+            papeleta.aprobada_por_id = None
+            papeleta.fecha_aprobacion = None
+            cambios.append(f'Factura {factura_cancelada} cancelada → regresa a pendiente')
+        else:
+            papeleta.estatus_facturacion = nuevo
+            cambios.append(f'Estatus: {viejo} → {nuevo}')
+    
+    if 'notas' in data:
+        if 'estatus' in data and data['estatus'] == 'cancelada':
+            # Append user notes to the auto-generated cancel note
+            if data['notas'].strip():
+                papeleta.notas_facturacion = (papeleta.notas_facturacion or '') + '\nMotivo: ' + data['notas'].strip()
+        else:
+            papeleta.notas_facturacion = data['notas'].strip() if data['notas'] else None
+    
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'cambios': cambios})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})

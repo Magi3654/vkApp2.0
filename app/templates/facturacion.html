@@ -993,44 +993,12 @@
     </div>
     {% endif %}
     
-    <!-- Historial -->
-    {% if papeletas_facturadas %}
-    <div class="historial-section">
-        <h3 class="section-title"><i class="fas fa-history"></i> Historial de Facturación</h3>
-        <table class="historial-table">
-            <thead>
-                <tr>
-                    <th>Folio</th>
-                    <th>Empresa</th>
-                    <th># Factura</th>
-                    <th>Monto</th>
-                    <th>Estatus</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in papeletas_facturadas %}
-                <tr>
-                    <td><strong>{{ p.folio }}</strong></td>
-                    <td>{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}</td>
-                    <td>{{ p.numero_factura or '-' }}</td>
-                    <td>${{ "%.2f"|format(p.monto_factura or 0) }}</td>
-                    <td>
-                        {% if p.estatus_facturacion == 'facturada' %}
-                            <span class="badge badge-warning"><i class="fas fa-clock"></i> Por Revisar</span>
-                        {% elif p.estatus_facturacion == 'aprobada' %}
-                            <span class="badge badge-success"><i class="fas fa-check"></i> Aprobada</span>
-                        {% elif p.estatus_facturacion == 'rechazada' %}
-                            <span class="badge badge-danger"><i class="fas fa-times"></i> Rechazada</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ p.fecha_facturacion.strftime('%d/%m/%Y %H:%M') if p.fecha_facturacion else '-' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Link a Gestión de Facturas -->
+    <div style="text-align:center;padding:1.5rem 0;">
+        <a href="{{ url_for('main.gestion_facturas') }}" style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;background:linear-gradient(135deg,#990100,#b90504);color:#fff;border-radius:10px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .15s;box-shadow:0 2px 8px rgba(153,1,0,.2);">
+            <i class="fas fa-file-invoice-dollar"></i> Gestión de Facturas — Historial, consultas y cancelaciones
+        </a>
     </div>
-    {% endif %}
 </div>
 
 <!-- Modal de Expediente -->

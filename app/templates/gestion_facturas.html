@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Facturas - Kinessia Hub{% endblock %}
+{% block page_styles %}
+<style>
+:root {--kn-oxblood:#990100;--kn-ember:#b90504;--kn-graphite:#333;--kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-white:#fff;--kn-success:#059669;--kn-warning:#d97706;--kn-danger:#dc2626;--kn-purple:#6B2D8B;}
+.gf-page{max-width:1440px;margin:0 auto;padding:1.5rem;background:var(--kn-snow);min-height:calc(100vh - 60px)}
+.gf-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.gf-header h1{font-size:1.5rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
+.gf-header h1 i{color:var(--kn-oxblood)}
+.btn-kn{padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;transition:all .15s}
+.btn-kn.secondary{background:var(--kn-alabaster);color:var(--kn-graphite)}.btn-kn.secondary:hover{background:#d1d1d1}
+
+/* Stats */
+.gf-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.75rem;margin-bottom:1.25rem}
+.gf-stat{background:var(--kn-white);border-radius:10px;padding:1rem;border:1px solid var(--kn-alabaster);position:relative;overflow:hidden}
+.gf-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.gf-stat.total::before{background:var(--kn-graphite)}.gf-stat.aprobada::before{background:var(--kn-success)}.gf-stat.rechazada::before{background:var(--kn-warning)}.gf-stat.cancelada::before{background:var(--kn-danger)}.gf-stat.monto::before{background:var(--kn-oxblood)}
+.gf-stat .num{font-size:1.5rem;font-weight:800;color:var(--kn-graphite);font-family:'SF Mono','Consolas',monospace;line-height:1}
+.gf-stat .label{font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-top:.2rem}
+
+/* Filtros */
+.gf-filtros{background:var(--kn-white);border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;border:1px solid var(--kn-alabaster);display:flex;gap:.65rem;align-items:flex-end;flex-wrap:wrap}
+.gf-filtros .campo{display:flex;flex-direction:column;gap:.2rem;flex:1;min-width:140px}
+.gf-filtros label{font-size:.65rem;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.gf-filtros input,.gf-filtros select{padding:.45rem .6rem;border:1px solid var(--kn-alabaster);border-radius:6px;font-size:.82rem;background:var(--kn-snow);color:var(--kn-graphite)}
+.gf-filtros input:focus,.gf-filtros select:focus{outline:none;border-color:var(--kn-oxblood);box-shadow:0 0 0 2px rgba(153,1,0,.08)}
+.gf-filtros .btn-buscar{padding:.45rem .85rem;border-radius:6px;border:none;background:var(--kn-oxblood);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem;white-space:nowrap}
+.gf-filtros .btn-buscar:hover{background:var(--kn-ember)}
+.gf-filtros .btn-limpiar{padding:.45rem .7rem;border-radius:6px;border:1px solid var(--kn-alabaster);background:var(--kn-white);color:#64748b;font-size:.8rem;cursor:pointer;white-space:nowrap}
+
+/* Tabla */
+.gf-tabla-wrap{background:var(--kn-white);border-radius:10px;border:1px solid var(--kn-alabaster);overflow:hidden}
+.gf-tabla{width:100%;border-collapse:collapse;font-size:.83rem}
+.gf-tabla thead th{background:#f8fafc;color:#64748b;padding:.6rem .7rem;text-align:left;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.02em;border-bottom:2px solid #f1f5f9;position:sticky;top:0;z-index:1}
+.gf-tabla tbody td{padding:.55rem .7rem;border-bottom:1px solid #f8fafc;vertical-align:middle}
+.gf-tabla tbody tr{cursor:pointer;transition:background .12s}
+.gf-tabla tbody tr:hover{background:#fef2f2}
+.gf-tabla .mono{font-family:'SF Mono','Consolas',monospace;font-size:.8rem}
+.gf-tabla .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
+
+/* Estatus badges */
+.estatus-pill{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .55rem;border-radius:20px;font-size:.72rem;font-weight:600}
+.estatus-pill.aprobada{background:#d1fae5;color:#065f46}
+.estatus-pill.facturada{background:#dbeafe;color:#1e40af}
+.estatus-pill.rechazada{background:#fef3c7;color:#92400e}
+.estatus-pill.cancelada{background:#fee2e2;color:#991b1b}
+
+/* Modal edición */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(30,10,10,.55);backdrop-filter:blur(4px);z-index:1100;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.active{display:flex}
+.modal-edit{background:#fff;border-radius:14px;max-width:640px;width:95%;box-shadow:0 24px 80px rgba(153,1,0,.2);animation:modalIn .2s ease;overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.me-header{padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#fff5f5,#fff);display:flex;justify-content:space-between;align-items:center}
+.me-header h3{margin:0;font-size:1.05rem;font-weight:700;color:var(--kn-graphite);display:flex;align-items:center;gap:.5rem}
+.me-header h3 i{color:var(--kn-oxblood)}
+.me-close{background:none;border:none;font-size:1.1rem;color:#94a3b8;cursor:pointer;padding:.25rem}.me-close:hover{color:var(--kn-graphite)}
+.me-body{padding:1.25rem;overflow-y:auto;flex:1}
+.me-info{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.me-field{display:flex;flex-direction:column;gap:.15rem}
+.me-field .lbl{font-size:.68rem;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.me-field .val{font-size:.88rem;color:var(--kn-graphite);font-weight:500}
+.me-field .val.mono{font-family:'SF Mono','Consolas',monospace}
+.me-divider{height:1px;background:#f1f5f9;margin:.75rem 0}
+
+.me-form-group{margin-bottom:.85rem}
+.me-form-group label{display:block;font-size:.72rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.03em;margin-bottom:.25rem}
+.me-form-group input,.me-form-group select,.me-form-group textarea{width:100%;padding:.5rem .65rem;border:1px solid var(--kn-alabaster);border-radius:6px;font-size:.85rem;color:var(--kn-graphite);box-sizing:border-box}
+.me-form-group input:focus,.me-form-group select:focus,.me-form-group textarea:focus{outline:none;border-color:var(--kn-oxblood);box-shadow:0 0 0 2px rgba(153,1,0,.08)}
+.me-form-group textarea{resize:vertical;min-height:60px;font-family:inherit}
+
+.me-pdf-link{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .75rem;border-radius:6px;background:#fef2f2;color:var(--kn-oxblood);font-size:.8rem;font-weight:600;text-decoration:none;transition:all .15s}
+.me-pdf-link:hover{background:#fecaca}
+
+.me-footer{padding:.85rem 1.25rem;border-top:1px solid #f1f5f9;display:flex;gap:.65rem;justify-content:flex-end}
+.me-footer .btn-cancel{padding:.45rem .85rem;border-radius:6px;border:1px solid var(--kn-alabaster);background:var(--kn-white);color:var(--kn-graphite);font-size:.82rem;font-weight:600;cursor:pointer}
+.me-footer .btn-save{padding:.45rem .85rem;border-radius:6px;border:none;background:var(--kn-oxblood);color:#fff;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem}
+.me-footer .btn-save:hover{background:var(--kn-ember)}
+.me-footer .btn-save:disabled{opacity:.5;cursor:not-allowed}
+.me-footer .btn-save.saved{background:var(--kn-success)}
+
+.gf-empty{text-align:center;padding:3rem;color:#94a3b8}
+.gf-empty i{font-size:2rem;opacity:.3;margin-bottom:.5rem}
+.gf-count{font-size:.78rem;color:#94a3b8;padding:.5rem .7rem}
+
+@media(max-width:768px){.gf-stats{grid-template-columns:1fr 1fr}.gf-filtros{flex-direction:column}.me-info{grid-template-columns:1fr}.gf-tabla{font-size:.76rem}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gf-page">
+    <div class="gf-header">
+        <h1><i class="fas fa-file-invoice-dollar"></i> Gestión de Facturas</h1>
+        <a href="{{ url_for('main.facturacion') }}" class="btn-kn secondary"><i class="fas fa-arrow-left"></i> Facturación</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="gf-stats">
+        <div class="gf-stat total"><div class="num">{{ stats.total }}</div><div class="label">Total</div></div>
+        <div class="gf-stat aprobada"><div class="num">{{ stats.aprobadas }}</div><div class="label">Aprobadas</div></div>
+        <div class="gf-stat rechazada"><div class="num">{{ stats.rechazadas }}</div><div class="label">Rechazadas</div></div>
+        <div class="gf-stat cancelada"><div class="num">{{ stats.canceladas }}</div><div class="label">Canceladas</div></div>
+        <div class="gf-stat monto"><div class="num">${{ '{:,.0f}'.format(stats.monto_aprobadas) }}</div><div class="label">Monto Aprobadas</div></div>
+    </div>
+
+    <!-- Filtros -->
+    <form class="gf-filtros" method="GET">
+        <div class="campo">
+            <label><i class="fas fa-search"></i> Folio / # Factura</label>
+            <input type="text" name="factura" value="{{ q_factura }}" placeholder="FED-85694, 1317-001...">
+        </div>
+        <div class="campo">
+            <label>Empresa</label>
+            <select name="empresa">
+                <option value="">Todas</option>
+                {% for emp in empresas_unicas %}
+                <option value="{{ emp }}" {{ 'selected' if q_empresa == emp }}>{{ emp }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo" style="min-width:120px;">
+            <label>Estatus</label>
+            <select name="estatus">
+                <option value="">Todos</option>
+                <option value="aprobada" {{ 'selected' if q_estatus == 'aprobada' }}>Aprobada</option>
+                <option value="facturada" {{ 'selected' if q_estatus == 'facturada' }}>Facturada</option>
+                <option value="rechazada" {{ 'selected' if q_estatus == 'rechazada' }}>Rechazada</option>
+                <option value="cancelada" {{ 'selected' if q_estatus == 'cancelada' }}>Cancelada</option>
+            </select>
+        </div>
+        <div class="campo" style="min-width:130px;">
+            <label>Desde</label>
+            <input type="date" name="desde" value="{{ q_desde }}">
+        </div>
+        <div class="campo" style="min-width:130px;">
+            <label>Hasta</label>
+            <input type="date" name="hasta" value="{{ q_hasta }}">
+        </div>
+        <button type="submit" class="btn-buscar"><i class="fas fa-search"></i> Buscar</button>
+        <a href="{{ url_for('main.gestion_facturas') }}" class="btn-limpiar"><i class="fas fa-times"></i> Limpiar</a>
+    </form>
+
+    <!-- Tabla de facturas -->
+    <div class="gf-tabla-wrap">
+        {% if facturas %}
+        <table class="gf-tabla">
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th># Factura</th>
+                    <th>Empresa</th>
+                    <th>Pasajero</th>
+                    <th style="text-align:right">Monto</th>
+                    <th>Estatus</th>
+                    <th>Facturó</th>
+                    <th>Aprobó</th>
+                    <th>Boleto</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in facturas %}
+                <tr onclick="abrirEdicion({{ f.id }})">
+                    <td class="mono" style="font-weight:600;">{{ f.folio }}</td>
+                    <td class="mono">{{ f.numero_factura or '-' }}</td>
+                    <td>{{ f.empresa.nombre_empresa if f.empresa else f.facturar_a }}</td>
+                    <td>{{ f.pasajero_nombre or f.solicito or '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(f.monto_factura|float if f.monto_factura else f.total|float) }}</td>
+                    <td>
+                        <span class="estatus-pill {{ f.estatus_facturacion }}">
+                            {% if f.estatus_facturacion == 'aprobada' %}<i class="fas fa-check-circle"></i>
+                            {% elif f.estatus_facturacion == 'facturada' %}<i class="fas fa-file-invoice"></i>
+                            {% elif f.estatus_facturacion == 'rechazada' %}<i class="fas fa-exclamation-circle"></i>
+                            {% elif f.estatus_facturacion == 'cancelada' %}<i class="fas fa-ban"></i>
+                            {% endif %}
+                            {{ f.estatus_facturacion|capitalize }}
+                        </span>
+                    </td>
+                    <td style="font-size:.76rem;">
+                        {% if f.facturada_por %}
+                        <div style="color:var(--kn-graphite);font-weight:500;">{{ f.facturada_por.nombre }}</div>
+                        <div style="color:#94a3b8;">{{ f.fecha_facturacion.strftime('%d/%m/%Y %H:%M') if f.fecha_facturacion else '' }}</div>
+                        {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+                    </td>
+                    <td style="font-size:.76rem;">
+                        {% if f.aprobada_por %}
+                        <div style="color:var(--kn-graphite);font-weight:500;">{{ f.aprobada_por.nombre }}</div>
+                        <div style="color:#94a3b8;">{{ f.fecha_aprobacion.strftime('%d/%m/%Y %H:%M') if f.fecha_aprobacion else '' }}</div>
+                        {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if f.archivo_boleto %}
+                        <a href="/static/uploads/boletos/{{ f.archivo_boleto }}" target="_blank" class="me-pdf-link" onclick="event.stopPropagation()">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                        {% else %}
+                        <span style="color:#cbd5e1;font-size:.75rem;">—</span>
+                        {% endif %}
+                    </td>
+                    <td><button class="btn-kn secondary" style="padding:.3rem .55rem;font-size:.75rem;" onclick="event.stopPropagation();abrirEdicion({{ f.id }})"><i class="fas fa-pen"></i></button></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="gf-count">Mostrando {{ facturas|length }} factura{{ 's' if facturas|length != 1 }}</div>
+        {% else %}
+        <div class="gf-empty"><i class="fas fa-search"></i><p>No se encontraron facturas con esos filtros</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Edición -->
+<div class="modal-overlay" id="modalEdicion" onclick="if(event.target===this)cerrarEdicion()">
+    <div class="modal-edit">
+        <div class="me-header">
+            <h3><i class="fas fa-file-invoice-dollar"></i> <span id="meTitulo">Factura</span></h3>
+            <button class="me-close" onclick="cerrarEdicion()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="me-body">
+            <!-- Info de solo lectura -->
+            <div class="me-info">
+                <div class="me-field"><span class="lbl">Folio Papeleta</span><span class="val mono" id="meFolio"></span></div>
+                <div class="me-field"><span class="lbl">Empresa</span><span class="val" id="meEmpresa"></span></div>
+                <div class="me-field"><span class="lbl">Pasajero</span><span class="val" id="mePasajero"></span></div>
+                <div class="me-field"><span class="lbl">Monto</span><span class="val mono" id="meMonto"></span></div>
+                <div class="me-field"><span class="lbl">Facturó</span><span class="val" id="meFacturoPor"></span></div>
+                <div class="me-field"><span class="lbl">Aprobó</span><span class="val" id="meAproboPor"></span></div>
+                <div class="me-field"><span class="lbl">Boleto PDF</span><span id="mePdf"></span></div>
+            </div>
+
+            <div class="me-divider"></div>
+
+            <!-- Campos editables -->
+            <div class="me-form-group">
+                <label>Número de Factura</label>
+                <input type="text" id="meNumFactura" placeholder="FED-00000" style="font-family:'SF Mono','Consolas',monospace;">
+            </div>
+            <div class="me-form-group">
+                <label>Estatus</label>
+                <select id="meEstatus">
+                    <option value="facturada">Facturada</option>
+                    <option value="aprobada">Aprobada</option>
+                    <option value="rechazada">Rechazada</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+            </div>
+            <div class="me-form-group">
+                <label>Notas / Observaciones</label>
+                <textarea id="meNotas" placeholder="Motivo de cancelación, corrección, etc."></textarea>
+            </div>
+        </div>
+        <div class="me-footer">
+            <button class="btn-cancel" onclick="cerrarEdicion()">Cancelar</button>
+            <button class="btn-save" id="btnGuardar" onclick="guardarCambios()"><i class="fas fa-save"></i> Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Datos de facturas para el modal
+var facturasData = {
+    {% for f in facturas %}
+    {{ f.id }}: {
+        id: {{ f.id }},
+        folio: '{{ f.folio }}',
+        empresa: '{{ (f.empresa.nombre_empresa if f.empresa else f.facturar_a)|e }}',
+        pasajero: '{{ (f.pasajero_nombre or f.solicito or "-")|e }}',
+        monto: '{{ "{:,.2f}".format(f.monto_factura|float if f.monto_factura else f.total|float) }}',
+        fecha: '{{ f.fecha_facturacion.strftime("%d/%m/%Y %H:%M") if f.fecha_facturacion else "-" }}',
+        numero_factura: '{{ (f.numero_factura or "")|e }}',
+        estatus: '{{ f.estatus_facturacion }}',
+        notas: `{{ (f.notas_facturacion or "")|e }}`,
+        archivo_boleto: '{{ (f.archivo_boleto or "")|e }}',
+        facturo_por: '{{ (f.facturada_por.nombre if f.facturada_por else "")|e }}',
+        facturo_fecha: '{{ f.fecha_facturacion.strftime("%d/%m/%Y %H:%M") if f.fecha_facturacion else "" }}',
+        aprobo_por: '{{ (f.aprobada_por.nombre if f.aprobada_por else "")|e }}',
+        aprobo_fecha: '{{ f.fecha_aprobacion.strftime("%d/%m/%Y %H:%M") if f.fecha_aprobacion else "" }}'
+    }{{ ',' if not loop.last }}
+    {% endfor %}
+};
+
+var facturaActualId = null;
+
+function abrirEdicion(id) {
+    var f = facturasData[id];
+    if (!f) return;
+    facturaActualId = id;
+
+    document.getElementById('meTitulo').textContent = 'Factura — ' + (f.numero_factura || f.folio);
+    document.getElementById('meFolio').textContent = f.folio;
+    document.getElementById('meEmpresa').textContent = f.empresa;
+    document.getElementById('mePasajero').textContent = f.pasajero;
+    document.getElementById('meMonto').textContent = '$' + f.monto;
+
+    // Facturó / Aprobó
+    var facEl = document.getElementById('meFacturoPor');
+    facEl.innerHTML = f.facturo_por ? f.facturo_por + '<br><span style="font-size:.72rem;color:#94a3b8;">' + f.facturo_fecha + '</span>' : '<span style="color:#cbd5e1;">—</span>';
+    var aprEl = document.getElementById('meAproboPor');
+    aprEl.innerHTML = f.aprobo_por ? f.aprobo_por + '<br><span style="font-size:.72rem;color:#94a3b8;">' + f.aprobo_fecha + '</span>' : '<span style="color:#cbd5e1;">—</span>';
+
+    // PDF link
+    var pdfEl = document.getElementById('mePdf');
+    if (f.archivo_boleto) {
+        pdfEl.innerHTML = '<a href="/static/uploads/boletos/' + encodeURIComponent(f.archivo_boleto) + '" target="_blank" class="me-pdf-link"><i class="fas fa-file-pdf"></i> Ver PDF</a>';
+    } else {
+        pdfEl.innerHTML = '<span style="color:#94a3b8;font-size:.82rem;">Sin boleto</span>';
+    }
+
+    // Editables
+    document.getElementById('meNumFactura').value = f.numero_factura;
+    document.getElementById('meEstatus').value = f.estatus;
+    document.getElementById('meNotas').value = f.notas;
+
+    // Reset button
+    var btn = document.getElementById('btnGuardar');
+    btn.className = 'btn-save';
+    btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+    btn.disabled = false;
+
+    document.getElementById('modalEdicion').classList.add('active');
+}
+
+function cerrarEdicion() {
+    document.getElementById('modalEdicion').classList.remove('active');
+    facturaActualId = null;
+}
+
+function guardarCambios() {
+    if (!facturaActualId) return;
+    var btn = document.getElementById('btnGuardar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+    var data = {
+        numero_factura: document.getElementById('meNumFactura').value.trim(),
+        estatus: document.getElementById('meEstatus').value,
+        notas: document.getElementById('meNotas').value.trim()
+    };
+
+    // Confirmar cancelación
+    if (data.estatus === 'cancelada') {
+        if (!confirm('¿Cancelar esta factura? La papeleta regresará a Pendientes de Facturar.')) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+            return;
+        }
+    }
+
+    fetch('/gestion-facturas/actualizar/' + facturaActualId, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            btn.className = 'btn-save saved';
+            btn.innerHTML = '<i class="fas fa-check"></i> Guardado';
+            // Update local data
+            facturasData[facturaActualId].numero_factura = data.numero_factura;
+            facturasData[facturaActualId].estatus = data.estatus;
+            facturasData[facturaActualId].notas = data.notas;
+            setTimeout(function() { location.reload(); }, 800);
+        } else {
+            btn.className = 'btn-save';
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+            btn.disabled = false;
+            alert('Error: ' + (d.error || 'No se pudo guardar'));
+        }
+    })
+    .catch(function() {
+        btn.className = 'btn-save';
+        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        btn.disabled = false;
+        alert('Error de conexión');
+    });
+}
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarEdicion(); });
+</script>
+{% endblock %}
