@@ -5882,6 +5882,13 @@ def comisiones_sua_volaris():
     meses_nombres = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     
+    # Solicitudes SUA enviadas a facturación
+    solicitudes_sua = Notificacion.query.filter(
+        Notificacion.tipo == 'otro',
+        Notificacion.destinatario == 'facturacion',
+        Notificacion.titulo.ilike('%SUA%')
+    ).order_by(Notificacion.created_at.desc()).all()
+    
     return render_template('comisiones_sua_volaris.html',
         anio=anio, mes=mes, mes_nombre=meses_nombres[mes],
         q1_inicio=q1_inicio, q1_fin=q1_fin,
@@ -5889,7 +5896,8 @@ def comisiones_sua_volaris():
         papeletas_q1=papeletas_q1, total_sua_q1=total_sua_q1,
         papeletas_q2=papeletas_q2, total_sua_q2=total_sua_q2,
         total_sua_mes=total_sua_mes,
-        meses_nombres=meses_nombres
+        meses_nombres=meses_nombres,
+        solicitudes_sua=solicitudes_sua
     )
 
 
@@ -6088,6 +6096,125 @@ def actualizar_factura(id):
     try:
         db.session.commit()
         return jsonify({'success': True, 'cambios': cambios})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/api/solicitud-sua/<int:id>')
+@login_required
+def api_solicitud_sua(id):
+    """API: detalle de solicitud SUA con listado de boletos"""
+    notif = Notificacion.query.get_or_404(id)
+    payload = notif.payload or {}
+    
+    anio = payload.get('anio')
+    mes = payload.get('mes')
+    quincena = payload.get('quincena')
+    
+    if not anio or not mes:
+        return jsonify({'success': False, 'error': 'Datos incompletos'})
+    
+    from calendar import monthrange
+    ultimo_dia = monthrange(int(anio), int(mes))[1]
+    
+    if quincena == 'q1':
+        fecha_inicio = date(int(anio), int(mes), 1)
+        fecha_fin = date(int(anio), int(mes), 15)
+    else:
+        fecha_inicio = date(int(anio), int(mes), 16)
+        fecha_fin = date(int(anio), int(mes), ultimo_dia)
+    
+    # Volaris ID
+    volaris = Aerolinea.query.filter(Aerolinea.nombre.ilike('%volaris%')).first()
+    volaris_id = volaris.id if volaris else 2
+    
+    papeletas = Papeleta.query.options(
+        db.joinedload(Papeleta.usuario)
+    ).filter(
+        Papeleta.aerolinea_id == volaris_id,
+        Papeleta.comision_agencia > 0,
+        Papeleta.estatus_control == 'activa',
+        Papeleta.fecha_venta >= fecha_inicio,
+        Papeleta.fecha_venta <= fecha_fin
+    ).order_by(Papeleta.fecha_venta).all()
+    
+    boletos = []
+    total_sua_real = 0
+    for p in papeletas:
+        sua = float(p.comision_agencia or 0)
+        total_sua_real += sua
+        boletos.append({
+            'folio': p.folio,
+            'clave_reserva': p.clave_reserva or '-',
+            'pasajero': p.pasajero_nombre or p.solicito or '-',
+            'agente': p.usuario.nombre if p.usuario else '-',
+            'fecha': p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-',
+            'empresa': p.facturar_a or '-',
+            'total_ticket': float(p.total_ticket or 0),
+            'sua': sua
+        })
+    
+    return jsonify({
+        'success': True,
+        'id': notif.id,
+        'periodo': payload.get('periodo', ''),
+        'monto_total': total_sua_real,
+        'solicitado_por': payload.get('solicitado_por', ''),
+        'fecha_solicitud': notif.created_at.strftime('%d/%m/%Y %H:%M') if notif.created_at else '',
+        'boletos': boletos,
+        'total_boletos': len(boletos)
+    })
+
+
+@main.route('/api/facturar-sua/<int:id>', methods=['POST'])
+@login_required
+def facturar_sua(id):
+    """Registrar factura para solicitud SUA"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        return jsonify({'success': False, 'error': 'Sin permiso'}), 403
+    
+    notif = Notificacion.query.get_or_404(id)
+    data = request.get_json()
+    
+    numero_factura = data.get('numero_factura', '').strip()
+    monto = float(data.get('monto', 0))
+    
+    if not numero_factura:
+        return jsonify({'success': False, 'error': 'Número de factura requerido'})
+    
+    try:
+        # Marcar la notificación como procesada
+        notif.estatus = 'enviada'
+        
+        # Guardar datos de factura en el payload
+        payload = notif.payload or {}
+        payload['factura_numero'] = numero_factura
+        payload['factura_monto'] = monto
+        payload['facturado_por'] = current_user.nombre
+        payload['fecha_facturacion'] = datetime.now().strftime('%d/%m/%Y %H:%M')
+        notif.payload = payload
+        
+        db.session.commit()
+        return jsonify({'success': True, 'mensaje': f'Factura {numero_factura} registrada para SUA'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@main.route('/papeletas-volaris/eliminar-solicitud-sua/<int:id>', methods=['POST'])
+@login_required
+def eliminar_solicitud_sua(id):
+    """Eliminar solicitud de factura SUA (duplicada o errónea)"""
+    if current_user.rol not in ['facturacion', 'administrador', 'admin', 'gerente', 'director']:
+        return jsonify({'success': False, 'error': 'Sin permiso'}), 403
+    
+    notif = Notificacion.query.get_or_404(id)
+    
+    try:
+        db.session.delete(notif)
+        db.session.commit()
+        return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})

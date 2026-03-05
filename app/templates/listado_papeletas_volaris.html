@@ -1,276 +1,1923 @@
 {% extends "base.html" %}
-{% block title %}Boletos Volaris - Kinessia Hub{% endblock %}
+
+{% block title %}Facturación - Kinessia Hub{% endblock %}
+
 {% block page_styles %}
 <style>
-:root { --kn-snow:#f6f6f6;--kn-alabaster:#e8e8e8;--kn-graphite:#333;--kn-white:#fff;--kn-success:#059669;--kn-success-light:#d1fae5;--kn-warning:#d97706;--kn-warning-light:#fef3c7;--kn-purple:#6B2D8B; }
-.lc-page{max-width:1600px;margin:0 auto;padding:1.5rem;background:var(--kn-snow);min-height:calc(100vh - 60px)}
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
-.page-header h1{font-size:1.5rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
-.page-header h1 i{color:var(--kn-purple)}
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
-.kpi-mini{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;border:1px solid var(--kn-alabaster);position:relative;overflow:hidden}
-.kpi-mini::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.kpi-mini.total::before{background:var(--kn-purple)}.kpi-mini.ok::before{background:var(--kn-success)}.kpi-mini.pending::before{background:var(--kn-warning)}
-.kpi-mini .kpi-num{font-size:1.75rem;font-weight:800;color:var(--kn-graphite);line-height:1}
-.kpi-mini .kpi-label{font-size:.75rem;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-top:.25rem}
-.filtros-panel{background:var(--kn-white);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;border:1px solid var(--kn-alabaster)}
-.filtros-grid{display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end}
-.filtros-grid .campo{display:flex;flex-direction:column;gap:.25rem}
-.filtros-grid label{font-size:.7rem;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
-.filtros-grid select,.filtros-grid input{padding:.5rem .75rem;border:1px solid var(--kn-alabaster);border-radius:8px;font-size:.85rem;background:var(--kn-snow);color:var(--kn-graphite);min-width:140px}
-.filtros-grid select:focus,.filtros-grid input:focus{outline:none;border-color:var(--kn-purple);box-shadow:0 0 0 2px rgba(107,45,139,.1)}
-.btn-kn{padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;transition:all .2s}
-.btn-kn.primary{background:var(--kn-purple);color:#fff}.btn-kn.primary:hover{background:#5a2576;transform:translateY(-1px)}
-.btn-kn.volaris{background:var(--kn-purple);color:#fff}.btn-kn.volaris:hover{background:#5a2576;transform:translateY(-1px)}
-.btn-kn.secondary{background:var(--kn-alabaster);color:var(--kn-graphite)}.btn-kn.secondary:hover{background:#d1d1d1}
-.btn-kn.success{background:var(--kn-success);color:#fff}.btn-kn.success:hover{background:#047857}
-.btn-kn.sm{padding:.3rem .6rem;font-size:.75rem}
-.tabla-container{background:var(--kn-white);border-radius:12px;border:1px solid var(--kn-alabaster);overflow:hidden}
-.tabla-paps{width:100%;border-collapse:collapse;font-size:.85rem}
-.tabla-paps thead th{background:var(--kn-purple);color:#fff;padding:.75rem;text-align:left;font-weight:600;font-size:.75rem;text-transform:uppercase;white-space:nowrap}
-.tabla-paps tbody td{padding:.6rem .75rem;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-.tabla-paps tbody tr:hover{background:#faf5ff}
-.tabla-paps .mono{font-family:'SF Mono','Consolas',monospace;font-size:.8rem}
-.tabla-paps .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
-.badge-status{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .6rem;border-radius:6px;font-size:.7rem;font-weight:700;white-space:nowrap}
-.badge-status.conciliado{background:var(--kn-success-light);color:var(--kn-success)}.badge-status.pendiente{background:var(--kn-warning-light);color:var(--kn-warning)}
-.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
-.modal-overlay.active{display:flex}
-.modal-box{background:#fff;border-radius:16px;padding:2rem;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.modal-box h2{font-size:1.25rem;margin:0 0 .5rem;color:var(--kn-graphite);display:flex;align-items:center;gap:.5rem}
-.modal-box h2 i{color:var(--kn-purple)}.modal-box p{color:#64748b;font-size:.85rem;margin:0 0 1.5rem}
-.upload-zone{border:2px dashed var(--kn-alabaster);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1rem}
-.upload-zone:hover{border-color:var(--kn-purple);background:#faf5ff}
-.upload-zone i{font-size:2rem;color:var(--kn-purple);margin-bottom:.5rem}.upload-zone p{margin:0;font-size:.85rem}
-.upload-zone .filename{font-weight:600;color:var(--kn-graphite);margin-top:.5rem}
-.modal-actions{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem}
-.paginacion{display:flex;justify-content:center;align-items:center;gap:.5rem;padding:1rem}
-.paginacion a,.paginacion span{padding:.4rem .75rem;border-radius:6px;font-size:.85rem;text-decoration:none;color:var(--kn-graphite);border:1px solid var(--kn-alabaster)}
-.paginacion a:hover{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
-.paginacion .active{background:var(--kn-purple);color:#fff;border-color:var(--kn-purple)}
-.empty-paps{text-align:center;padding:3rem;color:#94a3b8}.empty-paps i{font-size:3rem;margin-bottom:1rem;opacity:.4}
-.tabla-paps tbody tr{cursor:pointer}
-.tabla-paps tbody tr:active{background:#f3e8ff}
+.facturacion-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
 
-/* === MODAL DETALLE PAPELETA === */
-.modal-detalle-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(30,10,50,.6);backdrop-filter:blur(4px);z-index:1100;align-items:center;justify-content:center;padding:1rem}
-.modal-detalle-overlay.active{display:flex}
-.modal-detalle{background:#fff;border-radius:16px;max-width:860px;width:100%;max-height:90vh;overflow:hidden;box-shadow:0 24px 80px rgba(107,45,139,.25);display:flex;flex-direction:column;animation:modalIn .25s ease}
-@keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
-.modal-det-header{display:flex;justify-content:space-between;align-items:center;padding:1.25rem 1.5rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff)}
-.modal-det-header h2{font-size:1.1rem;font-weight:700;color:var(--kn-graphite);margin:0;display:flex;align-items:center;gap:.5rem}
-.modal-det-header h2 i{color:var(--kn-purple)}
-.modal-det-close{width:32px;height:32px;border:none;background:var(--kn-snow);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:1rem;transition:all .15s}
-.modal-det-close:hover{background:var(--kn-purple);color:#fff}
-.modal-det-body{overflow-y:auto;padding:1.5rem;flex:1}
-.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
-.det-field{display:flex;flex-direction:column;gap:.15rem}
-.det-field.full{grid-column:1/-1}
-.det-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;font-weight:600}
-.det-value{font-size:.9rem;color:var(--kn-graphite);font-weight:500}
-.det-value.mono{font-family:'SF Mono','Consolas',monospace;font-size:.85rem}
-.det-value.monto{font-family:'SF Mono','Consolas',monospace;font-weight:700;color:var(--kn-purple)}
-.det-section{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--kn-purple);font-weight:700;margin:1.25rem 0 .5rem;padding-bottom:.35rem;border-bottom:2px solid #f3e8ff;display:flex;align-items:center;gap:.4rem}
-.det-section i{font-size:.7rem}
-.det-pdf-frame{width:100%;height:380px;border:1px solid var(--kn-alabaster);border-radius:10px;overflow:hidden;background:var(--kn-snow)}
-.det-pdf-frame iframe{width:100%;height:100%;border:none}
-.det-pdf-empty{width:100%;height:120px;border:2px dashed var(--kn-alabaster);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;gap:.5rem}
-.det-pdf-empty i{font-size:1.5rem;opacity:.5}
-.det-factura-row{display:flex;gap:.75rem;align-items:flex-end}
-.det-factura-input{flex:1;padding:.5rem .75rem;border:1.5px solid var(--kn-alabaster);border-radius:8px;font-size:.9rem;font-family:'SF Mono','Consolas',monospace;background:var(--kn-snow);transition:border-color .2s}
-.det-factura-input:focus{outline:none;border-color:var(--kn-purple);box-shadow:0 0 0 3px rgba(107,45,139,.1)}
-.det-factura-input.saved{border-color:var(--kn-success);background:#f0fdf4}
-.btn-save-factura{padding:.5rem 1rem;border-radius:8px;border:none;background:var(--kn-purple);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:all .15s;white-space:nowrap}
-.btn-save-factura:hover{background:#5a2576;transform:translateY(-1px)}
-.btn-save-factura.saving{opacity:.6;pointer-events:none}
-.btn-save-factura.done{background:var(--kn-success)}
-.det-loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:#94a3b8;gap:.5rem}
-.det-loading i{animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.det-conciliacion-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .75rem;border-radius:8px;font-size:.8rem;font-weight:700}
-.det-conciliacion-badge.ok{background:var(--kn-success-light);color:var(--kn-success)}
-.det-conciliacion-badge.pend{background:var(--kn-warning-light);color:var(--kn-warning)}
-@media(max-width:768px){.page-header{flex-direction:column;align-items:flex-start}.kpi-row{grid-template-columns:repeat(3,1fr)}.tabla-container{overflow-x:auto}.filtros-grid{flex-direction:column}.filtros-grid .campo{width:100%}.filtros-grid select,.filtros-grid input{width:100%}.modal-detalle{max-height:95vh}.det-grid{grid-template-columns:1fr}.det-pdf-frame{height:280px}}
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.page-header h2 {
+    color: var(--graphite);
+    font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-header h2 i {
+    color: var(--brick-ember);
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brick-ember);
+}
+
+.stat-card .label {
+    color: #666;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.stat-card.warning .number { color: #f59e0b; }
+.stat-card.success .number { color: #10b981; }
+
+.section-title {
+    font-size: 1.25rem;
+    color: var(--graphite);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--brick-ember);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: var(--brick-ember);
+}
+
+/* Grupo por día */
+.dia-grupo {
+    margin-bottom: 2rem;
+}
+
+.dia-header {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px 10px 0 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dia-header i {
+    opacity: 0.9;
+}
+
+/* Lista de expedientes */
+.expedientes-lista {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.expediente-row {
+    display: grid;
+    grid-template-columns: 70px 100px 1fr 150px 100px 100px 90px;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.3s, transform 0.3s;
+}
+
+.expediente-row:hover {
+    background: #f8f9fa;
+}
+
+.expediente-row:last-child {
+    border-bottom: none;
+}
+
+/* Badge de tipo (BSP / Low Cost) */
+.tipo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.tipo-badge.bsp {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    color: white;
+}
+
+.tipo-badge.lowcost {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.tipo-badge.sua {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6B2D8B 100%);
+    color: white;
+}
+
+/* Modal SUA */
+.modal-sua{background:#fff;border-radius:14px;max-width:900px;width:95%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(107,45,139,.25);animation:suaIn .25s ease}
+@keyframes suaIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.sua-header{padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff);display:flex;justify-content:space-between;align-items:center}
+.sua-header h3{margin:0;font-size:1.05rem;font-weight:700;color:#333;display:flex;align-items:center;gap:.5rem}
+.sua-header h3 i{color:#6B2D8B}
+.sua-header .close-btn{background:none;border:none;font-size:1.1rem;color:#94a3b8;cursor:pointer}.sua-header .close-btn:hover{color:#333}
+.sua-body{padding:1.25rem;overflow-y:auto;flex:1}
+.sua-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin-bottom:1rem}
+.sua-meta-item{display:flex;flex-direction:column;gap:.1rem}
+.sua-meta-item .lbl{font-size:.65rem;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.sua-meta-item .val{font-size:.88rem;color:#333;font-weight:600}
+.sua-meta-item .val.mono{font-family:'SF Mono','Consolas',monospace}
+.sua-meta-item .val.purple{color:#6B2D8B;font-size:1.1rem}
+.sua-tabla{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem}
+.sua-tabla thead th{background:#f8fafc;color:#64748b;padding:.45rem .5rem;text-align:left;font-weight:600;font-size:.68rem;text-transform:uppercase;border-bottom:2px solid #f1f5f9}
+.sua-tabla tbody td{padding:.4rem .5rem;border-bottom:1px solid #f8fafc}
+.sua-tabla tbody tr:hover{background:#faf5ff}
+.sua-tabla .mono{font-family:'SF Mono','Consolas',monospace;font-size:.76rem}
+.sua-tabla .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
+.sua-tabla .monto.purple{color:#6B2D8B}
+.sua-tabla tfoot td{font-weight:700;background:#faf5ff;border-top:2px solid #6B2D8B;padding:.5rem}
+.sua-form{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding-top:.75rem;border-top:1px solid #f1f5f9}
+.sua-form .campo{display:flex;flex-direction:column;gap:.2rem}
+.sua-form label{font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:600}
+.sua-form input{padding:.5rem .65rem;border:1px solid #e8e8e8;border-radius:6px;font-size:.85rem;font-family:'SF Mono','Consolas',monospace}
+.sua-form input:focus{outline:none;border-color:#6B2D8B;box-shadow:0 0 0 2px rgba(107,45,139,.1)}
+.sua-footer{padding:.85rem 1.25rem;border-top:1px solid #f1f5f9;display:flex;gap:.65rem;justify-content:flex-end}
+.sua-footer .btn-cancel{padding:.45rem .85rem;border-radius:6px;border:1px solid #e8e8e8;background:#fff;color:#333;font-size:.82rem;font-weight:600;cursor:pointer}
+.sua-footer .btn-facturar{padding:.45rem .85rem;border-radius:6px;border:none;background:#6B2D8B;color:#fff;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem}
+.sua-footer .btn-facturar:hover{background:#5a2476}
+.sua-footer .btn-facturar:disabled{opacity:.5;cursor:not-allowed}
+.sua-loading{text-align:center;padding:2rem;color:#94a3b8}
+
+.tipo-badge i {
+    font-size: 0.65rem;
+}
+
+.expediente-row .clave {
+    font-weight: 700;
+    color: var(--brick-ember);
+    font-size: 0.85rem;
+}
+
+.expediente-row .empresa {
+    font-weight: 500;
+    color: var(--graphite);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.expediente-row .pasajero {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.expediente-row .monto {
+    font-weight: 700;
+    color: var(--graphite);
+    text-align: right;
+}
+
+.expediente-row .estatus-docs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.doc-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+}
+
+.doc-badge.tiene {
+    background: #d4edda;
+    color: #155724;
+}
+
+.doc-badge.no-tiene {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.expediente-row .btn-abrir {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.expediente-row .btn-abrir:hover {
+    transform: translateY(-1px);
+}
+
+/* BSP badge header en modal */
+.bsp-badge-header {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.bsp-badge-header .tipo-badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+/* Header de lista */
+.lista-header {
+    display: grid;
+    grid-template-columns: 70px 100px 1fr 150px 100px 100px 90px;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: #f8f9fa;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: #666;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .expediente-row, .lista-header {
+        grid-template-columns: 70px 1fr 100px 90px;
+    }
+    .expediente-row .empresa,
+    .expediente-row .pasajero,
+    .lista-header span:nth-child(3),
+    .lista-header span:nth-child(4) {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .lista-header {
+        display: none;
+    }
+    .expediente-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .expediente-row .estatus-docs,
+    .expediente-row .clave {
+        display: none;
+    }
+}
+
+/* ============================================ */
+/* MODAL GRANDE CON 3 COLUMNAS                  */
+/* ============================================ */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-expediente {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 1400px;
+    height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--oxblood) 0%, var(--brick-ember) 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.modal-header-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-header .meta-info {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    opacity: 0.95;
+}
+
+.modal-header .meta-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.modal-body {
+    display: grid;
+    grid-template-columns: 300px 300px 1fr;
+    gap: 1px;
+    background: #e5e7eb;
+    flex: 1;
+    overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+    .modal-body {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .modal-section.pdf-section {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 700px) {
+    .modal-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+    .modal-section.pdf-section {
+        grid-column: span 1;
+    }
+}
+
+.modal-section {
+    background: white;
+    padding: 1.25rem;
+    overflow-y: auto;
+}
+
+.modal-section.pdf-section {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--graphite);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.modal-section-title i {
+    font-size: 1rem;
+}
+
+.modal-section-title.papeleta i { color: #3b82f6; }
+.modal-section-title.desglose i { color: #10b981; }
+.modal-section-title.boleto i { color: #ef4444; }
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-item .label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 0.125rem;
+    letter-spacing: 0.5px;
+}
+
+.detail-item .value {
+    font-weight: 600;
+    color: var(--graphite);
+    font-size: 0.875rem;
+}
+
+.detail-item.full-width {
+    grid-column: span 2;
+}
+
+.reembolso-info {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.reembolso-info .reembolso-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reembolso-info .detail-grid {
+    margin-bottom: 0;
+}
+
+.reembolso-info .detail-item .label {
+    color: #92400e;
+}
+
+.reembolso-info .detail-item .value {
+    color: #78350f;
+}
+
+.montos-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.monto-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.375rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.monto-row:last-child {
+    border-bottom: none;
+}
+
+.monto-row.total {
+    border-top: 2px solid var(--brick-ember);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    font-weight: 700;
+    color: var(--brick-ember);
+    font-size: 0.95rem;
+}
+
+.no-desglose-msg {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #92400e;
+}
+
+.no-desglose-msg i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+}
+
+.no-desglose-msg p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* PDF Viewer grande */
+.pdf-container {
+    flex: 1;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+
+.pdf-container iframe {
+    width: 100%;
+    flex: 1;
+    border: none;
+}
+
+.pdf-container .no-pdf {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    text-align: center;
+    padding: 2rem;
+}
+
+.pdf-container .no-pdf i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+    color: #9ca3af;
+}
+
+.pdf-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-pdf-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.btn-pdf-action:hover {
+    transform: translateY(-1px);
+}
+
+.btn-pdf-action.primary {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-pdf-action.secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Modal Footer con formulario */
+.modal-footer {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+
+.factura-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.factura-form .form-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.factura-form label {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.375rem;
+    font-weight: 500;
+}
+
+.factura-form input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.factura-form input:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+    box-shadow: 0 0 0 3px rgba(185, 5, 4, 0.1);
+}
+
+.btn-registrar {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+
+.btn-registrar:hover {
+    transform: translateY(-1px);
+}
+
+/* Historial */
+.historial-section {
+    margin-top: 3rem;
+}
+
+.historial-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.historial-table th {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.historial-table td {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge i { font-size: 0.7rem; }
+
+.badge-success { background: #d4edda; color: #155724; }
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-danger { background: #f8d7da; color: #721c24; }
+.badge-info { background: #d1ecf1; color: #0c5460; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #888;
+    background: white;
+    border-radius: 12px;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #10b981;
+}
+
+/* Barra de Filtros */
+.filtros-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filtro-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filtro-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    white-space: nowrap;
+}
+
+.filtro-group label i {
+    color: var(--brick-ember);
+}
+
+.filtro-group input,
+.filtro-group select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+
+.filtro-group input:focus,
+.filtro-group select:focus {
+    outline: none;
+    border-color: var(--brick-ember);
+}
+
+.filtro-group input[type="text"] {
+    min-width: 180px;
+}
+
+.filtro-group input[type="date"] {
+    min-width: 140px;
+}
+
+.btn-limpiar {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.btn-limpiar:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Contador de resultados */
+.resultados-count {
+    font-size: 0.85rem;
+    color: #666;
+    padding: 0.5rem 0;
+}
+
+.resultados-count strong {
+    color: var(--brick-ember);
+}
+
+@media (max-width: 900px) {
+    .filtros-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filtro-group {
+        width: 100%;
+    }
+    
+    .filtro-group input,
+    .filtro-group select {
+        flex: 1;
+    }
+    
+    .btn-limpiar {
+        margin-left: 0;
+        justify-content: center;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="lc-page">
+<div class="facturacion-container">
     <div class="page-header">
-        <h1><i class="fas fa-plane"></i> Boletos Volaris</h1>
-        <div style="display:flex;gap:.5rem;">
-            <a href="{{ url_for('main.comisiones_sua_volaris') }}" class="btn-kn primary" style="background:#059669;"><i class="fas fa-hand-holding-usd"></i> Comisiones SUA</a>
-            <button class="btn-kn volaris" onclick="document.getElementById('modalVolaris').classList.add('active')"><i class="fas fa-file-upload"></i> Conciliar con Archivo</button>
+        <h2><i class="fas fa-file-invoice-dollar"></i>Facturación</h2>
+    </div>
+    
+    <!-- Estadísticas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="number">{{ expedientes_pendientes|length }}</div>
+            <div class="label">Total Pendientes</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #f59e0b;">
+            <div class="number" style="color: #f59e0b;">{{ papeletas_pendientes|length }}</div>
+            <div class="label">Low Cost</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #0ea5e9;">
+            <div class="number" style="color: #0ea5e9;">{{ desgloses_bsp_pendientes|length }}</div>
+            <div class="label">BSP</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="number" style="color: #8b5cf6;">{{ solicitudes_sua|length }}</div>
+            <div class="label">SUA</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'facturada')|list|length }}</div>
+            <div class="label">Por Revisar</div>
+        </div>
+        <div class="stat-card success">
+            <div class="number">{{ papeletas_facturadas|selectattr('estatus_facturacion', 'equalto', 'aprobada')|list|length }}</div>
+            <div class="label">Aprobadas</div>
         </div>
     </div>
-
-    <div class="kpi-row">
-        <div class="kpi-mini total"><div class="kpi-num">{{ total_papeletas }}</div><div class="kpi-label">Total Papeletas</div></div>
-        <div class="kpi-mini ok"><div class="kpi-num">{{ total_conciliadas }}</div><div class="kpi-label">Conciliadas</div></div>
-        <div class="kpi-mini pending"><div class="kpi-num">{{ total_sin_conciliar }}</div><div class="kpi-label">Sin Conciliar</div></div>
-    </div>
-
-    <div class="filtros-panel">
-        <form method="GET" action="{{ url_for('main.listado_papeletas_volaris') }}">
-            <div class="filtros-grid">
-                <div class="campo"><label>Buscar</label><input type="text" name="buscar" value="{{ filtro_buscar }}" placeholder="Clave, pasajero, folio..."></div>
-                <div class="campo"><label>Conciliación</label><select name="conciliada"><option value="">Todos</option><option value="si" {{ 'selected' if filtro_conciliada == 'si' }}>Conciliadas</option><option value="no" {{ 'selected' if filtro_conciliada == 'no' }}>Sin conciliar</option></select></div>
-                <div class="campo"><label>Desde</label><input type="date" name="fecha_desde" value="{{ filtro_fecha_desde }}"></div>
-                <div class="campo"><label>Hasta</label><input type="date" name="fecha_hasta" value="{{ filtro_fecha_hasta }}"></div>
-                <div class="campo" style="display:flex;flex-direction:row;gap:.5rem;align-self:flex-end;">
-                    <button type="submit" class="btn-kn primary"><i class="fas fa-search"></i> Filtrar</button>
-                    <a href="{{ url_for('main.listado_papeletas_volaris') }}" class="btn-kn secondary"><i class="fas fa-times"></i></a>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div class="tabla-container">
-        {% if papeletas %}
-        <table class="tabla-paps">
-            <thead><tr><th>Papeleta</th><th>Clave Reserva</th><th>Agente</th><th>Pasajero</th><th>Fecha Venta</th><th>Total Ticket</th><th>SUA</th><th>Empresa</th><th>Conciliación</th><th>Acciones</th></tr></thead>
-            <tbody>
-                {% for p in papeletas %}
-                <tr onclick="abrirDetalle({{ p.id }})" title="Ver detalle">
-                    <td class="mono">{{ p.folio }}</td>
-                    <td class="mono" style="font-weight:600;">{{ p.clave_reserva or '-' }}</td>
-                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
-                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
-                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
-                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
-                    <td class="monto">${{ '{:,.2f}'.format(p.comision_agencia|float) if p.comision_agencia else '-' }}</td>
-                    <td>{{ p.facturar_a or '-' }}</td>
-                    <td>{% if p.conciliada %}<span class="badge-status conciliado"><i class="fas fa-check-circle"></i> Conciliada</span>{% else %}<span class="badge-status pendiente"><i class="fas fa-exclamation-circle"></i> Pendiente</span>{% endif %}</td>
-                    <td onclick="event.stopPropagation()">
-                        {% if p.conciliada %}
-                        <form method="POST" action="{{ url_for('main.desconciliar_papeleta_volaris') }}" style="display:inline;"><input type="hidden" name="papeleta_id" value="{{ p.id }}"><button type="submit" class="btn-kn sm secondary" title="Quitar conciliación" onclick="return confirm('¿Quitar conciliación?')"><i class="fas fa-undo"></i></button></form>
-                        {% else %}
-                        <form method="POST" action="{{ url_for('main.conciliar_papeleta_volaris') }}" style="display:inline;"><input type="hidden" name="papeleta_id" value="{{ p.id }}"><button type="submit" class="btn-kn sm success" title="Conciliar"><i class="fas fa-check"></i></button></form>
-                        {% endif %}
-                    </td>
-                </tr>
+    
+    <!-- Barra de Filtros -->
+    <div class="filtros-bar">
+        <div class="filtro-group">
+            <label><i class="fas fa-search"></i></label>
+            <input type="text" id="filtroBuscar" placeholder="Buscar clave, pasajero..." onkeyup="aplicarFiltros()">
+        </div>
+        <div class="filtro-group">
+            <label>Tipo:</label>
+            <select id="filtroTipo" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="lowcost">Low Cost</option>
+                <option value="bsp">BSP</option>
+                <option value="sua">SUA</option>
+            </select>
+        </div>
+        <div class="filtro-group">
+            <label>Empresa:</label>
+            <select id="filtroEmpresa" onchange="aplicarFiltros()">
+                <option value="">Todas</option>
+                {% set empresas_unicas = [] %}
+                {% for exp in expedientes_pendientes %}
+                    {% if exp.empresa not in empresas_unicas %}
+                        {% set _ = empresas_unicas.append(exp.empresa) %}
+                    {% endif %}
                 {% endfor %}
-            </tbody>
-        </table>
-        {% if total_paginas > 1 %}
-        <div class="paginacion">
-            {% if pagina > 1 %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pagina-1, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}"><i class="fas fa-chevron-left"></i></a>{% endif %}
-            {% for pg in range(1, total_paginas + 1) %}{% if pg == pagina %}<span class="active">{{ pg }}</span>{% elif pg <= 3 or pg >= total_paginas - 2 or (pg >= pagina - 1 and pg <= pagina + 1) %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pg, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}">{{ pg }}</a>{% elif pg == 4 or pg == total_paginas - 3 %}<span>...</span>{% endif %}{% endfor %}
-            {% if pagina < total_paginas %}<a href="{{ url_for('main.listado_papeletas_volaris', pagina=pagina+1, conciliada=filtro_conciliada, fecha_desde=filtro_fecha_desde, fecha_hasta=filtro_fecha_hasta, buscar=filtro_buscar) }}"><i class="fas fa-chevron-right"></i></a>{% endif %}
+                {% for emp in empresas_unicas|sort %}
+                <option value="{{ emp|lower }}">{{ emp }}</option>
+                {% endfor %}
+            </select>
         </div>
-        {% endif %}
-        <div style="padding:.75rem 1.25rem;font-size:.8rem;color:#64748b;border-top:1px solid #f1f5f9;">Mostrando {{ papeletas|length }} de {{ total }} papeletas</div>
-        {% else %}
-        <div class="empty-paps"><i class="fas fa-plane"></i><p>No se encontraron papeletas de Volaris</p></div>
-        {% endif %}
-    </div>
-</div>
-
-<div class="modal-overlay" id="modalVolaris">
-    <div class="modal-box">
-        <h2><i class="fas fa-file-excel"></i> Conciliar con Volaris</h2>
-        <p>Sube el Reporte de Ventas de Volaris (.xlsx) para cruzar automáticamente los PNRs con las papeletas del sistema.</p>
-        <form method="POST" action="{{ url_for('main.conciliar_volaris') }}" enctype="multipart/form-data">
-            <div class="upload-zone" onclick="document.getElementById('inputVolaris').click()">
-                <i class="fas fa-cloud-upload-alt"></i><p>Haz clic para seleccionar el archivo</p>
-                <p class="filename" id="volarisFilename" style="display:none;"></p>
-                <input type="file" name="archivo_volaris" id="inputVolaris" accept=".xlsx,.xls" style="display:none;" onchange="mostrarNombre(this)">
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-kn secondary" onclick="document.getElementById('modalVolaris').classList.remove('active')">Cancelar</button>
-                <button type="submit" class="btn-kn volaris" id="btnConciliar" disabled><i class="fas fa-sync-alt"></i> Conciliar</button>
-            </div>
-        </form>
-    </div>
-</div>
-<script>
-function mostrarNombre(i){var f=i.files[0]?i.files[0].name:'';var e=document.getElementById('volarisFilename');var b=document.getElementById('btnConciliar');if(f){e.textContent=f;e.style.display='block';b.disabled=false}else{e.style.display='none';b.disabled=true}}
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.getElementById('modalVolaris').classList.remove('active');document.getElementById('modalDetalle').classList.remove('active')}});
-document.getElementById('modalVolaris').addEventListener('click',function(e){if(e.target===this)this.classList.remove('active')});
-</script>
-
-<!-- Modal Detalle Papeleta -->
-<div class="modal-detalle-overlay" id="modalDetalle" onclick="if(event.target===this)this.classList.remove('active')">
-    <div class="modal-detalle">
-        <div class="modal-det-header">
-            <h2><i class="fas fa-receipt"></i> <span id="detTituloFolio">Papeleta</span></h2>
-            <button class="modal-det-close" onclick="document.getElementById('modalDetalle').classList.remove('active')"><i class="fas fa-times"></i></button>
+        <div class="filtro-group">
+            <label>Fecha:</label>
+            <input type="date" id="filtroFecha" onchange="aplicarFiltros()">
         </div>
-        <div class="modal-det-body" id="detBody">
-            <div class="det-loading" id="detLoading"><i class="fas fa-spinner"></i> Cargando...</div>
-            <div id="detContenido" style="display:none;">
-                
-                <!-- Datos principales -->
-                <div class="det-section"><i class="fas fa-info-circle"></i> Datos de la Papeleta</div>
-                <div class="det-grid">
-                    <div class="det-field"><span class="det-label">Folio</span><span class="det-value mono" id="detFolio"></span></div>
-                    <div class="det-field"><span class="det-label">Pasajero</span><span class="det-value" id="detPasajero"></span></div>
-                    <div class="det-field"><span class="det-label">Clave Reserva</span><span class="det-value mono" id="detClaveReserva"></span></div>
-                    <div class="det-field"><span class="det-label">Total Ticket</span><span class="det-value monto" id="detTotalTicket"></span></div>
-                    <div class="det-field"><span class="det-label">Empresa</span><span class="det-value" id="detEmpresa"></span></div>
-                    <div class="det-field"><span class="det-label">Factura</span><span class="det-value mono" id="detFacturaDisplay"></span></div>
+        <div class="filtro-group">
+            <label>Documentos:</label>
+            <select id="filtroDocs" onchange="aplicarFiltros()">
+                <option value="">Todos</option>
+                <option value="completo">Completos</option>
+                <option value="incompleto">Incompletos</option>
+            </select>
+        </div>
+        <button type="button" class="btn-limpiar" onclick="limpiarFiltros()">
+            <i class="fas fa-times"></i> Limpiar
+        </button>
+    </div>
+    
+    <!-- Expedientes Pendientes por Día -->
+    <h3 class="section-title"><i class="fas fa-clock"></i> Expedientes Pendientes de Facturar</h3>
+    
+    {% if expedientes_agrupados %}
+    
+    {% for fecha_str, grupo in expedientes_agrupados %}
+    <div class="dia-grupo" data-fecha="{{ fecha_str }}">
+        <div class="dia-header">
+            <i class="fas fa-calendar-day"></i>
+            {{ grupo.fecha_display }}
+            <span class="dia-count" style="margin-left: auto; opacity: 0.8;">({{ grupo.expedientes|length }} expediente{{ 's' if grupo.expedientes|length > 1 else '' }})</span>
+        </div>
+        <div class="expedientes-lista">
+            <div class="lista-header">
+                <span>Tipo</span>
+                <span>Clave</span>
+                <span>Empresa</span>
+                <span>Pasajero</span>
+                <span>Monto</span>
+                <span>Docs</span>
+                <span></span>
+            </div>
+            {% for exp in grupo.expedientes %}
+            <div class="expediente-row" 
+                 onclick="abrirExpediente('{{ exp.tipo }}', {{ exp.id }})" 
+                 id="expediente-row-{{ exp.tipo }}-{{ exp.id }}"
+                 data-tipo="{{ 'bsp' if exp.tipo == 'desglose_bsp' else ('sua' if exp.tipo == 'comision_sua' else 'lowcost') }}"
+                 data-clave="{{ exp.clave|lower if exp.clave else '' }}"
+                 data-empresa="{{ exp.empresa|lower }}"
+                 data-pasajero="{{ exp.pasajero|lower }}"
+                 data-fecha="{{ exp.fecha.strftime('%Y-%m-%d') if exp.fecha else '' }}"
+                 data-docs="{{ 'completo' if exp.tiene_desglose and exp.tiene_boleto else 'incompleto' }}">
+                <div class="tipo-badge {{ 'bsp' if exp.tipo == 'desglose_bsp' else ('sua' if exp.tipo == 'comision_sua' else 'lowcost') }}">
+                    {% if exp.tipo == 'desglose_bsp' %}
+                        <i class="fas fa-plane"></i> BSP
+                    {% elif exp.tipo == 'comision_sua' %}
+                        <i class="fas fa-hand-holding-usd"></i> SUA
+                    {% else %}
+                        <i class="fas fa-ticket-alt"></i> LC
+                    {% endif %}
                 </div>
-
-                <!-- PDF del Boleto -->
-                <div class="det-section"><i class="fas fa-file-pdf"></i> Boleto / PDF</div>
-                <div id="detPdfContainer"></div>
+                <div class="clave">
+                    {{ exp.clave or exp.folio }}
+                </div>
+                <div class="empresa">{{ exp.empresa }}</div>
+                <div class="pasajero">{{ exp.pasajero }}</div>
+                <div class="monto">${{ "{:,.2f}".format(exp.total) }}</div>
+                <div class="estatus-docs">
+                    {% if exp.tipo == 'comision_sua' %}
+                        <span class="doc-badge tiene" title="Concentrado SUA"><i class="fas fa-hand-holding-usd"></i></span>
+                        <span class="doc-badge tiene" title="Listado de boletos"><i class="fas fa-list"></i></span>
+                    {% elif exp.tipo == 'desglose_bsp' %}
+                        {# BSP solo tiene desglose #}
+                        <span class="doc-badge tiene" title="Desglose"><i class="fas fa-calculator"></i></span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_boleto else 'no-tiene' }}" title="Boleto">
+                            <i class="fas fa-file-pdf"></i>
+                        </span>
+                    {% else %}
+                        {# Low Cost tiene papeleta + desglose opcional #}
+                        <span class="doc-badge tiene" title="Papeleta"><i class="fas fa-receipt"></i></span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_desglose else 'no-tiene' }}" title="Desglose">
+                            <i class="fas fa-calculator"></i>
+                        </span>
+                        <span class="doc-badge {{ 'tiene' if exp.tiene_boleto else 'no-tiene' }}" title="Boleto PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </span>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-abrir" onclick="event.stopPropagation(); abrirExpediente('{{ exp.tipo }}', {{ exp.id }})">
+                    <i class="fas fa-folder-open"></i> Abrir
+                </button>
             </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-check-circle"></i>
+        <p>No hay expedientes pendientes de facturar.</p>
+    </div>
+    {% endif %}
+    
+    <!-- Link a Gestión de Facturas -->
+    <div style="text-align:center;padding:1.5rem 0;">
+        <a href="{{ url_for('main.gestion_facturas') }}" style="display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;background:linear-gradient(135deg,#990100,#b90504);color:#fff;border-radius:10px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .15s;box-shadow:0 2px 8px rgba(153,1,0,.2);">
+            <i class="fas fa-file-invoice-dollar"></i> Gestión de Facturas — Historial, consultas y cancelaciones
+        </a>
+    </div>
+</div>
+
+<!-- Modal de Expediente -->
+<div class="modal-overlay" id="modalExpediente">
+    <div class="modal-expediente">
+        <div class="modal-header">
+            <div class="modal-header-info">
+                <h3><i class="fas fa-folder-open"></i> Expediente <span id="modalClaveSabre"></span></h3>
+                <div class="meta-info">
+                    <span><i class="fas fa-building"></i> <span id="modalEmpresa"></span></span>
+                    <span><i class="fas fa-user"></i> <span id="modalPasajero"></span></span>
+                    <span><i class="fas fa-calendar"></i> <span id="modalFecha"></span></span>
+                </div>
+            </div>
+            <button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Columna Papeleta -->
+            <div class="modal-section">
+                <div class="modal-section-title papeleta">
+                    <i class="fas fa-receipt"></i> Papeleta <span id="modalPapeletaFolio"></span>
+                </div>
+                
+                <!-- Indicadores especiales -->
+                <div id="indicadoresEspeciales" style="display: none; margin-bottom: 0.75rem;">
+                    <span id="badgeExtemporanea" class="badge badge-warning" style="display: none;">
+                        <i class="fas fa-clock"></i> Extemporánea
+                    </span>
+                    <span id="badgeReembolso" class="badge badge-info" style="display: none;">
+                        <i class="fas fa-undo"></i> Tiene Reembolso
+                    </span>
+                </div>
+                
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label">Tarjeta</span>
+                        <span class="value" id="modalTarjeta">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Fecha Venta</span>
+                        <span class="value" id="modalFechaVenta">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Facturar A</span>
+                        <span class="value" id="modalFacturarA">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Tipo Cargo</span>
+                        <span class="value" id="modalTipoCargo">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Aerolínea / Proveedor</span>
+                        <span class="value" id="modalAerolineaProveedor">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Solicitó</span>
+                        <span class="value" id="modalSolicito">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Clave Sabre</span>
+                        <span class="value" id="modalClaveSabreDetalle">---</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Forma Pago</span>
+                        <span class="value" id="modalFormaPago">---</span>
+                    </div>
+                    <div class="detail-item full-width">
+                        <span class="label">Agente</span>
+                        <span class="value" id="modalAgente">---</span>
+                    </div>
+                </div>
+                
+                <div class="montos-box">
+                    <div class="monto-row">
+                        <span>Total Ticket</span>
+                        <span id="modalTotalTicket">$0.00</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Comisión (10%)</span>
+                        <span id="modalDiezPorciento">$0.00</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Cargo</span>
+                        <span id="modalCargo">$0.00</span>
+                    </div>
+                    <div class="monto-row total">
+                        <span>Total Papeleta</span>
+                        <span id="modalTotalPapeleta">$0.00</span>
+                    </div>
+                </div>
+                
+                <!-- Sección de reembolso si aplica -->
+                <div id="seccionReembolso" class="reembolso-info" style="display: none;">
+                    <div class="reembolso-title"><i class="fas fa-undo"></i> Información de Reembolso</div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="label">Motivo</span>
+                            <span class="value" id="modalMotivoReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Monto</span>
+                            <span class="value" id="modalMontoReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Estatus</span>
+                            <span class="value" id="modalEstatusReembolso">---</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Referencia</span>
+                            <span class="value" id="modalReferenciaReembolso">---</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Columna Desglose -->
+            <div class="modal-section">
+                <div class="modal-section-title desglose">
+                    <i class="fas fa-calculator"></i> Desglose <span id="modalDesgloseFolio"></span>
+                </div>
+                <div id="desgloseContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Columna PDF (grande) -->
+            <div class="modal-section pdf-section">
+                <div class="modal-section-title boleto">
+                    <i class="fas fa-file-pdf"></i> Boleto / Documento
+                </div>
+                <div class="pdf-container">
+                    <iframe id="pdfViewer" style="display: none;"></iframe>
+                    <div class="no-pdf" id="noPdfMsg">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No hay boleto adjunto a esta papeleta</p>
+                    </div>
+                </div>
+                <div class="pdf-actions" id="pdfActions" style="display: none;">
+                    <a href="#" id="btnAbrirPdf" target="_blank" class="btn-pdf-action primary">
+                        <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                    </a>
+                    <a href="#" id="btnDescargarPdf" download class="btn-pdf-action secondary">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <form id="formFacturar" class="factura-form" method="POST" autocomplete="off">
+                <div class="form-group">
+                    <label for="numero_factura">Número de Factura</label>
+                    <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: A-12345" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="monto_factura">Monto Facturado</label>
+                    <input type="number" step="0.01" id="monto_factura" name="monto_factura" placeholder="0.00" required>
+                </div>
+                <button type="submit" class="btn-registrar">
+                    <i class="fas fa-check"></i> Registrar Factura
+                </button>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-let papeletaActualId = null;
+// Datos de expedientes - Papeletas (Low Cost)
+const expedientesPapeleta = {
+    {% for p in papeletas_pendientes %}
+    {% set desglose = desgloses_dict.get(p.clave_sabre) %}
+    {{ p.id }}: {
+        tipo: 'papeleta',
+        id: {{ p.id }},
+        folio: "{{ p.folio }}",
+        claveSabre: "{{ p.clave_sabre }}",
+        empresa: "{{ p.empresa.nombre_empresa if p.empresa else p.facturar_a }}",
+        facturarA: "{{ p.facturar_a }}",
+        solicito: "{{ p.solicito }}",
+        fecha: "{{ p.fecha_venta.strftime('%d/%m/%Y') }}",
+        tarjeta: "{{ p.tarjeta }}",
+        aerolinea: "{{ p.aerolinea.nombre if p.aerolinea else '' }}",
+        proveedor: "{{ p.proveedor or '' }}",
+        agente: "{{ p.usuario.nombre if p.usuario else 'N/A' }}",
+        formaPago: "{{ p.forma_pago or 'N/A' }}",
+        tipoCargo: "{{ p.tipo_cargo or 'aerolinea' }}",
+        totalTicket: {{ p.total_ticket or 0 }},
+        diezPorciento: {{ p.diez_porciento or 0 }},
+        cargo: {{ p.cargo or 0 }},
+        totalPapeleta: {{ p.total or 0 }},
+        archivoBoleto: "{{ p.archivo_boleto or '' }}",
+        extemporanea: {{ 'true' if p.extemporanea else 'false' }},
+        motivoExtemporanea: "{{ p.motivo_extemporanea or '' }}",
+        fechaCargoReal: "{{ p.fecha_cargo_real.strftime('%d/%m/%Y') if p.fecha_cargo_real else '' }}",
+        tieneReembolso: {{ 'true' if p.tiene_reembolso else 'false' }},
+        motivoReembolso: "{{ p.motivo_reembolso or '' }}",
+        estatusReembolso: "{{ p.estatus_reembolso or '' }}",
+        montoReembolso: {{ p.monto_reembolso or 0 }},
+        referenciaReembolso: "{{ p.referencia_reembolso or '' }}",
+        actionUrl: "{{ url_for('main.registrar_factura', id=p.id) }}",
+        {% if desglose %}
+        desglose: {
+            folio: {{ desglose.folio }},
+            claveBoleto: "{{ desglose.clave_reserva }}",
+            pasajero: "{{ desglose.pasajero_nombre or 'N/A' }}",
+            ruta: "{{ desglose.ruta or 'N/A' }}",
+            aerolinea: "{{ desglose.aerolinea.nombre if desglose.aerolinea else 'N/A' }}",
+            tarifaBase: {{ desglose.tarifa_base or 0 }},
+            iva: {{ desglose.iva or 0 }},
+            tua: {{ desglose.tua or 0 }},
+            yr: {{ desglose.yr or 0 }},
+            otrosCargos: {{ desglose.otros_cargos or 0 }},
+            cargoServicio: {{ desglose.cargo_por_servicio or 0 }},
+            total: {{ desglose.total or 0 }}
+        }
+        {% else %}
+        desglose: null
+        {% endif %}
+    },
+    {% endfor %}
+};
 
-function abrirDetalle(id) {
-    papeletaActualId = id;
-    const modal = document.getElementById('modalDetalle');
-    const loading = document.getElementById('detLoading');
-    const contenido = document.getElementById('detContenido');
+// Datos de expedientes - Desgloses BSP
+const expedientesBSP = {
+    {% for d in desgloses_bsp_pendientes %}
+    {{ d.folio }}: {
+        tipo: 'desglose_bsp',
+        id: {{ d.folio }},
+        folio: "BSP-{{ d.folio }}",
+        claveReserva: "{{ d.clave_reserva }}",
+        claveSabre: "{{ d.clave_sabre or d.clave_reserva }}",
+        empresa: "{{ d.empresa.nombre_empresa if d.empresa else 'N/A' }}",
+        pasajero: "{{ d.pasajero_nombre or 'N/A' }}",
+        fecha: "{{ d.fecha_emision.strftime('%d/%m/%Y') if d.fecha_emision else '' }}",
+        fechaViaje: "{{ d.fecha_viaje.strftime('%d/%m/%Y') if d.fecha_viaje else '' }}",
+        aerolinea: "{{ d.aerolinea.nombre if d.aerolinea else 'N/A' }}",
+        ruta: "{{ d.ruta or 'N/A' }}",
+        clase: "{{ d.clase or 'N/A' }}",
+        numeroBoleto: "{{ d.numero_boleto or '' }}",
+        archivoBoleto: "{{ d.archivo_boleto or '' }}",
+        agente: "{{ d.usuario.nombre if d.usuario else 'N/A' }}",
+        tarifaBase: {{ d.tarifa_base or 0 }},
+        iva: {{ d.iva or 0 }},
+        tua: {{ d.tua or 0 }},
+        yr: {{ d.yr or 0 }},
+        otrosCargos: {{ d.otros_cargos or 0 }},
+        cargoServicio: {{ d.cargo_por_servicio or 0 }},
+        total: {{ d.total or 0 }},
+        actionUrl: "{{ url_for('main.registrar_factura_bsp', folio=d.folio) }}"
+    },
+    {% endfor %}
+};
+
+let expedienteActualTipo = null;
+let expedienteActualId = null;
+
+// ==========================================
+// FUNCIONES DE FILTRADO
+// ==========================================
+function aplicarFiltros() {
+    const buscar = document.getElementById('filtroBuscar').value.toLowerCase().trim();
+    const tipo = document.getElementById('filtroTipo').value;
+    const empresa = document.getElementById('filtroEmpresa').value.toLowerCase();
+    const fecha = document.getElementById('filtroFecha').value;
+    const docs = document.getElementById('filtroDocs').value;
     
-    modal.classList.add('active');
-    loading.style.display = 'flex';
-    contenido.style.display = 'none';
+    let totalVisibles = 0;
     
-    fetch('/api/papeleta/' + id)
-        .then(r => r.json())
-        .then(d => {
-            loading.style.display = 'none';
-            contenido.style.display = 'block';
+    document.querySelectorAll('.expediente-row').forEach(row => {
+        const rowTipo = row.dataset.tipo || '';
+        const clave = row.dataset.clave || '';
+        const rowEmpresa = row.dataset.empresa || '';
+        const pasajero = row.dataset.pasajero || '';
+        const rowFecha = row.dataset.fecha || '';
+        const rowDocs = row.dataset.docs || '';
+        
+        // Aplicar filtros
+        const matchTipo = !tipo || rowTipo === tipo;
+        const matchBuscar = !buscar || 
+            clave.includes(buscar) || 
+            pasajero.includes(buscar) ||
+            rowEmpresa.includes(buscar);
+        const matchEmpresa = !empresa || rowEmpresa.includes(empresa);
+        const matchFecha = !fecha || rowFecha === fecha;
+        const matchDocs = !docs || rowDocs === docs;
+        
+        const visible = matchTipo && matchBuscar && matchEmpresa && matchFecha && matchDocs;
+        row.style.display = visible ? '' : 'none';
+        
+        if (visible) totalVisibles++;
+    });
+    
+    // Ocultar grupos vacíos y actualizar contadores
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        const filas = grupo.querySelectorAll('.expediente-row');
+        const filasVisibles = grupo.querySelectorAll('.expediente-row:not([style*="display: none"])');
+        
+        grupo.style.display = filasVisibles.length > 0 ? '' : 'none';
+        
+        // Actualizar contador del día
+        const contador = grupo.querySelector('.dia-count');
+        if (contador && filasVisibles.length > 0) {
+            contador.textContent = `(${filasVisibles.length} expediente${filasVisibles.length > 1 ? 's' : ''})`;
+        }
+    });
+    
+    // Mostrar mensaje si no hay resultados
+    mostrarMensajeVacio(totalVisibles === 0 && document.querySelectorAll('.expediente-row').length > 0);
+}
+
+function limpiarFiltros() {
+    document.getElementById('filtroBuscar').value = '';
+    document.getElementById('filtroTipo').value = '';
+    document.getElementById('filtroEmpresa').value = '';
+    document.getElementById('filtroFecha').value = '';
+    document.getElementById('filtroDocs').value = '';
+    
+    // Mostrar todas las filas
+    document.querySelectorAll('.expediente-row').forEach(row => {
+        row.style.display = '';
+    });
+    
+    // Mostrar todos los grupos
+    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+        grupo.style.display = '';
+        
+        // Restaurar contador original
+        const filas = grupo.querySelectorAll('.expediente-row');
+        const contador = grupo.querySelector('.dia-count');
+        if (contador) {
+            contador.textContent = `(${filas.length} expediente${filas.length > 1 ? 's' : ''})`;
+        }
+    });
+    
+    mostrarMensajeVacio(false);
+}
+
+function mostrarMensajeVacio(mostrar) {
+    let msgVacio = document.getElementById('filtros-sin-resultados');
+    
+    if (mostrar) {
+        if (!msgVacio) {
+            msgVacio = document.createElement('div');
+            msgVacio.id = 'filtros-sin-resultados';
+            msgVacio.className = 'empty-state';
+            msgVacio.innerHTML = '<i class="fas fa-filter"></i><p>No se encontraron expedientes con los filtros aplicados.</p>';
             
-            document.getElementById('detTituloFolio').textContent = 'Papeleta ' + d.folio;
-            document.getElementById('detFolio').textContent = d.folio;
-            document.getElementById('detClaveReserva').textContent = d.clave_reserva || '-';
-            document.getElementById('detPasajero').textContent = d.pasajero_nombre || d.solicito || '-';
-            document.getElementById('detTotalTicket').textContent = '$' + parseFloat(d.total_ticket || 0).toLocaleString('es-MX', {minimumFractionDigits:2});
-            document.getElementById('detEmpresa').textContent = d.facturar_a || '-';
+            const section = document.querySelector('.section-title');
+            if (section && section.parentElement) {
+                section.parentElement.insertBefore(msgVacio, section.nextSibling.nextSibling);
+            }
+        }
+        msgVacio.style.display = '';
+    } else if (msgVacio) {
+        msgVacio.style.display = 'none';
+    }
+}
+
+// Funciones de formato
+function formatTipoCargo(tipo) {
+    const tipos = {
+        'aerolinea': 'Aerolínea',
+        'hotel': 'Hotel',
+        'auto': 'Renta de Auto',
+        'otro': 'Otro'
+    };
+    return tipos[tipo] || tipo || 'N/A';
+}
+
+function formatMotivoReembolso(motivo) {
+    const motivos = {
+        'duplicado': 'Compra duplicada',
+        'cancelacion': 'Cancelación',
+        'cambio': 'Cambio de itinerario',
+        'error_monto': 'Error en monto',
+        'no_show': 'No show',
+        'otro': 'Otro'
+    };
+    return motivos[motivo] || motivo || 'N/A';
+}
+
+function formatEstatusReembolso(estatus) {
+    const estatuses = {
+        'pendiente': 'Pendiente',
+        'en_proceso': 'En proceso',
+        'completado': 'Completado',
+        'rechazado': 'Rechazado'
+    };
+    return estatuses[estatus] || estatus || 'N/A';
+}
+
+function abrirExpediente(tipo, id) {
+    // SUA: abrir modal de detalle SUA
+    if (tipo === 'comision_sua') {
+        abrirSUA(id);
+        return;
+    }
+    
+    let exp;
+    
+    if (tipo === 'papeleta') {
+        exp = expedientesPapeleta[id];
+    } else if (tipo === 'desglose_bsp') {
+        exp = expedientesBSP[id];
+    }
+    
+    if (!exp) return;
+    
+    expedienteActualTipo = tipo;
+    expedienteActualId = id;
+    
+    // Header
+    document.getElementById('modalClaveSabre').textContent = exp.claveSabre || exp.claveReserva;
+    document.getElementById('modalEmpresa').textContent = exp.empresa;
+    document.getElementById('modalPasajero').textContent = tipo === 'papeleta' ? exp.solicito : exp.pasajero;
+    document.getElementById('modalFecha').textContent = exp.fecha;
+    
+    // Sección Papeleta (columna izquierda)
+    const seccionPapeleta = document.querySelector('.modal-column.papeleta-col');
+    const seccionBSP = document.getElementById('seccionBSP');
+    
+    if (tipo === 'papeleta') {
+        // Mostrar sección papeleta, ocultar BSP
+        if (seccionPapeleta) seccionPapeleta.style.display = '';
+        if (seccionBSP) seccionBSP.style.display = 'none';
+        
+        // Papeleta - Todos los campos
+        document.getElementById('modalPapeletaFolio').textContent = '#' + exp.folio;
+        document.getElementById('modalTarjeta').textContent = exp.tarjeta;
+        document.getElementById('modalFechaVenta').textContent = exp.fecha;
+        document.getElementById('modalFacturarA').textContent = exp.facturarA;
+        document.getElementById('modalTipoCargo').textContent = formatTipoCargo(exp.tipoCargo);
+        
+        // Aerolínea o Proveedor según tipo de cargo
+        const aerolineaProveedor = exp.tipoCargo === 'aerolinea' ? exp.aerolinea : exp.proveedor;
+        document.getElementById('modalAerolineaProveedor').textContent = aerolineaProveedor || 'N/A';
+        
+        document.getElementById('modalSolicito').textContent = exp.solicito;
+        document.getElementById('modalClaveSabreDetalle').textContent = exp.claveSabre;
+        document.getElementById('modalFormaPago').textContent = exp.formaPago;
+        document.getElementById('modalAgente').textContent = exp.agente;
+        
+        // Indicadores especiales
+        const indicadores = document.getElementById('indicadoresEspeciales');
+        const badgeExtemp = document.getElementById('badgeExtemporanea');
+        const badgeReemb = document.getElementById('badgeReembolso');
+        
+        if (exp.extemporanea || exp.tieneReembolso) {
+            indicadores.style.display = 'flex';
+            indicadores.style.gap = '0.5rem';
+            indicadores.style.flexWrap = 'wrap';
+            badgeExtemp.style.display = exp.extemporanea ? 'inline-flex' : 'none';
+            badgeReemb.style.display = exp.tieneReembolso ? 'inline-flex' : 'none';
+        } else {
+            indicadores.style.display = 'none';
+        }
+        
+        // Montos
+        document.getElementById('modalTotalTicket').textContent = '$' + exp.totalTicket.toFixed(2);
+        document.getElementById('modalDiezPorciento').textContent = '$' + exp.diezPorciento.toFixed(2);
+        document.getElementById('modalCargo').textContent = '$' + exp.cargo.toFixed(2);
+        document.getElementById('modalTotalPapeleta').textContent = '$' + exp.totalPapeleta.toFixed(2);
+        
+        // Sección de reembolso
+        const seccionReembolso = document.getElementById('seccionReembolso');
+        if (exp.tieneReembolso) {
+            seccionReembolso.style.display = 'block';
+            document.getElementById('modalMotivoReembolso').textContent = formatMotivoReembolso(exp.motivoReembolso);
+            document.getElementById('modalMontoReembolso').textContent = '$' + exp.montoReembolso.toFixed(2);
+            document.getElementById('modalEstatusReembolso').textContent = formatEstatusReembolso(exp.estatusReembolso);
+            document.getElementById('modalReferenciaReembolso').textContent = exp.referenciaReembolso || 'N/A';
+        } else {
+            seccionReembolso.style.display = 'none';
+        }
+        
+        // Desglose
+        const desgloseContent = document.getElementById('desgloseContent');
+        if (exp.desglose) {
+            document.getElementById('modalDesgloseFolio').textContent = '#' + exp.desglose.folio;
+            desgloseContent.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="label">Clave Boleto</span>
+                        <span class="value">${exp.desglose.claveBoleto}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Pasajero</span>
+                        <span class="value">${exp.desglose.pasajero}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Ruta</span>
+                        <span class="value">${exp.desglose.ruta}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Aerolínea</span>
+                        <span class="value">${exp.desglose.aerolinea}</span>
+                    </div>
+                </div>
+                <div class="montos-box">
+                    <div class="monto-row">
+                        <span>Tarifa Base</span>
+                        <span>$${exp.desglose.tarifaBase.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>IVA</span>
+                        <span>$${exp.desglose.iva.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>TUA</span>
+                        <span>$${exp.desglose.tua.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>YR</span>
+                        <span>$${exp.desglose.yr.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Otros Cargos</span>
+                        <span>$${exp.desglose.otrosCargos.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row">
+                        <span>Cargo por Servicio</span>
+                        <span>$${exp.desglose.cargoServicio.toFixed(2)}</span>
+                    </div>
+                    <div class="monto-row total">
+                        <span>Total Desglose</span>
+                        <span>$${exp.desglose.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            document.getElementById('modalDesgloseFolio').textContent = '';
+            desgloseContent.innerHTML = `
+                <div class="no-desglose-msg">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>No hay desglose vinculado<br>a esta clave Sabre</p>
+                </div>
+            `;
+        }
+        
+        // PDF
+        if (exp.archivoBoleto) {
+            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
+            document.getElementById('pdfViewer').src = pdfUrl;
+            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('noPdfMsg').style.display = 'none';
+            document.getElementById('pdfActions').style.display = 'flex';
+            document.getElementById('btnAbrirPdf').href = pdfUrl;
+            document.getElementById('btnDescargarPdf').href = pdfUrl;
+        } else {
+            document.getElementById('pdfViewer').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
+            document.getElementById('noPdfMsg').style.display = 'flex';
+            document.getElementById('pdfActions').style.display = 'none';
+        }
+        
+        // Form - monto de papeleta
+        document.getElementById('monto_factura').value = exp.totalPapeleta.toFixed(2);
+        
+    } else if (tipo === 'desglose_bsp') {
+        // BSP - Solo tiene desglose, sin papeleta
+        if (seccionPapeleta) seccionPapeleta.style.display = 'none';
+        
+        // Mostrar desglose BSP en la columna del desglose
+        document.getElementById('modalDesgloseFolio').textContent = '#' + exp.id;
+        const desgloseContent = document.getElementById('desgloseContent');
+        desgloseContent.innerHTML = `
+            <div class="bsp-badge-header">
+                <span class="tipo-badge bsp"><i class="fas fa-plane"></i> BSP - ${exp.aerolinea}</span>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="label">Clave Reserva</span>
+                    <span class="value">${exp.claveReserva}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Pasajero</span>
+                    <span class="value">${exp.pasajero}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Ruta</span>
+                    <span class="value">${exp.ruta}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label"># Boleto</span>
+                    <span class="value">${exp.numeroBoleto || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Fecha Emisión</span>
+                    <span class="value">${exp.fecha}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Fecha Viaje</span>
+                    <span class="value">${exp.fechaViaje || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Clase</span>
+                    <span class="value">${exp.clase}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Agente</span>
+                    <span class="value">${exp.agente}</span>
+                </div>
+            </div>
+            <div class="montos-box">
+                <div class="monto-row">
+                    <span>Tarifa Base</span>
+                    <span>$${exp.tarifaBase.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>IVA</span>
+                    <span>$${exp.iva.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>TUA</span>
+                    <span>$${exp.tua.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>YR</span>
+                    <span>$${exp.yr.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Otros Cargos</span>
+                    <span>$${exp.otrosCargos.toFixed(2)}</span>
+                </div>
+                <div class="monto-row">
+                    <span>Cargo por Servicio</span>
+                    <span>$${exp.cargoServicio.toFixed(2)}</span>
+                </div>
+                <div class="monto-row total">
+                    <span>Total BSP</span>
+                    <span>$${exp.total.toFixed(2)}</span>
+                </div>
+            </div>
+        `;
+        
+        // BSP - Mostrar PDF si existe archivo_boleto
+        if (exp.archivoBoleto) {
+            const pdfUrl = '/static/uploads/boletos/' + exp.archivoBoleto;
+            document.getElementById('pdfViewer').src = pdfUrl;
+            document.getElementById('pdfViewer').style.display = 'block';
+            document.getElementById('noPdfMsg').style.display = 'none';
+            document.getElementById('pdfActions').style.display = 'flex';
+            document.getElementById('btnAbrirPdf').href = pdfUrl;
+            document.getElementById('btnDescargarPdf').href = pdfUrl;
+        } else {
+            document.getElementById('pdfViewer').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
+            document.getElementById('noPdfMsg').innerHTML = '<i class="fas fa-plane"></i><p>Boleto BSP<br>(sin documento adjunto)</p>';
+            document.getElementById('noPdfMsg').style.display = 'flex';
+            document.getElementById('pdfActions').style.display = 'none';
+        }
+        
+        // Form - monto total del desglose
+        document.getElementById('monto_factura').value = exp.total.toFixed(2);
+    }
+    
+    // Form action URL
+    document.getElementById('formFacturar').action = exp.actionUrl;
+    document.getElementById('numero_factura').value = '';
+    
+    // Mostrar modal
+    document.getElementById('modalExpediente').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal() {
+    document.getElementById('modalExpediente').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('pdfViewer').src = '';
+    expedienteActualTipo = null;
+    expedienteActualId = null;
+}
+
+// Form submit con AJAX para eliminar fila
+document.getElementById('formFacturar').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const btn = form.querySelector('.btn-registrar');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+    
+    // Agregar parámetro ajax=1 a la URL
+    const actionUrl = form.action + (form.action.includes('?') ? '&' : '?') + 'ajax=1';
+    
+    fetch(actionUrl, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        // Primero obtenemos el texto para ver qué devuelve
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // Si no es JSON, mostrar el error
+                console.error('Respuesta no es JSON:', text.substring(0, 200));
+                throw new Error('El servidor no devolvió JSON válido. ¿Actualizaste routes.py?');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            // Mostrar toast usando el sistema global de base.html
+            showToast(data.message || 'Factura registrada correctamente', 'success', 4000);
             
-            // PDF
-            const pdfContainer = document.getElementById('detPdfContainer');
-            if (d.tiene_archivo && d.archivo_boleto) {
-                const pdfUrl = '/static/uploads/boletos/' + encodeURIComponent(d.archivo_boleto);
-                fetch(pdfUrl, {method:'HEAD'})
-                    .then(r => {
-                        if (r.ok) {
-                            pdfContainer.innerHTML = '<div class="det-pdf-frame"><iframe src="' + pdfUrl + '#toolbar=1&navpanes=0"></iframe></div>';
-                        } else {
-                            pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Boleto registrado pero archivo no disponible</span><span style="font-size:.7rem;color:#94a3b8;">(' + d.archivo_boleto + ')</span></div>';
+            // Eliminar fila de la lista con animación (usa tipo-id)
+            const rowId = expedienteActualTipo + '-' + expedienteActualId;
+            const row = document.getElementById('expediente-row-' + rowId);
+            if (row) {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    row.remove();
+                    // Verificar si el grupo del día quedó vacío
+                    document.querySelectorAll('.dia-grupo').forEach(grupo => {
+                        const lista = grupo.querySelector('.expedientes-lista');
+                        if (lista && lista.querySelectorAll('.expediente-row').length === 0) {
+                            grupo.remove();
                         }
-                    })
-                    .catch(() => {
-                        pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Error al verificar boleto</span></div>';
                     });
-            } else {
-                pdfContainer.innerHTML = '<div class="det-pdf-empty"><i class="fas fa-file-pdf"></i><span>Sin boleto adjunto</span></div>';
+                    
+                    // Si no quedan expedientes, mostrar estado vacío
+                    if (document.querySelectorAll('.expediente-row').length === 0) {
+                        const container = document.querySelector('.section-title').parentElement;
+                        const emptyState = document.createElement('div');
+                        emptyState.className = 'empty-state';
+                        emptyState.innerHTML = '<i class="fas fa-check-circle"></i><p>No hay expedientes pendientes de facturar.</p>';
+                        container.appendChild(emptyState);
+                    }
+                }, 300);
             }
             
-            // Factura
-            document.getElementById('detFacturaDisplay').textContent = d.numero_factura || 'Sin factura';
-        })
-        .catch(err => {
-            loading.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i> Error al cargar datos';
-            console.error(err);
+            cerrarModal();
+            
+            // Actualizar contadores
+            const totalNum = document.querySelector('.stat-card .number');
+            if (totalNum) {
+                const current = parseInt(totalNum.textContent) || 0;
+                totalNum.textContent = Math.max(0, current - 1);
+            }
+            
+        } else {
+            showToast(data.message || 'No se pudo registrar la factura', 'danger', 5000);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        showToast('Error de conexión: ' + error.message, 'danger', 5000);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+});
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModal();
+});
+
+// Cerrar al hacer clic fuera
+document.getElementById('modalExpediente').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+
+// ============ MODAL SUA ============
+function abrirSUA(id) {
+    var modal = document.getElementById('modalSUA');
+    var body = document.getElementById('suaBody');
+    body.innerHTML = '<div class="sua-loading"><i class="fas fa-spinner fa-spin"></i> Cargando detalle...</div>';
+    modal.classList.add('active');
+    
+    fetch('/api/solicitud-sua/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (!d.success) { body.innerHTML = '<p style="color:#dc2626;">Error: ' + (d.error || 'No se pudo cargar') + '</p>'; return; }
+        
+        var html = '<div class="sua-meta">';
+        html += '<div class="sua-meta-item"><span class="lbl">Periodo</span><span class="val">' + d.periodo + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Total SUA</span><span class="val mono purple">$' + d.monto_total.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Boletos</span><span class="val">' + d.total_boletos + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Solicitado por</span><span class="val">' + d.solicitado_por + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Fecha solicitud</span><span class="val">' + d.fecha_solicitud + '</span></div>';
+        html += '</div>';
+        
+        // Tabla de boletos
+        html += '<table class="sua-tabla"><thead><tr><th>Folio</th><th>Clave</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Ticket</th><th style="text-align:right">SUA</th></tr></thead><tbody>';
+        var totalSua = 0;
+        d.boletos.forEach(function(b) {
+            totalSua += b.sua;
+            html += '<tr>';
+            html += '<td class="mono">' + b.folio + '</td>';
+            html += '<td class="mono">' + b.clave_reserva + '</td>';
+            html += '<td>' + b.pasajero + '</td>';
+            html += '<td>' + b.agente + '</td>';
+            html += '<td>' + b.fecha + '</td>';
+            html += '<td>' + b.empresa + '</td>';
+            html += '<td class="monto">$' + b.total_ticket.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td>';
+            html += '<td class="monto purple">$' + b.sua.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td>';
+            html += '</tr>';
         });
+        html += '</tbody><tfoot><tr><td colspan="7" style="text-align:right;">Total SUA:</td><td class="monto purple">$' + totalSua.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td></tr></tfoot></table>';
+        
+        // Form de facturación
+        html += '<div class="sua-form">';
+        html += '<div class="campo"><label>Número de Factura</label><input type="text" id="suaNumFactura" placeholder="FED-00000"></div>';
+        html += '<div class="campo"><label>Monto a Facturar</label><input type="number" step="0.01" id="suaMontoFactura" value="' + d.monto_total.toFixed(2) + '"></div>';
+        html += '</div>';
+        
+        body.innerHTML = html;
+        document.getElementById('suaSolicitudId').value = id;
+        document.getElementById('btnFacturarSUA').disabled = false;
+        document.getElementById('btnFacturarSUA').innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+        document.getElementById('btnFacturarSUA').className = 'btn-facturar';
+    })
+    .catch(function() { body.innerHTML = '<p style="color:#dc2626;">Error de conexión</p>'; });
 }
+
+function cerrarSUA() {
+    document.getElementById('modalSUA').classList.remove('active');
+}
+
+function facturarSUA() {
+    var id = document.getElementById('suaSolicitudId').value;
+    var btn = document.getElementById('btnFacturarSUA');
+    var numFactura = document.getElementById('suaNumFactura').value.trim();
+    var monto = parseFloat(document.getElementById('suaMontoFactura').value) || 0;
+    
+    if (!numFactura) { alert('Ingresa el número de factura'); return; }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+    
+    fetch('/api/facturar-sua/' + id, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({numero_factura: numFactura, monto: monto})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            btn.className = 'btn-facturar';
+            btn.style.background = '#059669';
+            btn.innerHTML = '<i class="fas fa-check"></i> Facturada';
+            setTimeout(function() { location.reload(); }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+            alert('Error: ' + (d.error || 'No se pudo registrar'));
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+        alert('Error de conexión');
+    });
+}
+
+document.getElementById('modalSUA').addEventListener('click', function(e) {
+    if (e.target === this) cerrarSUA();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { cerrarSUA(); cerrarModal(); } });
 </script>
+
+<!-- Modal SUA -->
+<div class="modal-overlay" id="modalSUA">
+    <div class="modal-sua">
+        <div class="sua-header">
+            <h3><i class="fas fa-hand-holding-usd"></i> Expediente Comisiones SUA — Volaris</h3>
+            <button class="close-btn" onclick="cerrarSUA()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sua-body" id="suaBody"></div>
+        <input type="hidden" id="suaSolicitudId" value="">
+        <div class="sua-footer">
+            <button class="btn-cancel" onclick="cerrarSUA()">Cancelar</button>
+            <button class="btn-facturar" id="btnFacturarSUA" onclick="facturarSUA()" disabled><i class="fas fa-file-invoice-dollar"></i> Registrar Factura</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

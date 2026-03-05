@@ -603,7 +603,6 @@ document.addEventListener('DOMContentLoaded', function() {
             calcularTotal();
         }).catch(function(){cargoEmpresaInfo.innerHTML='';cg.style.display='none';});
     });
-    document.getElementById('tipo_cargo').addEventListener('change', function(){ if(empresaSelect.value) empresaSelect.dispatchEvent(new Event('change')); });
 
     function actualizarBoton(){ btnSubmit.disabled=!puedeEnviar; btnSubmit.classList.toggle('disabled',!puedeEnviar); }
 
@@ -675,6 +674,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else if(t){document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=true;}
         else{document.getElementById('aerolinea_id').required=false;document.getElementById('proveedor').required=false;}
         if(t!=='aerolinea'){document.getElementById('comisionAgenciaGroup').style.display='none';document.getElementById('comision_agencia').value='0';}
+        // Recalcular cargos de empresa al cambiar tipo
+        if(empresaSelect.value) empresaSelect.dispatchEvent(new Event('change'));
     });
 
     // SUA (Volaris ID=2) / Compensación de Agencia (Viva ID=3)

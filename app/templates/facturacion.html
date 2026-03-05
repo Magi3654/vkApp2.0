@@ -4,6 +4,7 @@
 
 {% block page_styles %}
 <style>
+:root { --oxblood: #990100; --brick-ember: #b90504; }
 .facturacion-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -148,6 +149,40 @@
     background: linear-gradient(135deg, #8b5cf6 0%, #6B2D8B 100%);
     color: white;
 }
+
+/* Modal SUA */
+.modal-sua{background:#fff;border-radius:14px;max-width:900px;width:95%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(107,45,139,.25);animation:suaIn .25s ease}
+@keyframes suaIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.sua-header{padding:1rem 1.25rem;border-bottom:1px solid #f1f5f9;background:linear-gradient(135deg,#faf5ff,#fff);display:flex;justify-content:space-between;align-items:center}
+.sua-header h3{margin:0;font-size:1.05rem;font-weight:700;color:#333;display:flex;align-items:center;gap:.5rem}
+.sua-header h3 i{color:#6B2D8B}
+.sua-header .close-btn{background:none;border:none;font-size:1.1rem;color:#94a3b8;cursor:pointer}.sua-header .close-btn:hover{color:#333}
+.sua-body{padding:1.25rem;overflow-y:auto;flex:1}
+.sua-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin-bottom:1rem}
+.sua-meta-item{display:flex;flex-direction:column;gap:.1rem}
+.sua-meta-item .lbl{font-size:.65rem;color:#94a3b8;text-transform:uppercase;font-weight:600;letter-spacing:.03em}
+.sua-meta-item .val{font-size:.88rem;color:#333;font-weight:600}
+.sua-meta-item .val.mono{font-family:'SF Mono','Consolas',monospace}
+.sua-meta-item .val.purple{color:#6B2D8B;font-size:1.1rem}
+.sua-tabla{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:1rem}
+.sua-tabla thead th{background:#f8fafc;color:#64748b;padding:.45rem .5rem;text-align:left;font-weight:600;font-size:.68rem;text-transform:uppercase;border-bottom:2px solid #f1f5f9}
+.sua-tabla tbody td{padding:.4rem .5rem;border-bottom:1px solid #f8fafc}
+.sua-tabla tbody tr:hover{background:#faf5ff}
+.sua-tabla .mono{font-family:'SF Mono','Consolas',monospace;font-size:.76rem}
+.sua-tabla .monto{text-align:right;font-weight:600;font-family:'SF Mono',monospace}
+.sua-tabla .monto.purple{color:#6B2D8B}
+.sua-tabla tfoot td{font-weight:700;background:#faf5ff;border-top:2px solid #6B2D8B;padding:.5rem}
+.sua-form{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding-top:.75rem;border-top:1px solid #f1f5f9}
+.sua-form .campo{display:flex;flex-direction:column;gap:.2rem}
+.sua-form label{font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:600}
+.sua-form input{padding:.5rem .65rem;border:1px solid #e8e8e8;border-radius:6px;font-size:.85rem;font-family:'SF Mono','Consolas',monospace}
+.sua-form input:focus{outline:none;border-color:#6B2D8B;box-shadow:0 0 0 2px rgba(107,45,139,.1)}
+.sua-footer{padding:.85rem 1.25rem;border-top:1px solid #f1f5f9;display:flex;gap:.65rem;justify-content:flex-end}
+.sua-footer .btn-cancel{padding:.45rem .85rem;border-radius:6px;border:1px solid #e8e8e8;background:#fff;color:#333;font-size:.82rem;font-weight:600;cursor:pointer}
+.sua-footer .btn-facturar{padding:.45rem .85rem;border-radius:6px;border:none;background:#6B2D8B;color:#fff;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.3rem}
+.sua-footer .btn-facturar:hover{background:#5a2476}
+.sua-footer .btn-facturar:disabled{opacity:.5;cursor:not-allowed}
+.sua-loading{text-align:center;padding:2rem;color:#94a3b8}
 
 .tipo-badge i {
     font-size: 0.65rem;
@@ -330,6 +365,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color:white;
 }
 
 .modal-header .meta-info {
@@ -831,7 +867,7 @@
 {% block content %}
 <div class="facturacion-container">
     <div class="page-header">
-        <h2><i class="fas fa-file-invoice-dollar"></i> Módulo de Facturación</h2>
+        <h2><i class="fas fa-file-invoice-dollar"></i>Facturación</h2>
     </div>
     
     <!-- Estadísticas -->
@@ -1152,7 +1188,7 @@
             <form id="formFacturar" class="factura-form" method="POST" autocomplete="off">
                 <div class="form-group">
                     <label for="numero_factura">Número de Factura</label>
-                    <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: A-12345" required autocomplete="off">
+                    <input type="text" id="numero_factura" name="numero_factura" placeholder="Ej: A-12345" required autocomplete="off" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
                 </div>
                 <div class="form-group">
                     <label for="monto_factura">Monto Facturado</label>
@@ -1392,9 +1428,9 @@ function formatEstatusReembolso(estatus) {
 }
 
 function abrirExpediente(tipo, id) {
-    // SUA: abrir la vista de comisiones directamente
+    // SUA: abrir modal de detalle SUA
     if (tipo === 'comision_sua') {
-        window.open('/papeletas-volaris/comisiones-sua', '_blank');
+        abrirSUA(id);
         return;
     }
     
@@ -1412,7 +1448,7 @@ function abrirExpediente(tipo, id) {
     expedienteActualId = id;
     
     // Header
-    document.getElementById('modalClaveSabre').textContent = exp.claveSabre || exp.claveReserva;
+    document.getElementById('modalClaveSabre').textContent = exp.claveSabre || exp.claveReserva || exp.folio;
     document.getElementById('modalEmpresa').textContent = exp.empresa;
     document.getElementById('modalPasajero').textContent = tipo === 'papeleta' ? exp.solicito : exp.pasajero;
     document.getElementById('modalFecha').textContent = exp.fecha;
@@ -1770,5 +1806,120 @@ document.addEventListener('keydown', function(e) {
 document.getElementById('modalExpediente').addEventListener('click', function(e) {
     if (e.target === this) cerrarModal();
 });
+
+// ============ MODAL SUA ============
+function abrirSUA(id) {
+    var modal = document.getElementById('modalSUA');
+    var body = document.getElementById('suaBody');
+    body.innerHTML = '<div class="sua-loading"><i class="fas fa-spinner fa-spin"></i> Cargando detalle...</div>';
+    modal.classList.add('active');
+    
+    fetch('/api/solicitud-sua/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (!d.success) { body.innerHTML = '<p style="color:#dc2626;">Error: ' + (d.error || 'No se pudo cargar') + '</p>'; return; }
+        
+        var html = '<div class="sua-meta">';
+        html += '<div class="sua-meta-item"><span class="lbl">Periodo</span><span class="val">' + d.periodo + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Total SUA</span><span class="val mono purple">$' + d.monto_total.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Boletos</span><span class="val">' + d.total_boletos + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Solicitado por</span><span class="val">' + d.solicitado_por + '</span></div>';
+        html += '<div class="sua-meta-item"><span class="lbl">Fecha solicitud</span><span class="val">' + d.fecha_solicitud + '</span></div>';
+        html += '</div>';
+        
+        // Tabla de boletos
+        html += '<table class="sua-tabla"><thead><tr><th>Folio</th><th>Clave</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Ticket</th><th style="text-align:right">SUA</th></tr></thead><tbody>';
+        var totalSua = 0;
+        d.boletos.forEach(function(b) {
+            totalSua += b.sua;
+            html += '<tr>';
+            html += '<td class="mono">' + b.folio + '</td>';
+            html += '<td class="mono">' + b.clave_reserva + '</td>';
+            html += '<td>' + b.pasajero + '</td>';
+            html += '<td>' + b.agente + '</td>';
+            html += '<td>' + b.fecha + '</td>';
+            html += '<td>' + b.empresa + '</td>';
+            html += '<td class="monto">$' + b.total_ticket.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td>';
+            html += '<td class="monto purple">$' + b.sua.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody><tfoot><tr><td colspan="7" style="text-align:right;">Total SUA:</td><td class="monto purple">$' + totalSua.toLocaleString('es-MX', {minimumFractionDigits:2}) + '</td></tr></tfoot></table>';
+        
+        // Form de facturación
+        html += '<div class="sua-form">';
+        html += '<div class="campo"><label>Número de Factura</label><input type="text" id="suaNumFactura" placeholder="FED-00000"></div>';
+        html += '<div class="campo"><label>Monto a Facturar</label><input type="number" step="0.01" id="suaMontoFactura" value="' + d.monto_total.toFixed(2) + '"></div>';
+        html += '</div>';
+        
+        body.innerHTML = html;
+        document.getElementById('suaSolicitudId').value = id;
+        document.getElementById('btnFacturarSUA').disabled = false;
+        document.getElementById('btnFacturarSUA').innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+        document.getElementById('btnFacturarSUA').className = 'btn-facturar';
+    })
+    .catch(function() { body.innerHTML = '<p style="color:#dc2626;">Error de conexión</p>'; });
+}
+
+function cerrarSUA() {
+    document.getElementById('modalSUA').classList.remove('active');
+}
+
+function facturarSUA() {
+    var id = document.getElementById('suaSolicitudId').value;
+    var btn = document.getElementById('btnFacturarSUA');
+    var numFactura = document.getElementById('suaNumFactura').value.trim();
+    var monto = parseFloat(document.getElementById('suaMontoFactura').value) || 0;
+    
+    if (!numFactura) { alert('Ingresa el número de factura'); return; }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+    
+    fetch('/api/facturar-sua/' + id, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({numero_factura: numFactura, monto: monto})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            btn.className = 'btn-facturar';
+            btn.style.background = '#059669';
+            btn.innerHTML = '<i class="fas fa-check"></i> Facturada';
+            setTimeout(function() { location.reload(); }, 1000);
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+            alert('Error: ' + (d.error || 'No se pudo registrar'));
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Registrar Factura';
+        alert('Error de conexión');
+    });
+}
+
+document.getElementById('modalSUA').addEventListener('click', function(e) {
+    if (e.target === this) cerrarSUA();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { cerrarSUA(); cerrarModal(); } });
 </script>
+
+<!-- Modal SUA -->
+<div class="modal-overlay" id="modalSUA">
+    <div class="modal-sua">
+        <div class="sua-header">
+            <h3><i class="fas fa-hand-holding-usd"></i> Expediente Comisiones SUA — Volaris</h3>
+            <button class="close-btn" onclick="cerrarSUA()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sua-body" id="suaBody"></div>
+        <input type="hidden" id="suaSolicitudId" value="">
+        <div class="sua-footer">
+            <button class="btn-cancel" onclick="cerrarSUA()">Cancelar</button>
+            <button class="btn-facturar" id="btnFacturarSUA" onclick="facturarSUA()" disabled><i class="fas fa-file-invoice-dollar"></i> Registrar Factura</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

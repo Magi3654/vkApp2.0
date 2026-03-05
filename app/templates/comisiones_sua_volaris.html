@@ -104,21 +104,57 @@
 
     <!-- KPIs -->
     <div class="kpi-row">
-        <div class="kpi-card q1">
-            <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_q1) }}</div>
-            <div class="kpi-label">1ra Quincena (1-15)</div>
-            <div class="kpi-count">{{ papeletas_q1|length }} boleto{{ 's' if papeletas_q1|length != 1 }}</div>
-        </div>
         <div class="kpi-card q2">
             <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_q2) }}</div>
             <div class="kpi-label">2da Quincena (16-{{ q2_fin.day }})</div>
             <div class="kpi-count">{{ papeletas_q2|length }} boleto{{ 's' if papeletas_q2|length != 1 }}</div>
+        </div>
+        <div class="kpi-card q1">
+            <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_q1) }}</div>
+            <div class="kpi-label">1ra Quincena (1-15)</div>
+            <div class="kpi-count">{{ papeletas_q1|length }} boleto{{ 's' if papeletas_q1|length != 1 }}</div>
         </div>
         <div class="kpi-card total">
             <div class="kpi-num">${{ '{:,.2f}'.format(total_sua_mes) }}</div>
             <div class="kpi-label">Total {{ mes_nombre }} {{ anio }}</div>
             <div class="kpi-count">{{ papeletas_q1|length + papeletas_q2|length }} boletos</div>
         </div>
+    </div>
+
+    <!-- Quincena 2 (más reciente primero) -->
+    <div class="quincena-panel">
+        <div class="quincena-header">
+            <h3><i class="fas fa-calendar-week"></i> 2da Quincena — {{ q2_inicio.strftime('%d/%m') }} al {{ q2_fin.strftime('%d/%m/%Y') }}</h3>
+            <div class="right-actions">
+                <span class="total-badge">${{ '{:,.2f}'.format(total_sua_q2) }}</span>
+                <button type="button" class="btn-solicitar" {{ 'disabled' if total_sua_q2 <= 0 }}
+                    onclick="confirmarSolicitud('q2', '2da Quincena {{ mes_nombre }} {{ anio }}', '{{ '{:,.2f}'.format(total_sua_q2) }}', {{ total_sua_q2 }}, {{ papeletas_q2|length }})">
+                    <i class="fas fa-file-invoice-dollar"></i> Solicitar Factura
+                </button>
+            </div>
+        </div>
+        {% if papeletas_q2 %}
+        <table class="tabla-sua">
+            <thead><tr><th>Folio</th><th>Clave Reserva</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Total Ticket</th><th style="text-align:right">SUA</th></tr></thead>
+            <tbody>
+                {% for p in papeletas_q2 %}
+                <tr>
+                    <td class="mono">{{ p.folio }}</td>
+                    <td class="mono">{{ p.clave_reserva or '-' }}</td>
+                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
+                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
+                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
+                    <td>{{ p.facturar_a or '-' }}</td>
+                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
+                    <td class="monto sua">${{ '{:,.2f}'.format(p.comision_agencia|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot><tr><td colspan="7" style="text-align:right;">Total SUA 2da Quincena:</td><td class="monto sua">${{ '{:,.2f}'.format(total_sua_q2) }}</td></tr></tfoot>
+        </table>
+        {% else %}
+        <div class="empty-quincena"><i class="fas fa-inbox"></i><p>Sin boletos con SUA en esta quincena</p></div>
+        {% endif %}
     </div>
 
     <!-- Quincena 1 -->
@@ -157,41 +193,39 @@
         {% endif %}
     </div>
 
-    <!-- Quincena 2 -->
-    <div class="quincena-panel">
-        <div class="quincena-header">
-            <h3><i class="fas fa-calendar-week"></i> 2da Quincena — {{ q2_inicio.strftime('%d/%m') }} al {{ q2_fin.strftime('%d/%m/%Y') }}</h3>
-            <div class="right-actions">
-                <span class="total-badge">${{ '{:,.2f}'.format(total_sua_q2) }}</span>
-                <button type="button" class="btn-solicitar" {{ 'disabled' if total_sua_q2 <= 0 }}
-                    onclick="confirmarSolicitud('q2', '2da Quincena {{ mes_nombre }} {{ anio }}', '{{ '{:,.2f}'.format(total_sua_q2) }}', {{ total_sua_q2 }}, {{ papeletas_q2|length }})">
-                    <i class="fas fa-file-invoice-dollar"></i> Solicitar Factura
-                </button>
-            </div>
+    <!-- Solicitudes enviadas a facturación -->
+    {% if solicitudes_sua %}
+    <div class="quincena-panel" style="border:1px solid #e9d5ff;">
+        <div class="quincena-header" style="background:linear-gradient(135deg,#faf5ff,#f3e8ff);">
+            <h3><i class="fas fa-paper-plane" style="color:#6B2D8B;"></i> Solicitudes enviadas a Facturación</h3>
         </div>
-        {% if papeletas_q2 %}
         <table class="tabla-sua">
-            <thead><tr><th>Folio</th><th>Clave Reserva</th><th>Pasajero</th><th>Agente</th><th>Fecha</th><th>Empresa</th><th style="text-align:right">Total Ticket</th><th style="text-align:right">SUA</th></tr></thead>
+            <thead><tr><th>Periodo</th><th>Monto</th><th>Solicitado por</th><th>Fecha</th><th>Estatus</th><th></th></tr></thead>
             <tbody>
-                {% for p in papeletas_q2 %}
+                {% for s in solicitudes_sua %}
                 <tr>
-                    <td class="mono">{{ p.folio }}</td>
-                    <td class="mono">{{ p.clave_reserva or '-' }}</td>
-                    <td>{{ p.pasajero_nombre or p.solicito or '-' }}</td>
-                    <td>{{ p.usuario.nombre if p.usuario else '-' }}</td>
-                    <td>{{ p.fecha_venta.strftime('%d/%m/%Y') if p.fecha_venta else '-' }}</td>
-                    <td>{{ p.facturar_a or '-' }}</td>
-                    <td class="monto">${{ '{:,.2f}'.format(p.total_ticket|float) }}</td>
-                    <td class="monto sua">${{ '{:,.2f}'.format(p.comision_agencia|float) }}</td>
+                    <td style="font-weight:600;">{{ s.payload.periodo if s.payload else '-' }}</td>
+                    <td class="monto sua">${{ '{:,.2f}'.format(s.payload.monto_total|float) if s.payload and s.payload.monto_total else '0.00' }}</td>
+                    <td>{{ s.payload.solicitado_por if s.payload else '-' }}</td>
+                    <td style="font-size:.78rem;color:#64748b;">{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '-' }}</td>
+                    <td>
+                        {% if s.estatus == 'pendiente' %}
+                        <span style="display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .5rem;border-radius:12px;font-size:.72rem;font-weight:600;background:#fef3c7;color:#92400e;"><i class="fas fa-clock"></i> Pendiente</span>
+                        {% elif s.estatus == 'enviada' %}
+                        <span style="display:inline-flex;align-items:center;gap:.25rem;padding:.15rem .5rem;border-radius:12px;font-size:.72rem;font-weight:600;background:#d1fae5;color:#065f46;"><i class="fas fa-check"></i> Facturada</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if s.estatus == 'pendiente' %}
+                        <button type="button" onclick="eliminarSolicitud({{ s.id }})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:.85rem;padding:.25rem;" title="Eliminar solicitud duplicada"><i class="fas fa-trash-alt"></i></button>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot><tr><td colspan="7" style="text-align:right;">Total SUA 2da Quincena:</td><td class="monto sua">${{ '{:,.2f}'.format(total_sua_q2) }}</td></tr></tfoot>
         </table>
-        {% else %}
-        <div class="empty-quincena"><i class="fas fa-inbox"></i><p>Sin boletos con SUA en esta quincena</p></div>
-        {% endif %}
     </div>
+    {% endif %}
 </div>
 
 <!-- Modal Confirmar Solicitud -->
@@ -229,6 +263,16 @@ function confirmarSolicitud(quincena, periodo, montoStr, montoVal, boletos) {
     document.getElementById('solQuincena').value = quincena;
     document.getElementById('solMontoVal').value = montoVal;
     document.getElementById('modalSolicitud').classList.add('active');
+}
+function eliminarSolicitud(id) {
+    if (!confirm('¿Eliminar esta solicitud de facturación SUA?')) return;
+    fetch('/papeletas-volaris/eliminar-solicitud-sua/' + id, {method: 'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) { location.reload(); }
+        else { alert('Error: ' + (d.error || 'No se pudo eliminar')); }
+    })
+    .catch(function() { alert('Error de conexión'); });
 }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') document.getElementById('modalSolicitud').classList.remove('active'); });
 </script>
